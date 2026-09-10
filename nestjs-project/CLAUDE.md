@@ -121,8 +121,16 @@ These settings are required in `package.json` (jest config) and `test/jest-e2e.j
 
 - `setupFiles: ["dotenv/config"]` — without this, `.env` is not loaded inside the Jest process. `DB_HOST`, `JWT_SECRET`, etc. fall back to undefined or to the host's `localhost`, breaking container-to-container DNS.
 - `testRegex: '.*\\.(spec|integration-spec)\\.ts$'` — covers both unit (`*.spec.ts`) and integration (`*.integration-spec.ts`) suffixes.
+- `transformIgnorePatterns: ["/node_modules/(?!(@tus|srvx)/)"]` + a `"^.+\\.mjs$": "<rootDir>/../jest-esm-transform.js"` transform entry (`<rootDir>/jest-esm-transform.js` in `test/jest-e2e.json`, since its `rootDir` is the `test/` directory itself) — required because `@tus/server`/`@tus/s3-store` pull in ESM-only packages (`srvx`). See "ESM-only npm packages under Jest" below before touching these settings.
 
 Do not add new test-file suffixes; if a new test type is needed, update the regex deliberately.
+
+### ESM-only npm packages under Jest
+
+Some dependencies ship ESM-only builds (e.g. `@tus/server`/`@tus/s3-store`, via the transitive `srvx` package) that Jest's module loader cannot `require()`, failing with `SyntaxError: Cannot use import statement outside a module`.
+
+- Prefer a CommonJS-compatible version when one exists (e.g. `pg-boss@11.x`, `nanoid@^3.x`) — no Jest config needed.
+- When the ESM-only package can't be swapped: `transformIgnorePatterns` alone doesn't fix it (it only stops Jest from skipping the transform step), and `ts-jest` can't transform `.mjs` files either (TypeScript treats that extension as ESM unconditionally, ignoring `module` overrides). Use the Babel-based transformer at `nestjs-project/jest-esm-transform.js`, wired to the `^.+\.mjs$` pattern in both `package.json` and `test/jest-e2e.json`.
 
 ## Environment File Conventions
 

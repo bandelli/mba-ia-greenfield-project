@@ -48,3 +48,33 @@ export class TokenReuseDetectedException extends DomainException {
     );
   }
 }
+
+export class UploadUnauthenticatedException extends DomainException {
+  constructor() {
+    super(
+      'UPLOAD_UNAUTHENTICATED',
+      401,
+      'Upload session requires an authenticated caller',
+    );
+  }
+}
+
+export class UploadInvalidFileTypeException extends DomainException {
+  constructor() {
+    super(
+      'UPLOAD_INVALID_FILE_TYPE',
+      400,
+      'Declared upload file type is not a supported video type',
+    );
+  }
+}
+
+export class UploadContentValidationFailedException extends DomainException {
+  constructor() {
+    super(
+      'UPLOAD_CONTENT_VALIDATION_FAILED',
+      422,
+      'Uploaded content failed authoritative video validation',
+    );
+  }
+}
