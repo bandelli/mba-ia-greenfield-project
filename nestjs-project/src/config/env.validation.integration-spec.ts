@@ -1,3 +1,4 @@
+import type { ValidationResult } from 'joi';
 import { envValidationSchema } from './env.validation';
 
 const requiredEnv = {
@@ -6,9 +7,15 @@ const requiredEnv = {
   DB_NAME: 'db',
   JWT_SECRET: 'secret',
   JWT_REFRESH_SECRET: 'refresh-secret',
+  STORAGE_ENDPOINT: 'http://minio:9000',
+  STORAGE_BUCKET: 'bucket',
+  STORAGE_ACCESS_KEY_ID: 'access-key',
+  STORAGE_SECRET_ACCESS_KEY: 'secret-key',
 };
 
-const validate = (env: Record<string, string>) =>
+const validate = (
+  env: Record<string, string>,
+): ValidationResult<Record<string, string>> =>
   envValidationSchema.validate(
     { ...requiredEnv, ...env },
     { allowUnknown: true, abortEarly: false },
@@ -32,8 +39,9 @@ describe('envValidationSchema — SWAGGER_ENABLED', () => {
   });
 
   it('should apply default false when SWAGGER_ENABLED is not set', () => {
-    const { value, error } = validate({});
-    expect(error).toBeUndefined();
-    expect(value.SWAGGER_ENABLED).toBe('false');
+    const result = validate({});
+    expect(result.error).toBeUndefined();
+    if (result.error) return;
+    expect(result.value.SWAGGER_ENABLED).toBe('false');
   });
 });
