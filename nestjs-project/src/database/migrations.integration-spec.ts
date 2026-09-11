@@ -37,6 +37,14 @@ describe('Database migrations (integration)', () => {
       ),
       dataSource.query(`DROP TABLE IF EXISTS "migrations" CASCADE`),
     ]);
+    // Dropping the table does not drop the enum type CreateAuthTokens
+    // creates for it — leftover from any prior real migration run against
+    // this shared dev DB (per .claude/rules/typeorm-migrations.md's
+    // "Recovering from synchronize residue"). Drop it too so runMigrations()
+    // below can recreate it from scratch without a "type already exists" error.
+    await dataSource.query(
+      `DROP TYPE IF EXISTS "public"."verification_tokens_type_enum"`,
+    );
   });
 
   afterAll(async () => {

@@ -1,85 +1,85 @@
-# Pilares de um Bom Design System
+# Pillars of a Good Design System
 
 ---
 
-## Prefácio
+## Preface
 
-Guia prático e curto: você lê em uma sentada, pega o jeito de DS, e fica capaz de **avaliar** um DS existente (o seu, o do cliente, o de uma biblioteca pública) com palavras precisas. Não é "tem cara de DS bom" — é "esse DS falha no pilar 4 porque X".
+Practical, short guide: you read it in one sitting, get the hang of DS, and become able to **evaluate** an existing DS (yours, a client's, a public library's) with precise words. It's not "looks like a good DS" — it's "this DS fails pillar 4 because X".
 
-### Como ler
+### How to read
 
-- **Iniciante** — leia em ordem; Parte 1 fixa vocabulário.
-- **Já sabe HTML/CSS** — pule pra Parte 3 (pilares + checklists) e Parte 3.5 (smells de layout).
-- **Quer só auditar** — leia os 6 checklists da Parte 3, a Parte 3.5 inteira, e o estudo de caso da Parte 4.
+- **Beginner** — read in order; Part 1 fixes vocabulary.
+- **Already know HTML/CSS** — skip to Part 3 (pillars + checklists) and Part 3.5 (layout smells).
+- **Just want to audit** — read the 6 checklists in Part 3, all of Part 3.5, and the case study in Part 4.
 
-Companion: [design-system-ai-implementable.md](docs/design-system-ai-implementable.md) cobre o ângulo "DS bom é, por construção, AI-implementável". Não é pré-requisito; este doc fecha sozinho.
-
----
-
-## Parte 1 — Vocabulário
-
-### 1.1 Por que vocabulário importa
-
-Discutir DS sem vocabulário compartilhado vira opinião — "essa cor está esquisita", "esse botão tinha que ser maior". Com vocabulário, vira argumento — "esse botão usa `red-500` direto em vez de `destructive`; quebra o pilar 1 e faz rebrand custar N edits".
-
-A maioria das brigas em DS é vocabulário ruim, não desenho ruim.
-
-### 1.2 Termos essenciais
-
-**Token / Variable.** Token é o conceito (`nome → valor`). Variable é a encarnação numa ferramenta: Figma Variable, CSS Custom Property, chave de objeto JS. Nem toda variable é token — `--header-height-on-mobile-landscape: 48px` ad-hoc num componente é variável local. Token implica reuso e governança.
-
-**Primitive.** Valor cru, sem semântica. `red-500 = #EF4444`, `space-4 = 16px`, `radius-md = 8px`. É o alfabeto do DS.
-
-**Semantic / Theme token (alias).** Token que aponta pra outro, carregando intenção. `destructive → red-500`. O valor cru é o mesmo; o que muda é a promessa de uso. Theme token, alias, semantic token são, nesse doc, sinônimos. DTCG chama de "alias", outros DSs chamam de "system token" — conceito idêntico.
-
-A diferença entre primitive e semantic é o que faz rebrand barato vs caro. Se você renomear `red-500` no componente, troca componente por componente. Se troca o alias, edita uma linha.
-
-**Component-scope token.** Interno ao componente. `button-padding-x → space-4`, `button-bg-destructive → destructive`. Terceira camada — não polui a tabela global.
-
-**Slot.** Ponto de extensão. `<Button leadingIcon={<DownloadIcon/>}>` — `leadingIcon` é slot. **`asChild`** (Radix UI) leva o conceito mais longe: o componente cede semântica ao filho, evitando wrapper. Útil para `<Button asChild><Link href="...">Ir</Link></Button>` — vira link mantendo estilo de botão. Pattern dominante em Radix, shadcn/ui, Headless UI.
-
-**Variant.** Eixo discreto do contrato. `size: sm|md|lg`, `variant: primary|secondary|destructive`. É o **contrato visível**. Quando Figma e código divergem nos valores, há drift de contrato (pilar 3).
-
-**State.** Estado run-time: `default`, `hover`, `focus`, `active`, `disabled`, `loading`. Diferente de variant porque não é escolhido pelo dev — é determinado pelo navegador / interação. Em Figma costumam ser variants explícitos (`state=hover`); em código, pseudo-classes (`:hover`, `:focus-visible`) ou data-attributes.
-
-**Binding.** Ligação token ↔ propriedade visual. Em Figma: `Rectangle.fills` bound em `theme.surface-default`. Em código: `background-color: var(--surface-default)`. A maioria dos bugs de DS são bindings ausentes, na camada errada, ou stuck.
-
-**Drift.** Divergência entre design e implementação. Drift de **valor** (Figma diz `#DC2626`, código diz `#DD2222`), de **estrutura** (Figma tem `size=lg`, código não), ou de **estado** (Figma tem `:focus` desenhado, código não tem `:focus-visible`). DS bom não evita drift; **detecta** drift.
-
-**Revision vs Supersede.** Modelo de história de decisões. Revision: mudou parâmetro, mas a escolha ("Option letter") continua. Supersede: a escolha mudou. Discriminador binário: a Option letter mudou? Sim → Supersede. Não → Revision.
-
-**Code Connect.** Mecanismo Figma para mapear declarativamente componente Figma → componente de código (`Component X é o <Button> ali`). Reduz fricção pra IA gerar código que respeita o DS. Sem Code Connect, IA depende de naming consistente + Figma Dev Mode MCP — funciona, é menos determinístico.
+Companion: [design-system-ai-implementable.md](docs/design-system-ai-implementable.md) covers the angle "a good DS is, by construction, AI-implementable". Not a prerequisite; this doc stands alone.
 
 ---
 
-## Parte 2 — Foundations
+## Part 1 — Vocabulary
 
-Foundations são a **matéria-prima** do DS: cor, tipografia, forma, elevação, movimento. Antes de avaliar como um DS organiza matéria-prima (Parte 3), você precisa saber que matéria-prima é essa.
+### 1.1 Why vocabulary matters
 
-> **Aviso.** Esta parte cita Tailwind, Carbon, Radix, shadcn/ui como referência. **Referência ≠ prescrição.** Copiar um DS público inteiro porque "é o canon" é erro frequente, não conservadorismo. Use como vocabulário; escolha o subset que faz sentido pro seu produto.
+Discussing DS without shared vocabulary turns into opinion — "that color looks weird", "that button should be bigger". With vocabulary, it becomes argument — "that button uses `red-500` directly instead of `destructive`; it breaks pillar 1 and makes rebranding cost N edits".
 
-### 2.1 Cor
+Most DS fights are bad vocabulary, not bad design.
 
-Cor é a foundation mais densa — concentra ~50-70% dos tokens e a maior parte dos bugs de drift. Vale tempo.
+### 1.2 Essential terms
 
-**Color ramp.** Sequência ordenada de tons: `red-50, red-100, ..., red-900, red-950` (convenção Tailwind, 11 tons). Radix Colors usa 12 nomeados por papel funcional (`solid`, `border`, `text-low-contrast`); Carbon usa 10. Menos que ~10 fica curto; mais que ~13 vira ruído. **Pra DS novo, copiar a convenção Tailwind tem menor atrito.**
+**Token / Variable.** Token is the concept (`name → value`). Variable is the incarnation in a tool: Figma Variable, CSS Custom Property, JS object key. Not every variable is a token — `--header-height-on-mobile-landscape: 48px` ad-hoc in a component is a local variable. Token implies reuse and governance.
 
-**Quais cores ganham ramp?** No mínimo: 1 neutral + 1 primary (brand) + 4 semânticas (success, warning, danger, info). Total típico: 6-8 ramps × ~11 tons = ~70-90 primitives.
+**Primitive.** Raw value, no semantics. `red-500 = #EF4444`, `space-4 = 16px`, `radius-md = 8px`. It's the DS's alphabet.
 
-**Espaços de cor: HEX → HSL → OKLCH.**
-- HEX: compacto, péssimo pra gerar ramps por cálculo.
-- HSL: manipulável (`lightness - 10%` escurece) mas perceptualmente desuniforme — 10% de lightness em amarelo apaga; em azul, escurece pra quase preto.
-- **OKLCH**: perceptualmente uniforme, suportado nativamente em CSS desde 2023. Tailwind v4 default. Estado da arte.
+**Semantic / Theme token (alias).** Token that points to another, carrying intent. `destructive → red-500`. The raw value is the same; what changes is the usage promise. Theme token, alias, semantic token are, in this doc, synonyms. DTCG calls it "alias", other DSs call it "system token" — identical concept.
+
+The difference between primitive and semantic is what makes rebranding cheap vs. expensive. If you rename `red-500` in the component, you swap it component by component. If you swap the alias, you edit one line.
+
+**Component-scope token.** Internal to the component. `button-padding-x → space-4`, `button-bg-destructive → destructive`. Third layer — doesn't pollute the global table.
+
+**Slot.** Extension point. `<Button leadingIcon={<DownloadIcon/>}>` — `leadingIcon` is a slot. **`asChild`** (Radix UI) takes the concept further: the component hands its semantics to the child, avoiding a wrapper. Useful for `<Button asChild><Link href="...">Go</Link></Button>` — becomes a link while keeping button styling. Dominant pattern in Radix, shadcn/ui, Headless UI.
+
+**Variant.** Discrete axis of the contract. `size: sm|md|lg`, `variant: primary|secondary|destructive`. It's the **visible contract**. When Figma and code diverge on values, there's contract drift (pillar 3).
+
+**State.** Run-time state: `default`, `hover`, `focus`, `active`, `disabled`, `loading`. Different from variant because it's not chosen by the dev — it's determined by the browser / interaction. In Figma these are usually explicit variants (`state=hover`); in code, pseudo-classes (`:hover`, `:focus-visible`) or data attributes.
+
+**Binding.** Token ↔ visual property link. In Figma: `Rectangle.fills` bound to `theme.surface-default`. In code: `background-color: var(--surface-default)`. Most DS bugs are missing bindings, at the wrong layer, or stuck.
+
+**Drift.** Divergence between design and implementation. **Value** drift (Figma says `#DC2626`, code says `#DD2222`), **structure** drift (Figma has `size=lg`, code doesn't), or **state** drift (Figma has `:focus` designed, code doesn't have `:focus-visible`). A good DS doesn't avoid drift; it **detects** drift.
+
+**Revision vs Supersede.** Model for decision history. Revision: a parameter changed, but the choice ("Option letter") remains. Supersede: the choice changed. Binary discriminator: did the Option letter change? Yes → Supersede. No → Revision.
+
+**Code Connect.** Figma mechanism to declaratively map a Figma component → a code component (`Component X is that <Button>`). Reduces friction for AI generating code that respects the DS. Without Code Connect, AI relies on consistent naming + Figma Dev Mode MCP — it works, but is less deterministic.
+
+---
+
+## Part 2 — Foundations
+
+Foundations are the DS's **raw material**: color, typography, shape, elevation, motion. Before evaluating how a DS organizes raw material (Part 3), you need to know what that raw material is.
+
+> **Note.** This part cites Tailwind, Carbon, Radix, shadcn/ui as reference. **Reference ≠ prescription.** Copying an entire public DS because "it's canon" is a common mistake, not conservatism. Use it as vocabulary; choose the subset that makes sense for your product.
+
+### 2.1 Color
+
+Color is the densest foundation — it concentrates ~50-70% of tokens and most drift bugs. Worth the time.
+
+**Color ramp.** Ordered sequence of tones: `red-50, red-100, ..., red-900, red-950` (Tailwind convention, 11 tones). Radix Colors uses 12 named by functional role (`solid`, `border`, `text-low-contrast`); Carbon uses 10. Fewer than ~10 falls short; more than ~13 becomes noise. **For a new DS, copying the Tailwind convention has the least friction.**
+
+**Which colors get a ramp?** At minimum: 1 neutral + 1 primary (brand) + 4 semantic (success, warning, danger, info). Typical total: 6-8 ramps × ~11 tones = ~70-90 primitives.
+
+**Color spaces: HEX → HSL → OKLCH.**
+- HEX: compact, terrible for generating ramps by computation.
+- HSL: manipulable (`lightness - 10%` darkens) but perceptually non-uniform — 10% lightness on yellow washes it out; on blue, it darkens toward near-black.
+- **OKLCH**: perceptually uniform, natively supported in CSS since 2023. Tailwind v4 default. State of the art.
 
 ```css
---red-500: #EF4444;                      /* HEX inerte */
---red-500: hsl(0 84% 60%);                /* HSL inconsistente */
---red-500: oklch(0.628 0.258 27.6);       /* OKLCH uniforme */
+--red-500: #EF4444;                      /* HEX inert */
+--red-500: hsl(0 84% 60%);                /* HSL inconsistent */
+--red-500: oklch(0.628 0.258 27.6);       /* OKLCH uniform */
 ```
 
-Caveats de OKLCH em DS legado: gamut clipping em sRGB, conversão não é lossless visualmente, `color-mix` em sRGB pode regredir. Pra DS novo, OKLCH; pra legado, planeje migração.
+OKLCH caveats in legacy DS: gamut clipping in sRGB, conversion isn't visually lossless, `color-mix` in sRGB can regress. For a new DS, OKLCH; for legacy, plan a migration.
 
-**Light/Dark como duas resoluções.** Em DS que respeita o pilar 5, Light e Dark **não são duas listas** — são duas **resoluções** do mesmo conjunto de aliases:
+**Light/Dark as two resolutions.** In a DS that respects pillar 5, Light and Dark are **not two lists** — they're two **resolutions** of the same set of aliases:
 
 ```
 theme.surface-default
@@ -90,9 +90,9 @@ theme.primary
   Light → red-700      Dark → red-300
 ```
 
-Componente bind em `theme.surface-default` uma única vez; o modo decide qual primitive resolve. Atenção: **dark mode bom não é light mode invertido** — contraste óptico funciona diferente, frequentemente exige ajuste de saturação.
+A component binds to `theme.surface-default` once; the mode decides which primitive resolves. Watch out: **good dark mode isn't inverted light mode** — optical contrast works differently, and often requires saturation adjustment.
 
-**Diagrama: camadas de cor.** O diagrama vale pra qualquer foundation, mas o caso principal é cor. **Componentes consomem theme (camada 2) ou component-scope (camada 3), nunca primitives (camada 1) diretamente.**
+**Diagram: color layers.** The diagram applies to any foundation, but the main case is color. **Components consume theme (tier 2) or component-scope (tier 3), never primitives (tier 1) directly.**
 
 ```mermaid
 flowchart TB
@@ -115,7 +115,7 @@ flowchart TB
     end
 
     P1 --> T1
-    P2 -.atalho perigoso.-> C2
+    P2 -.dangerous shortcut.-> C2
     P3 --> T3
     T1 --> C1
     T3 --> C3
@@ -129,29 +129,29 @@ flowchart TB
     class C1,C2,C3 component
 ```
 
-A flecha tracejada `space-4 -.-> button-padding-x` sinaliza o anti-pattern: bind primitive direto em component-scope, pulando theme.
+The dashed arrow `space-4 -.-> button-padding-x` flags the anti-pattern: binding a primitive directly in component-scope, skipping theme.
 
-### 2.2 Tipografia
+### 2.2 Typography
 
-Tipografia é onde imaturos têm 50 estilos com nomes ad-hoc; maduros têm 10-15 Text Styles canônicos. Roleiro genérico bem aceito: `Display L/M/S` (hero), `Headline L/M/S` (títulos de página), `Title L/M/S` (títulos de card/seção), `Body L/M/S` (leitura), `Label L/M/S` (botões, chips, micro-tipografia). 15 estilos é teto; a maioria dos produtos usa 10-13.
+Typography is where immature systems have 50 ad-hoc-named styles; mature ones have 10-15 canonical Text Styles. Widely accepted generic roster: `Display L/M/S` (hero), `Headline L/M/S` (page titles), `Title L/M/S` (card/section titles), `Body L/M/S` (reading), `Label L/M/S` (buttons, chips, micro-typography). 15 styles is the ceiling; most products use 10-13.
 
-Cada nível define `fontSize`, `lineHeight`, `letterSpacing`, `fontWeight`. Em Figma vira **Text Style** (`Body/M`); em código vira classe Tailwind ou CSS.
+Each level defines `fontSize`, `lineHeight`, `letterSpacing`, `fontWeight`. In Figma it becomes a **Text Style** (`Body/M`); in code it becomes a Tailwind class or CSS.
 
-**Por que ter typescale?** Sem ele, cada designer escolhe `18px` ou `19px` pra "subtítulo" conforme o vento. Com ele, todos os subtítulos são `Title/L` e mudar do produto inteiro é uma edição.
+**Why have a typescale?** Without one, each designer picks `18px` or `19px` for "subtitle" depending on the wind. With one, every subtitle is `Title/L` and changing the whole product is one edit.
 
-**Foundation embaixo do Text Style.** O Text Style também aponta pra um **token de foundation** (`fontFamily-base`, `fontWeight-medium`):
+**Foundation beneath the Text Style.** The Text Style also points to a **foundation token** (`fontFamily-base`, `fontWeight-medium`):
 
 ```
 foundation:    fontFamily-base = 'Inter'
 text-style:    Body/M (fontFamily=fontFamily-base, fontSize=16, ...)
-node:          aplica Body/M
+node:          applies Body/M
 ```
 
-Trocar Inter por Roboto = 1 edit no foundation. Pilar 1 em ação. **Migração de fonte só é viável se a foundation está em camadas** — se você não troca a fonte do produto inteiro com 1-2 edits, sua tipografia ainda não é DS, é coleção de literais.
+Swapping Inter for Roboto = 1 edit in the foundation. Pillar 1 in action. **Font migration is only viable if the foundation is layered** — if you can't swap the whole product's font with 1-2 edits, your typography isn't a DS yet, it's a collection of literals.
 
-### 2.3 Forma
+### 2.3 Shape
 
-"Forma" no DS = corner radius. Foundation mais subestimada e mais fácil de bagunçar.
+"Shape" in a DS = corner radius. The most underestimated and easiest foundation to make a mess of.
 
 ```
 radius-none   0    radius-md     8     radius-2xl    24
@@ -159,136 +159,136 @@ radius-xs     2    radius-lg     12    radius-full   9999
 radius-sm     4    radius-xl     16
 ```
 
-7-8 valores. Não 30. Aceite que `radius-sm` (4) ou `radius-md` (8) cobrem 95% dos casos; rejeite os 5% que insistem em valores únicos.
+7-8 values. Not 30. Accept that `radius-sm` (4) or `radius-md` (8) cover 95% of cases; reject the 5% that insist on one-off values.
 
-**Forma como linguagem.** DS bom codifica a relação em theme tokens: `radius-control → radius-sm` (inputs, chips), `radius-card → radius-lg` (cards), `radius-pill → radius-full`. Aí Button bind em `radius-control`, não em `radius-md` direto.
+**Shape as a language.** A good DS codifies the relationship in theme tokens: `radius-control → radius-sm` (inputs, chips), `radius-card → radius-lg` (cards), `radius-pill → radius-full`. Then Button binds to `radius-control`, not directly to `radius-md`.
 
-### 2.4 Elevação
+### 2.4 Elevation
 
-Elevação = sensação de "acima". Em DSs ricos (estilo materialista) é tão fundamental quanto cor; em DSs flat (Tailwind-style) aparece sutil — sombras leves só pra sobreposição.
+Elevation = the feeling of "above". In rich (materialist-style) DSs it's as fundamental as color; in flat DSs (Tailwind-style) it appears subtly — light shadows only for overlays.
 
 ```
-elevation-0   sem sombra        elevation-3   menus, tooltips
-elevation-1   cards estáticos   elevation-4   modals, dialogs
-elevation-2   hover/interativo  elevation-5   overlays full-screen
+elevation-0   no shadow           elevation-3   menus, tooltips
+elevation-1   static cards        elevation-4   modals, dialogs
+elevation-2   hover/interactive   elevation-5   full-screen overlays
 ```
 
-Cada level resolve pra um conjunto de `box-shadow`s — geralmente 2 empilhadas (uma curta densa pra nitidez, uma longa difusa pra profundidade). Em Dark mode, sombra preta sobre fundo escuro fica invisível — alguns DSs substituem (parcialmente) sombra por **surface tint** (camada translúcida da brand sobre a superfície, mais intensa quanto maior a elevação). Custa tokens extras `surface-tint-1..5`; vale se o produto é dark-first.
+Each level resolves to a set of `box-shadow`s — usually 2 stacked (one short and dense for crispness, one long and diffuse for depth). In Dark mode, a black shadow on a dark background becomes invisible — some DSs (partially) replace shadow with **surface tint** (translucent brand layer over the surface, more intense with higher elevation). Costs extra `surface-tint-1..5` tokens; worth it if the product is dark-first.
 
-**Por que é foundation, não decoração.** Comunica hierarquia. Sem tokens, cada modal/popover/dropdown vira sombra ad-hoc — drift visual em semanas.
+**Why it's a foundation, not decoration.** It communicates hierarchy. Without tokens, every modal/popover/dropdown becomes an ad-hoc shadow — visual drift within weeks.
 
-### 2.5 Movimento
+### 2.5 Motion
 
-Foundation que só recentemente virou first-class. Em produtos com animação forte (mobile, brand expressiva), merece tokens. Em enterprise estático, fica nota de rodapé.
+A foundation that only recently became first-class. In products with strong animation (mobile, expressive brand), it deserves tokens. In static enterprise apps, it's a footnote.
 
-**Duration:** `duration-xs 80ms` (microestados), `duration-sm 140ms` (chip/switch), `duration-md 240ms` (cards/panels), `duration-lg 400ms` (overlays).
+**Duration:** `duration-xs 80ms` (micro-states), `duration-sm 140ms` (chip/switch), `duration-md 240ms` (cards/panels), `duration-lg 400ms` (overlays).
 
-**Easing (curvas canônicas):** `ease-standard cubic-bezier(0.2,0,0,1)` (uso geral), `ease-emphasized cubic-bezier(0.05,0.7,0.1,1)` (entradas dramáticas), `ease-decelerate cubic-bezier(0,0,0,1)` (entrando), `ease-accelerate cubic-bezier(0.3,0,1,1)` (saindo).
+**Easing (canonical curves):** `ease-standard cubic-bezier(0.2,0,0,1)` (general use), `ease-emphasized cubic-bezier(0.05,0.7,0.1,1)` (dramatic entrances), `ease-decelerate cubic-bezier(0,0,0,1)` (entering), `ease-accelerate cubic-bezier(0.3,0,1,1)` (exiting).
 
-**Regra empírica:** se a animação aparece 2+ vezes no produto, vira token.
+**Rule of thumb:** if an animation appears 2+ times in the product, it becomes a token.
 
 ---
 
-## Parte 3 — Os 6 pilares avaliativos
+## Part 3 — The 6 evaluative pillars
 
-Cada pilar tem o mesmo formato: tese curta, por quê, smell↔fix em tabela, checklist. Aluno deve conseguir escanear em 60 segundos.
+Each pillar follows the same format: short thesis, why, smell↔fix table, checklist. A student should be able to scan it in 60 seconds.
 
-Mnemônico: **T-N-C-F-T-D** (Tokens, Nomeação, Contrato, Fonte única, Theming, Decisões).
+Mnemonic: **T-N-C-S-T-D** (Tokens, Naming, Contract, Single source, Theming, Decisions).
 
-### Pilar 1 — Tokens em camadas
+### Pillar 1 — Layered tokens
 
-**Tese.** Pra cor, semântica é obrigatória. Pra outros domínios (espaço, radius, duração), semântica precisa de razão funcional — alias por simetria é pior que primitive direto.
+**Thesis.** For color, semantics is mandatory. For other domains (space, radius, duration), semantics needs a functional reason — an alias for symmetry's sake is worse than a direct primitive.
 
-**Por quê.** Sem camadas: rebrand é find-and-replace gigante, dark mode exige editar componente por componente, IA não sabe qual cor é "primary". Com camadas: rebrand edita aliases, dark mode é segunda resolução, IA aponta pra `theme.primary` e o sistema resolve.
+**Why.** Without layers: rebranding is a giant find-and-replace, dark mode requires editing component by component, AI doesn't know which color is "primary". With layers: rebranding edits aliases, dark mode is a second resolution, AI points to `theme.primary` and the system resolves it.
 
 | Smell | Fix |
 |---|---|
-| `red-500` aparece dezenas de vezes em componentes | Crie `theme.destructive → red-500`; bind componentes em `destructive` |
-| Dark mode estimado em "semanas" e parado há meses | Pilar 1 quebrado; refatorar antes de tentar Dark |
-| Tabela com >200 entradas misturando primitives e aliases | Separe em arquivos: `primitives.css`, `theme.css` |
-| Aliases vagos tipo `space-md-2` (alias por simetria) | Use primitive direto (`space-4`) ou alias com razão funcional (`radius-control`) |
-| `theme.dark.primary` (modo virou nome) | Refatore pra `theme.primary` resolvendo por modo |
+| `red-500` appears dozens of times in components | Create `theme.destructive → red-500`; bind components to `destructive` |
+| Dark mode estimated at "weeks" and stalled for months | Pillar 1 is broken; refactor before attempting Dark |
+| Table with >200 entries mixing primitives and aliases | Split into files: `primitives.css`, `theme.css` |
+| Vague aliases like `space-md-2` (alias for symmetry) | Use a direct primitive (`space-4`) or an alias with a functional reason (`radius-control`) |
+| `theme.dark.primary` (mode baked into the name) | Refactor to `theme.primary` resolving by mode |
 
 **Checklist.**
-- [ ] Existe camada de primitives explícita?
-- [ ] Existe camada de theme com nomes semânticos?
-- [ ] Pra **cor**: componentes consomem theme (não primitives)?
-- [ ] Light/Dark são duas resoluções do mesmo conjunto (não dois themes paralelos)?
-- [ ] Há lint que acusa primitive direto em componente?
+- [ ] Is there an explicit primitives layer?
+- [ ] Is there a theme layer with semantic names?
+- [ ] For **color**: do components consume theme (not primitives)?
+- [ ] Are Light/Dark two resolutions of the same set (not two parallel themes)?
+- [ ] Is there a lint that flags a direct primitive in a component?
 
-Se ≥3 estão "não", o pilar 1 está mal.
+If ≥3 are "no", pillar 1 is in bad shape.
 
 ---
 
-### Pilar 2 — Nomeação por intenção
+### Pillar 2 — Intent-based naming
 
-**Tese.** Nomes descrevem propósito, não aparência.
+**Thesis.** Names describe purpose, not appearance.
 
-**Por quê.** Se a brand virar azul amanhã, quantos tokens precisam ser renomeados? **Zero**, num DS bom. Nome é contrato — `brand-blue` promete "essa cor azul"; trocar a cor quebra. `primary` promete "tom da marca"; trocar a cor mantém o contrato. Vida útil do DS depende disso.
+**Why.** If the brand turns blue tomorrow, how many tokens need renaming? **Zero**, in a good DS. A name is a contract — `brand-blue` promises "this blue color"; changing the color breaks it. `primary` promises "the brand's tone"; changing the color keeps the contract. The DS's lifespan depends on this.
 
 | Smell | Fix |
 |---|---|
-| `text-light`, `text-medium`, `text-dark` (descreve aparência) | `text-muted`, `text-default`, `text-strong` (hierarquia) |
-| `error-red` em código de componente | `destructive` (intenção) — `error-red` pode existir só como primitive |
-| `brand-blue`, `colorBrandBlueDarkMode` | `primary`; cores vivem em primitives, theme nomeia papel |
-| `header-bg` (nome do componente vaza pro token) | `surface-app-chrome` ou `surface-elevated` (papel, não componente) |
-| `text-12px` na camada theme | `label-sm` ou `text-caption` (papel; tamanho fica em primitive) |
-| `dark-mode-bg` como token | `surface-default` resolvendo por modo |
+| `text-light`, `text-medium`, `text-dark` (describes appearance) | `text-muted`, `text-default`, `text-strong` (hierarchy) |
+| `error-red` in component code | `destructive` (intent) — `error-red` may exist only as a primitive |
+| `brand-blue`, `colorBrandBlueDarkMode` | `primary`; colors live in primitives, theme names the role |
+| `header-bg` (component name leaks into the token) | `surface-app-chrome` or `surface-elevated` (role, not component) |
+| `text-12px` at the theme layer | `label-sm` or `text-caption` (role; size stays in the primitive) |
+| `dark-mode-bg` as a token | `surface-default` resolving by mode |
 
-**Bom referencial.** shadcn/ui usa 8 nomes (`primary`, `destructive`, `secondary`, `muted`, `accent`, `border`, `input`, `ring`) que cobrem 90% do uso, todos por papel. Polaris (Shopify) usa `bg-fill-success`, `bg-fill-critical` — papel + estado, não matiz. Carbon (IBM) tem nomes do tipo `text-primary`, `support-error`, `interactive-01`.
+**Good reference.** shadcn/ui uses 8 names (`primary`, `destructive`, `secondary`, `muted`, `accent`, `border`, `input`, `ring`) that cover 90% of usage, all by role. Polaris (Shopify) uses `bg-fill-success`, `bg-fill-critical` — role + state, not hue. Carbon (IBM) has names like `text-primary`, `support-error`, `interactive-01`.
 
 **Checklist.**
-- [ ] Nomes na camada theme não mencionam cor, tamanho concreto, ou aparência?
-- [ ] Há separação clara: primitives nomeiam aparência, theme nomeia intenção?
-- [ ] Renomear `red-500` → `crimson-500` não exigiria editar componentes?
-- [ ] Há convenção documentada pra nomes novos (ex: "use papel, não cor")?
+- [ ] Do theme-layer names avoid mentioning color, concrete size, or appearance?
+- [ ] Is there a clear separation: primitives name appearance, theme names intent?
+- [ ] Would renaming `red-500` → `crimson-500` not require editing components?
+- [ ] Is there a documented convention for new names (e.g. "use role, not color")?
 
 ---
 
-### Pilar 3 — Contrato de componente
+### Pillar 3 — Component contract
 
-**Tese.** Os mesmos eixos existem no Figma, no código, e no catálogo de stories. A11y (acessibilidade — numerônimo de `a` + 11 letras + `y`) é default, não opcional.
+**Thesis.** The same axes exist in Figma, in code, and in the story catalog. A11y (accessibility — numeronym of `a` + 11 letters + `y`) is default, not optional.
 
-**Por quê.** Drift estrutural (`Button size="xl"` que existe no Figma mas não no código) é mais grave que drift de valor. A11y default importa porque, sem ele, cada consumidor reinventa: um esquece focus, outro aria-label, outro estado disabled — vira loteria.
+**Why.** Structural drift (`Button size="xl"` that exists in Figma but not in code) is more serious than value drift. Default a11y matters because, without it, every consumer reinvents it: one forgets focus, another forgets aria-label, another forgets the disabled state — it becomes a lottery.
 
 | Smell | Fix |
 |---|---|
-| Figma tem `Button/size=lg` mas código não | Adicione no código ou remova do Figma — case a case |
-| `:focus` aparece só quando consumidor adiciona `outline` | Componente do DS implementa `:focus-visible` por default |
-| Disabled é `opacity: 0.5` (cai abaixo de WCAG 4.5:1) | Tokens `text-disabled`, `bg-disabled` mantendo contraste mínimo |
-| `<div onClick>` em vez de `<button>` | Semântica HTML correta por default; use Radix/Headless UI pra keyboard |
-| Sem `prefers-reduced-motion` | Tokens de duração com fallback condicional |
-| Cada uso copia `aria-label="Fechar"` | Default sensato no componente; consumidor sobrescreve se quiser |
-| Stories só têm `default` state | Catálogo cobre cada `variant × state` |
+| Figma has `Button/size=lg` but code doesn't | Add it in code or remove it from Figma — case by case |
+| `:focus` only appears when the consumer adds `outline` | The DS component implements `:focus-visible` by default |
+| Disabled is `opacity: 0.5` (falls below WCAG 4.5:1) | Tokens `text-disabled`, `bg-disabled` keeping minimum contrast |
+| `<div onClick>` instead of `<button>` | Correct HTML semantics by default; use Radix/Headless UI for keyboard support |
+| No `prefers-reduced-motion` | Duration tokens with conditional fallback |
+| Every usage copies `aria-label="Close"` | Sensible default in the component; consumer overrides if needed |
+| Stories only have the `default` state | Catalog covers each `variant × state` combination |
 
-**WCAG 2.2** (2023): SC 2.4.11 (foco não-obscurecido), SC 2.5.7 (alternativa por clique pra drag), SC 2.5.8 (target ≥ 24×24 CSS px). DS bom em 2026 considera no contrato.
+**WCAG 2.2** (2023): SC 2.4.11 (focus not obscured), SC 2.5.7 (dragging alternative), SC 2.5.8 (target ≥ 24×24 CSS px). A good DS in 2026 accounts for these in the contract.
 
 **Checklist.**
-- [ ] Cada variant Figma existe no código com mesmo nome?
-- [ ] Cada state desenhado é alcançável (pseudo-classe ou data-attr)?
-- [ ] `:focus-visible` é default, não opcional?
-- [ ] Componente tem semântica HTML/ARIA correta sem prop extra?
-- [ ] Há story/test pra cada combinação variant × state?
+- [ ] Does each Figma variant exist in code under the same name?
+- [ ] Is each designed state reachable (pseudo-class or data-attr)?
+- [ ] Is `:focus-visible` default, not optional?
+- [ ] Does the component have correct HTML/ARIA semantics without an extra prop?
+- [ ] Is there a story/test for every variant × state combination?
 
 ---
 
-### Pilar 4 — Fonte única alinhada (Figma ↔ código)
+### Pillar 4 — Aligned single source (Figma ↔ code)
 
-**Tese.** O drift que você não mede é o drift que cresce. Automação acusa, humano decide.
+**Thesis.** The drift you don't measure is the drift that grows. Automation flags it, a human decides.
 
-**Por quê.** Sem alinhamento, DS vira folclore ("você é novo, não usa essa cor; usa aquela"). Automação resolve drift de valor (Figma e código discordam) e drift de cobertura (hardcoded em vez de token).
+**Why.** Without alignment, the DS becomes folklore ("you're new, don't use that color; use that one"). Automation resolves value drift (Figma and code disagree) and coverage drift (hardcoded instead of a token).
 
-**Nuance importante:** o relatório é **hipótese, não tarefa.** Aponta "aqui há 30 hardcodes"; humano valida quais merecem virar token. Tratar drift report como tarefa cega leva a "vamos só substituir tudo" — e quebra coisas.
+**Important nuance:** the report is a **hypothesis, not a task.** It points out "there are 30 hardcodes here"; a human validates which ones deserve to become tokens. Treating a drift report as a blind task leads to "let's just replace everything" — and breaks things.
 
-**Três sub-preocupações com custos diferentes:**
+**Three sub-concerns with different costs:**
 
-| Sub | O que é | Custo | ROI |
+| Sub | What it is | Cost | ROI |
 |---|---|---|---|
-| **A. Sync Figma → código** | Pipeline (Tokens Studio, script) que exporta Figma vars como CSS vars | Médio (~3 dias setup) | Alto se time muda tokens com frequência |
-| **B. Drift detection** | Scanners em CI: hardcoded, órfão, value differ | Baixo (~1 dia) | Alto sempre |
-| **C. Code Connect mapping** | Mapeamento Figma↔código | Médio-alto (manutenção) | Alto se IA / Dev Mode é parte do fluxo |
+| **A. Figma → code sync** | Pipeline (Tokens Studio, script) that exports Figma vars as CSS vars | Medium (~3 days setup) | High if the team changes tokens frequently |
+| **B. Drift detection** | CI scanners: hardcoded, orphaned, value differs | Low (~1 day) | Always high |
+| **C. Code Connect mapping** | Figma↔code mapping | Medium-high (maintenance) | High if AI / Dev Mode is part of the flow |
 
-Comece por **B** (mais barato, vale sempre); adicione A se ciclo de tokens é dinâmico; considere C como acelerador.
+Start with **B** (cheapest, always worth it); add A if the token cycle is dynamic; consider C as an accelerator.
 
 ```mermaid
 flowchart LR
@@ -298,7 +298,7 @@ flowchart LR
         FCC["Code Connect [C]"]
     end
 
-    subgraph CODE["CODIGO"]
+    subgraph CODE["CODE"]
         CSS["CSS variables"]
         CMP["Component"]
     end
@@ -311,8 +311,8 @@ flowchart LR
 
     FV -- "[A] sync" --> CSS
     CSS --> CMP
-    FC -.mapeia.-> CMP
-    FCC -.declara.-> CMP
+    FC -.maps.-> CMP
+    FCC -.declares.-> CMP
 
     CMP --> SCAN
     FV --> ORPH
@@ -320,7 +320,7 @@ flowchart LR
     FV --> DIFF
     CSS --> DIFF
 
-    SCAN --> REPORT["Drift Report<br/>HIPOTESE, nao tarefa"]
+    SCAN --> REPORT["Drift Report<br/>HYPOTHESIS, not a task"]
     ORPH --> REPORT
     DIFF --> REPORT
 
@@ -337,47 +337,47 @@ flowchart LR
 
 | Smell | Fix |
 |---|---|
-| Sync "quando alguém lembra" | Pipeline em CI; falha bloqueia merge |
-| Hardcoded `#FFFFFF` em CSS de componente | Hardcoded scanner em CI rejeita; dev usa `surface-default` |
-| Tokens órfãos detectados há semanas, ninguém deletou | Scan = hipótese — valide cruzando com Inspect output antes de deletar |
-| Drift report rodou, deletaram em massa, produto quebrou | Trate report como hipótese; pre-flight de validação cruzada |
-| Documentação em README desatualizado | Fonte única não é única se README discorda do código — gere do código |
+| Sync happens "whenever someone remembers" | CI pipeline; a failure blocks the merge |
+| Hardcoded `#FFFFFF` in component CSS | Hardcoded scanner in CI rejects it; dev uses `surface-default` |
+| Orphaned tokens detected weeks ago, nobody deleted them | Scan = hypothesis — validate against Inspect output before deleting |
+| Drift report ran, mass deletion happened, product broke | Treat the report as a hypothesis; cross-validate before acting |
+| Documentation in a stale README | Single source isn't single if the README disagrees with the code — generate it from the code |
 
 **Checklist.**
-- [ ] Existe pipeline (manual ou auto) que exporta Figma vars pra código?
-- [ ] Hardcoded scanner roda em CI ou pré-commit?
-- [ ] Detector de tokens órfãos existe?
-- [ ] Drift reports geram issue/alerta (não só log)?
-- [ ] Time trata reports como hipóteses, valida antes de agir?
+- [ ] Is there a pipeline (manual or auto) that exports Figma vars to code?
+- [ ] Does a hardcoded scanner run in CI or pre-commit?
+- [ ] Does an orphaned-token detector exist?
+- [ ] Do drift reports generate an issue/alert (not just a log)?
+- [ ] Does the team treat reports as hypotheses and validate before acting?
 
 ---
 
-### Pilar 5 — Política explícita de theming
+### Pillar 5 — Explicit theming policy
 
-**Tese.** Theming é escolha, não default. Onde tem theme, deve haver razão. Onde não tem, também.
+**Thesis.** Theming is a choice, not a default. Where it applies, there must be a reason. Where it doesn't, too.
 
-**Por quê.** DSs juniores aplicam theming "em tudo" e descobrem tarde que algumas zonas não deviam (player de vídeo, splash branded, embed de email). Outros aplicam "em pedaços" sem decidir, e o usuário troca pra Dark com partes que não acompanham. Política explícita resolve: cada zona é escolha consciente.
+**Why.** Junior DSs apply theming "to everything" and discover late that some zones shouldn't have it (video player, branded splash screen, email embed). Others apply it "in patches" without deciding, and the user switches to Dark with parts that don't follow along. An explicit policy resolves this: every zone is a conscious choice.
 
-**Três tipos de zona:**
+**Three zone types:**
 
-1. **Tematizada** — bind theme tokens. Light/Dark muda. Default da maioria.
-2. **Theme-independent** — bind primitives ou cores fixas. Não muda. Razão **deve** ser documentada.
-3. **Theme-pinned** — `data-theme="dark"` setado em subárvore com **justificativa explícita**. Legítimo: editor de código embutido com tema próprio, preview de email forçado em Light, painel mostrando Light+Dark lado a lado, trecho branded com identidade fixa. **NÃO legítimo:** "fica mais bonito assim" — anti-pattern, quebra o toggle global.
+1. **Themed** — bind theme tokens. Light/Dark changes it. Default for most.
+2. **Theme-independent** — bind primitives or fixed colors. Doesn't change. The reason **must** be documented.
+3. **Theme-pinned** — `data-theme="dark"` set on a subtree with **explicit justification**. Legitimate: embedded code editor with its own theme, email preview forced to Light, panel showing Light+Dark side by side, branded excerpt with fixed identity. **NOT legitimate:** "it looks nicer this way" — anti-pattern, breaks the global toggle.
 
 ```mermaid
 flowchart TB
-    APP[["Aplicacao"]]
+    APP[["Application"]]
 
-    APP --> THEMED["TEMATIZADA<br/>responde a Light/Dark"]
-    APP --> RAW["THEME-INDEPENDENT<br/>intencionalmente raw"]
-    APP --> PINNED["THEME-PINNED<br/>modo fixo em subarvore"]
+    APP --> THEMED["THEMED<br/>responds to Light/Dark"]
+    APP --> RAW["THEME-INDEPENDENT<br/>intentionally raw"]
+    APP --> PINNED["THEME-PINNED<br/>fixed mode in subtree"]
 
-    THEMED -.binda.-> THEME_TOK["theme tokens"]
-    RAW -.binda.-> PRIM_TOK["primitives diretos"]
+    THEMED -.binds.-> THEME_TOK["theme tokens"]
+    RAW -.binds.-> PRIM_TOK["direct primitives"]
 
-    PINNED --> LEGIT["COM justificativa<br/>VSCode-in-app,<br/>preview email,<br/>painel inspecao"]
-    PINNED --> ILLEGIT["SEM justificativa<br/>'fica mais bonito assim'"]
-    ILLEGIT -.quebra.-> BUG["Toggle do usuario<br/>nao funciona aqui"]
+    PINNED --> LEGIT["WITH justification<br/>VSCode-in-app,<br/>email preview,<br/>inspection panel"]
+    PINNED --> ILLEGIT["WITHOUT justification<br/>'looks nicer this way'"]
+    ILLEGIT -.breaks.-> BUG["User's toggle<br/>doesn't work here"]
 
     classDef themed fill:#DBEAFE,stroke:#1E40AF,color:#0C1E4F
     classDef raw fill:#F3F4F6,stroke:#374151,color:#111827
@@ -397,145 +397,145 @@ flowchart TB
 
 | Smell | Fix |
 |---|---|
-| Player de vídeo continua claro no Dark, sem doc | Comportamento correto — documente como zona theme-independent |
-| Subárvore Light dentro de produto Dark sem razão | Anti-pattern; remova `data-theme` ou justifique como theme-pinned |
-| Dark mode = `filter: invert(1)` | Refatore pra theme tokens; Dark é resolução, não filtro |
-| `if (theme === 'dark')` em business logic | Theme deve ser CSS-only; vazou pra app code |
-| "Dark mode" desenhado como Light invertido | Redesenhe Dark separadamente — contraste óptico funciona diferente |
+| Video player stays light in Dark mode, undocumented | Correct behavior — document it as a theme-independent zone |
+| Light subtree inside a Dark product with no reason | Anti-pattern; remove `data-theme` or justify it as theme-pinned |
+| Dark mode = `filter: invert(1)` | Refactor to theme tokens; Dark is a resolution, not a filter |
+| `if (theme === 'dark')` in business logic | Theme should be CSS-only; it leaked into app code |
+| "Dark mode" designed as inverted Light | Redesign Dark separately — optical contrast works differently |
 
 **Checklist.**
-- [ ] Existe doc listando zonas theme-independent + razão?
-- [ ] Toggle Light/Dark funciona globalmente sem subárvores quebradas?
-- [ ] Theme-pinning, quando existe, tem justificativa registrada?
-- [ ] Light e Dark foram desenhados separadamente?
+- [ ] Is there a doc listing theme-independent zones + reason?
+- [ ] Does the Light/Dark toggle work globally with no broken subtrees?
+- [ ] When theme-pinning exists, is there a recorded justification?
+- [ ] Were Light and Dark designed separately?
 
 ---
 
-### Pilar 6 — Decisões versionadas
+### Pillar 6 — Versioned decisions
 
-**Tese.** Toda decisão de DS tem motivo, data, e dependentes. História é parte do DS.
+**Thesis.** Every DS decision has a reason, a date, and dependents. History is part of the DS.
 
-**Por quê.** DS é corpo de decisões muito mais que de tokens. "Por que `radius-md` é 8 e não 6?" "Por que existe `theme.cta` separado de `theme.primary`?" Sem registro, novos contribuidores recriam pensamento errado: sugerem juntar tokens, "limpam" tokens que parecem órfãos, substituem valores "esquisitos" por "redondos".
+**Why.** A DS is a body of decisions much more than of tokens. "Why is `radius-md` 8 and not 6?" "Why does `theme.cta` exist separately from `theme.primary`?" Without a record, new contributors recreate flawed thinking: they suggest merging tokens, "clean up" tokens that look orphaned, replace "weird" values with "round" ones.
 
-**Modelo:**
-- **Revision** — mesma escolha, parâmetro/prose drift. Append inline no TD existente.
-- **Supersede** — escolha diferente. Novo TD; marker no antigo.
+**Model:**
+- **Revision** — same choice, parameter/prose drift. Append inline to the existing TD.
+- **Supersede** — different choice. New TD; marker on the old one.
 
-Discriminador binário: a Option letter mudou? Sim → Supersede. Não → Revision. Forward-only — história antes do modelo é "opaca" (cobre `git log`).
+Binary discriminator: did the Option letter change? Yes → Supersede. No → Revision. Forward-only — history before the model is "opaque" (covered by `git log`).
 
 ```
-TD-04: Border radius do Button
-  Option B (escolhida): 8px
+TD-04: Button border radius
+  Option B (chosen): 8px
 
-REVISION (mesma Option):
-  - 2026-04-12 — Aumentado de 8 para 10px após teste de usabilidade.
-    Rationale: usuários reportavam cantos cortantes em mobile.
+REVISION (same Option):
+  - 2026-04-12 — Increased from 8 to 10px after usability testing.
+    Rationale: users reported sharp corners on mobile.
 
-SUPERSEDE (Option mudou):
-  TD-04 ganha marker: <!-- status: superseded-by: button-redesign/TD-08 -->
-  Novo TD em outro doc decide Option C: pill-shaped (radius: 9999).
+SUPERSEDE (Option changed):
+  TD-04 gets a marker: <!-- status: superseded-by: button-redesign/TD-08 -->
+  A new TD in another doc decides Option C: pill-shaped (radius: 9999).
 ```
 
 | Smell | Fix |
 |---|---|
-| "Por que esse token existe?" → "não sei" | Adote Revision/Supersede a partir de hoje; TDs novos exigidos |
-| Tokens fantasmas em uso, ninguém sabe quem criou | Arqueologia seletiva (não tudo de uma vez) — só nos críticos |
-| Mudanças só em PR description, sem decision doc | Cada token novo nasce com TD curto (5-10 linhas em prosa) |
-| Time recria a discussão `primary` vs `brand` toda vez | TD inicial responde; revisita só com TD novo |
-| TDs viraram documento de 50 páginas que ninguém lê | Mantenha leves — se vira burocracia, ninguém faz e o pilar morre |
+| "Why does this token exist?" → "I don't know" | Adopt Revision/Supersede starting today; new TDs required |
+| Ghost tokens in use, nobody knows who created them | Selective archaeology (not all at once) — only the critical ones |
+| Changes only in PR descriptions, no decision doc | Every new token is born with a short TD (5-10 lines of prose) |
+| Team keeps re-litigating `primary` vs `brand` | The original TD answers it; revisit only with a new TD |
+| TDs turned into a 50-page document nobody reads | Keep them light — if it becomes bureaucracy, nobody does it and the pillar dies |
 
 **Checklist.**
-- [ ] Cada token não-trivial tem decisão registrada (motivo, data)?
-- [ ] Há distinção formal entre Revision e Supersede?
-- [ ] Decisões superseded preservam link bidirecional?
-- [ ] Time novo, lendo, entende o estado atual?
-- [ ] Decisões são leves o suficiente pra serem feitas?
+- [ ] Does every non-trivial token have a recorded decision (reason, date)?
+- [ ] Is there a formal distinction between Revision and Supersede?
+- [ ] Do superseded decisions preserve a bidirectional link?
+- [ ] Can a new team, reading it, understand the current state?
+- [ ] Are decisions light enough to actually get made?
 
 ---
 
-## Parte 3.5 — Smells de layout
+## Part 3.5 — Layout smells
 
-Os 6 pilares cobrem **estrutura de tokens e contrato**. Mas DS bom também produz **layout robusto** — UI que não quebra quando o conteúdo muda, a tela encolhe, ou o usuário traduz pra alemão. Estes são os 10 smells de layout que aparecem com mais frequência em código de frontend dev em formação.
+The 6 pillars cover **token structure and contract**. But a good DS also produces **robust layout** — UI that doesn't break when content changes, the screen shrinks, or the user translates it into German. These are the 10 layout smells that show up most often in code from frontend devs in training.
 
-Cada item: **Errado** (o que tipicamente se faz) → **Certo** (o fix) → **Por quê** (o caso onde quebra).
+Each item: **Wrong** (what's typically done) → **Right** (the fix) → **Why** (the case where it breaks).
 
 ### Layout flow / sizing
 
-**1. `position: absolute` pra posicionar dentro do fluxo.**
-- *Errado:* `<div style="position:absolute; top:20px; left:30px">` pra empurrar elemento dentro de container.
-- *Certo:* flex/grid + `gap` ou `margin` pra posicionar; absolute só pra overlay (badge sobre avatar, tooltip, dropdown).
-- *Por quê:* absolute remove do flow; conteúdo abaixo não reage. Quebra quando o container redimensiona ou o conteúdo cresce.
+**1. `position: absolute` to position within the flow.**
+- *Wrong:* `<div style="position:absolute; top:20px; left:30px">` to push an element inside a container.
+- *Right:* flex/grid + `gap` or `margin` to position; absolute only for overlays (badge over an avatar, tooltip, dropdown).
+- *Why:* absolute removes it from the flow; content below doesn't react. Breaks when the container resizes or the content grows.
 
-**2. Larguras fixas em `px`.**
-- *Errado:* `width: 320px` pra "ficar do tamanho do design".
-- *Certo:* `max-width: 32rem` + `width: 100%`; ou `clamp(16rem, 50%, 32rem)` pra fluido com limites; em grid, `minmax(0, 1fr)`.
-- *Por quê:* px hard-coded ignora viewport, zoom, e densidade. O design é alvo, não literal.
+**2. Fixed widths in `px`.**
+- *Wrong:* `width: 320px` to "match the design's size".
+- *Right:* `max-width: 32rem` + `width: 100%`; or `clamp(16rem, 50%, 32rem)` for fluid with limits; in grid, `minmax(0, 1fr)`.
+- *Why:* hardcoded px ignores viewport, zoom, and density. The design is a target, not a literal.
 
-**3. Falta de `min-width: 0` em flex-item com texto.**
-- *Errado:* `<div style="display:flex"><span>{longTitle}</span><Button/></div>` — texto longo empurra o botão pra fora.
-- *Certo:* `<span style="min-width:0; flex:1">` no item que tem texto; ou `overflow:hidden text-overflow:ellipsis` se truncar é a intenção.
-- *Por quê:* o default de `min-width` em flex-item é `auto` (≈ tamanho intrínseco do conteúdo). Texto longo não respeita o container — vaza silenciosamente.
+**3. Missing `min-width: 0` on a flex item with text.**
+- *Wrong:* `<div style="display:flex"><span>{longTitle}</span><Button/></div>` — long text pushes the button out.
+- *Right:* `<span style="min-width:0; flex:1">` on the item that has text; or `overflow:hidden text-overflow:ellipsis` if truncation is intended.
+- *Why:* the default `min-width` on a flex item is `auto` (≈ content's intrinsic size). Long text doesn't respect the container — it leaks silently.
 
-**4. `margin` no filho em vez de `gap` no container.**
-- *Errado:* `<Card style="margin-bottom: 16px">` repetido em cada card; último com `margin-bottom: 0`.
-- *Certo:* `<List style="display:flex; flex-direction:column; gap:16px">`; cards sem margin.
-- *Por quê:* gap é responsabilidade do container; margem no filho double-counta com vizinhos, não funciona com flex/grid wrap, e exige hack pro último item.
+**4. `margin` on the child instead of `gap` on the container.**
+- *Wrong:* `<Card style="margin-bottom: 16px">` repeated on every card; the last one with `margin-bottom: 0`.
+- *Right:* `<List style="display:flex; flex-direction:column; gap:16px">`; cards without margin.
+- *Why:* gap is the container's responsibility; margin on the child double-counts with neighbors, doesn't work with flex/grid wrap, and requires a hack for the last item.
 
-### Conteúdo dinâmico
+### Dynamic content
 
-**5. `overflow: hidden` como solução.**
-- *Errado:* "estourou? `overflow: hidden`" — esconde o sintoma, mantém o bug.
-- *Certo:* identifique a causa (texto longo? imagem sem `max-width`? flex sem `min-width: 0`?) e fixe a causa. Use `overflow: hidden` só quando truncar é a intenção (`text-overflow: ellipsis`, carrossel).
-- *Por quê:* `overflow: hidden` esconde scroll legítimo, corta focus ring, e mascara o problema real.
+**5. `overflow: hidden` as a solution.**
+- *Wrong:* "did it overflow? `overflow: hidden`" — hides the symptom, keeps the bug.
+- *Right:* identify the cause (long text? image without `max-width`? flex without `min-width: 0`?) and fix the cause. Use `overflow: hidden` only when truncation is intended (`text-overflow: ellipsis`, carousel).
+- *Why:* `overflow: hidden` hides legitimate scroll, cuts off the focus ring, and masks the real problem.
 
-**6. Sem estratégia pra string longa (i18n).**
-- *Errado:* botão `<Button>Save</Button>` com largura justa; quando vira `<Button>Сохранить настройки</Button>`, estoura.
-- *Certo:* wrapping é o default — deixe quebrar linha. Truncation com `…` só com critério explícito (largura máxima, contexto onde linha extra é ruim, ex: tabela de uma linha).
-- *Por quê:* alemão tem ~30% mais letras que inglês; russo + chinês variam ainda mais. Truncar perde informação e cria fricção. Wrap é o conservador.
+**6. No strategy for long strings (i18n).**
+- *Wrong:* button `<Button>Save</Button>` with a tight width; when it becomes `<Button>Сохранить настройки</Button>`, it overflows.
+- *Right:* wrapping is the default — let it break onto a new line. Truncation with `…` only with explicit criteria (max width, a context where an extra line is bad, e.g. a single-row table).
+- *Why:* German has ~30% more letters than English; Russian and Chinese vary even more. Truncating loses information and creates friction. Wrap is the conservative choice.
 
-**7. `height` fixo em `px` em container de texto.**
-- *Errado:* `<h2 style="height: 32px">` — corta ascender/descender, e quebra quando line-height muda.
-- *Certo:* nada de `height`; deixe o texto definir altura. Use `min-height` se precisa garantir piso; `padding-block` se precisa folga.
-- *Por quê:* tipografia tem métricas (ascender, descender, leading) que dependem de fonte e weight. Fonte trocada → altura quebra.
+**7. Fixed `height` in `px` on a text container.**
+- *Wrong:* `<h2 style="height: 32px">` — clips ascenders/descenders, and breaks when line-height changes.
+- *Right:* no `height`; let the text define the height. Use `min-height` if you need a floor; `padding-block` if you need breathing room.
+- *Why:* typography has metrics (ascender, descender, leading) that depend on font and weight. Swap the font → height breaks.
 
-### Robustez e acessibilidade de layout
+### Layout robustness and accessibility
 
-**8. Touch target < 24×24 CSS px (idealmente 44×44).**
-- *Errado:* `<IconButton size="16px">` pra ícone de fechar — clicável que vira hostil em mobile.
-- *Certo:* `min-width: 44px; min-height: 44px` (Apple HIG / WCAG 2.5.5 Level AAA); WCAG 2.2 SC 2.5.8 exige mínimo 24×24 (Level AA). Para ícones pequenos, expanda área clicável com `padding` ou `::before` invisível.
-- *Por quê:* tap em mobile com dedo precisa de área generosa; alvo pequeno gera erros de clique.
+**8. Touch target < 24×24 CSS px (ideally 44×44).**
+- *Wrong:* `<IconButton size="16px">` for a close icon — clickable turns hostile on mobile.
+- *Right:* `min-width: 44px; min-height: 44px` (Apple HIG / WCAG 2.5.5 Level AAA); WCAG 2.2 SC 2.5.8 requires a minimum of 24×24 (Level AA). For small icons, expand the clickable area with `padding` or an invisible `::before`.
+- *Why:* tapping on mobile with a finger needs a generous area; a small target generates click errors.
 
-**9. Breakpoints hard-coded em px no componente.**
-- *Errado:* `@media (max-width: 768px) { ... }` repetido em 30 arquivos.
-- *Certo:* tokens (`--breakpoint-md: 48rem`); ainda melhor: **container queries** (`@container (max-width: 32rem)`) — componente reage ao seu próprio container, não ao viewport global. Suporte estável desde 2023.
-- *Por quê:* breakpoint hard-coded em px assume viewport global; container query reage ao espaço real do componente. Componente reusável em sidebar e em main precisa.
+**9. Hardcoded px breakpoints in the component.**
+- *Wrong:* `@media (max-width: 768px) { ... }` repeated across 30 files.
+- *Right:* tokens (`--breakpoint-md: 48rem`); even better: **container queries** (`@container (max-width: 32rem)`) — the component reacts to its own container, not the global viewport. Stable support since 2023.
+- *Why:* a hardcoded px breakpoint assumes a global viewport; a container query reacts to the component's actual space. A component reused in a sidebar and in main content needs this.
 
-**10. `z-index` ad-hoc (`9999`, `999999`).**
-- *Errado:* `z-index: 99999` quando "não tava aparecendo".
-- *Certo:* escala curta de tokens — `z-base: 0`, `z-dropdown: 10`, `z-sticky: 20`, `z-modal: 100`, `z-toast: 200`. Use só o token; nunca número solto.
-- *Por quê:* sem escala, o produto vira corrida pelo z maior. Componentes brigam, dropdown some atrás de modal sem ninguém saber por quê.
+**10. Ad-hoc `z-index` (`9999`, `999999`).**
+- *Wrong:* `z-index: 99999` when "it wasn't showing up".
+- *Right:* a short scale of tokens — `z-base: 0`, `z-dropdown: 10`, `z-sticky: 20`, `z-modal: 100`, `z-toast: 200`. Use only the token; never a loose number.
+- *Why:* without a scale, the product turns into a race for the highest z. Components fight, a dropdown disappears behind a modal and nobody knows why.
 
 ---
 
-## Parte 4 — Estudo de caso: Primary flip
+## Part 4 — Case study: Primary flip
 
-Os 6 pilares e os 10 smells são silos didáticos. A vida real é interconectada — quase todo bug sério em DS cruza 2-3 pilares de uma vez. O caso a seguir é real: rebrand parcial num produto interno (StreamTube), abril/2026.
+The 6 pillars and the 10 smells are didactic silos. Real life is interconnected — almost every serious DS bug crosses 2-3 pillars at once. The following case is real: a partial rebrand in an internal product (StreamTube), April 2026.
 
-**Pilares envolvidos:** 2 (nomeação) + 5 (theming) + 6 (decisões).
+**Pillars involved:** 2 (naming) + 5 (theming) + 6 (decisions).
 
-**Contexto.** Brand vermelha. `theme.primary` resolvia pra `red-700` em Light e `red-300` em Dark — padrão clássico "tom escuro no Light, tom claro no Dark".
+**Context.** Red brand. `theme.primary` resolved to `red-700` in Light and `red-300` in Dark — the classic "dark tone in Light, light tone in Dark" pattern.
 
-Em determinado ciclo de design, a brand decidiu: em Dark, o primary deveria virar **branco puro** (`neutral-0`), com texto em preto puro. Escolha de design — mais shadcn-style, contraste binário.
+At a certain design cycle, the brand decided: in Dark, primary should become **pure white** (`neutral-0`), with pure black text. A design choice — more shadcn-style, binary contrast.
 
-**Onde poderia ter dado errado.** Em DS sem camadas (pilar 1 quebrado):
-- Editar Button: `background: var(--red-300)` → `background: var(--neutral-0)` em Dark.
-- Editar Anchor, Badge, Chip: idem.
-- Editar ~30 outros componentes.
-- Verificar que ninguém usava `red-300` pra outra coisa em Dark.
+**Where it could have gone wrong.** In a DS without layers (pillar 1 broken):
+- Edit Button: `background: var(--red-300)` → `background: var(--neutral-0)` in Dark.
+- Edit Anchor, Badge, Chip: same.
+- Edit ~30 other components.
+- Verify nobody was using `red-300` for something else in Dark.
 
-Tempo estimado: 2-3 dias. Risco de breakage: alto.
+Estimated time: 2-3 days. Breakage risk: high.
 
-**Onde acertou.** Pilares 1 + 2 já estavam firmes. Componentes apontavam pra `theme.primary` e `theme.primary-foreground`, não pra primitives. A mudança real foi:
+**Where it went right.** Pillars 1 + 2 were already solid. Components pointed to `theme.primary` and `theme.primary-foreground`, not to primitives. The actual change was:
 
 ```diff
 /* theme.css — Dark mode */
@@ -547,27 +547,27 @@ Tempo estimado: 2-3 dias. Risco de breakage: alto.
 }
 ```
 
-Dois tokens. Componentes não foram tocados. Tempo total: ~1 hora (incluindo verificação visual).
+Two tokens. Components weren't touched. Total time: ~1 hour (including visual verification).
 
-**Cascata derivada.** Como `theme.primary` fluía pra `theme.sidebar-primary` (alias-de-alias), esse último mudou automaticamente. Em revisão, percebeu-se que algum CTA específico apontava pra `theme.link` em vez de `theme.primary` — corrigido. Ajuste opcional, não exigido pela mudança original.
+**Derived cascade.** Since `theme.primary` flowed into `theme.sidebar-primary` (alias-of-alias), the latter changed automatically. During review, it was noticed that a specific CTA pointed to `theme.link` instead of `theme.primary` — fixed. Optional adjustment, not required by the original change.
 
-**Decisão.** Por ter mudado o **valor** mas não a **escolha** (a escolha continuou "primary é a cor principal da brand"), foi registrado como **Revision** no TD original:
+**Decision.** Because the **value** changed but not the **choice** (the choice remained "primary is the brand's main color"), it was recorded as a **Revision** on the original TD:
 
 ```
 TD-12: theme.primary
-  Option A (escolhida): cor principal da brand, resolvida por modo
+  Option A (chosen): the brand's main color, resolved by mode
   Light → red-700; Dark → red-300
 
   Revisions:
-  - 2026-04-30 — Dark flipou para neutral-0 (branco). Rationale: brand
-    decidiu contraste binário em Dark mode; alinha com shadcn-style.
+  - 2026-04-30 — Dark flipped to neutral-0 (white). Rationale: the brand
+    decided on binary contrast in Dark mode; aligns with shadcn-style.
 ```
 
-Não foi Supersede — a Option (cor principal da brand resolvida por modo) continuou. Só os parâmetros mudaram.
+Not a Supersede — the Option (brand's main color resolved by mode) remained. Only the parameters changed.
 
 ```mermaid
 flowchart LR
-    subgraph BEFORE["ANTES"]
+    subgraph BEFORE["BEFORE"]
         B_THEME_L["theme.primary Light:<br/>--> red-700"]
         B_THEME_D["theme.primary Dark:<br/>--> red-300"]
         B_BTN["Button.bg-primary<br/>--> theme.primary"]
@@ -579,9 +579,9 @@ flowchart LR
         B_THEME_D --> B_LINK
     end
 
-    subgraph AFTER["DEPOIS"]
-        A_THEME_L["theme.primary Light:<br/>--> red-700 mantido"]
-        A_THEME_D["theme.primary Dark:<br/>--> white FLIPADO"]
+    subgraph AFTER["AFTER"]
+        A_THEME_L["theme.primary Light:<br/>--> red-700 kept"]
+        A_THEME_D["theme.primary Dark:<br/>--> white FLIPPED"]
         A_BTN["Button.bg-primary<br/>zero edits"]
         A_LINK["Anchor.color<br/>zero edits"]
 
@@ -591,7 +591,7 @@ flowchart LR
         A_THEME_D --> A_LINK
     end
 
-    BEFORE -.flip do brand.-> AFTER
+    BEFORE -.brand flip.-> AFTER
 
     classDef before fill:#FEF3C7,stroke:#92400E,color:#451A03
     classDef changed fill:#FEE2E2,stroke:#991B1B,color:#7F1D1D,stroke-width:3px
@@ -602,45 +602,45 @@ flowchart LR
     class A_BTN,A_LINK,A_THEME_L stable
 ```
 
-**Lições.**
+**Lessons.**
 
-1. **Custo de rebrand é proporcional ao tamanho da camada theme**, não do produto. Um produto de 200 telas pode ter 30 theme tokens; mudar 5 muda 200 telas.
-2. **Pilar 2 isola a brand.** Se o token chamasse `dark-red-light`, o flip teria sido inviável (nome contradiz valor).
-3. **Pilar 6 evita refazer a discussão.** Sem decision log, três meses depois alguém olha o Dark com `theme.primary = white` e pensa "isso parece bug, devia ser cor da brand" — propõe reverter. A revisão registrada no TD-12 (one-liner com data + rationale) intercepta esse loop com 30 segundos de leitura. Em DSs sem pilar 6, esse loop acontece a cada novo time; com pilar 6, acontece uma vez e fica registrado.
-4. **Aliases-de-aliases têm cascata silenciosa.** O sidebar-primary ajustou sozinho — correto, mas merece verificação visual.
-
----
-
-## Parte 5 — Apêndice: bootstrap em 8 passos
-
-Você terminou o doc e quer começar um DS do zero. **Esqueleto, não receita exaustiva** — cada item viraria semanas. O valor desta seção é a **ordem** e o **que NÃO fazer no início**.
-
-1. **Foundations: cor + tipografia primeiro.** Neutral ramp + 1 primary ramp (~22 primitives) + ~10 Text Styles (Display/Headline/Title/Body/Label, 2-3 sizes cada). Resista a forma/elevação/movimento antes de cor+tipo firmes.
-2. **Theme como segunda camada.** 8-12 aliases iniciais — `surface-default`, `surface-raised`, `text-default`, `text-muted`, `border-default`, `primary`, `primary-foreground`, `destructive`, `destructive-foreground`. Light + Dark como duas resoluções.
-3. **Componente piloto: Button.** Variants `size` + `variant`, states default/hover/focus/active/disabled. Figma + código + catálogo de stories com todas as combinações. Esse componente é o modelo mental pros próximos 30.
-4. **Drift detection mínima.** Hardcoded scanner em CI: rejeita `#XXX` em arquivos de componente. Whitelist documentada. ~1 dia de implementação.
-5. **Política de theming explícita.** 1 página: zonas tematizadas (todas) + theme-independent (provavelmente nenhuma no início). Revisar quando alguma zona migrar.
-6. **Decision log.** 1 doc que cresce. Cada token novo: 5 linhas. Modelo Revision/Supersede. Ler em ordem cronológica dá conta da história.
-7. **Adicionar foundations restantes sob demanda.** Forma quando o terceiro componente repetir o mesmo radius. Elevação quando o segundo overlay for criado. Movimento quando a segunda transição compartilhada. Não no dia 1.
-8. **Code Connect só depois do DS estabilizado.** Mappings consomem tempo de manutenção; só vale a pena quando o componente está estável.
-
-**O que NÃO fazer no início:**
-
-- Motion tokens, dynamic theming, multi-brand, color blending sofisticado — tudo depois.
-- "Cobrir todos os casos" — DS bom **rejeita casos** mais do que aceita.
-- Documentação separada de 50 páginas — apodrece. Documente em paralelo com o código.
-- "Qualquer designer pode contribuir" — otimize pra 2-3 pessoas mantendo coerência. Escala depois.
-
-**Governança — o pilar não-técnico.** Os 6 pilares cobrem estrutura técnica; **governança** é onde maioria dos DSs morre. Quem aprova token novo? Quando vira componente do DS vs local? Como rejeita pedido? Em produtos pequenos (1 squad), informal basta — decisão na conversa, registro no log. Em produtos médios+, informal não escala. Mencione no plano de bootstrap, mesmo que seja "1 pessoa decide tudo nas primeiras 8 semanas, depois revisitamos".
+1. **Rebranding cost is proportional to the size of the theme layer**, not of the product. A product with 200 screens can have 30 theme tokens; changing 5 changes 200 screens.
+2. **Pillar 2 isolates the brand.** If the token were called `dark-red-light`, the flip would have been unworkable (name contradicts value).
+3. **Pillar 6 avoids re-litigating the discussion.** Without a decision log, three months later someone looks at Dark with `theme.primary = white` and thinks "that looks like a bug, it should be the brand color" — proposes reverting. The revision recorded on TD-12 (one-liner with date + rationale) intercepts that loop with 30 seconds of reading. In DSs without pillar 6, that loop happens with every new team; with pillar 6, it happens once and stays on record.
+4. **Aliases-of-aliases have a silent cascade.** The sidebar-primary adjusted on its own — correct, but it deserves visual verification.
 
 ---
 
-## Para onde ir depois
+## Part 5 — Appendix: bootstrap in 8 steps
 
-- **DTCG — Design Tokens Format Module** — [designtokens.org/tr/2025.10/format/](https://www.designtokens.org/tr/2025.10/format/). Spec normativa do formato (`$value`, `$type`, alias resolution). Curta, densa, é o vocabulário comum que ferramentas como Tokens Studio e Style Dictionary tentam implementar.
-- **Carbon, Polaris, shadcn/ui** — DSs públicos com filosofias diferentes. Compare como cada um trata os 6 pilares; nenhum é prescrição, todos são vocabulário.
-- **OKLCH** — [oklch.com](https://oklch.com/) (interativo) e o blog do Andrey Sitnik. Pra devs que vão construir cor de DS.
-- **CSS layout: MDN Flexbox + container queries** — [developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout). Lê o "min-width: 0 trick", `flex-grow/shrink/basis`, e container queries.
-- **WCAG 2.2** — [w3.org/TR/WCAG22/](https://www.w3.org/TR/WCAG22/). SC 2.4.11, 2.5.7, 2.5.8 são os mais relevantes pra DS.
-- **ADRs** — Michael Nygard, "Documenting Architecture Decisions" (2011). Pra entender o pilar 6.
-- **Companion**: [docs/design-system-ai-implementable.md](docs/design-system-ai-implementable.md) — DS bom é AI-implementável por construção.
+You've finished the doc and want to start a DS from scratch. **Skeleton, not an exhaustive recipe** — each item could fill weeks. The value of this section is the **order** and **what NOT to do at the start**.
+
+1. **Foundations: color + typography first.** Neutral ramp + 1 primary ramp (~22 primitives) + ~10 Text Styles (Display/Headline/Title/Body/Label, 2-3 sizes each). Resist shape/elevation/motion before color+type are solid.
+2. **Theme as the second layer.** 8-12 initial aliases — `surface-default`, `surface-raised`, `text-default`, `text-muted`, `border-default`, `primary`, `primary-foreground`, `destructive`, `destructive-foreground`. Light + Dark as two resolutions.
+3. **Pilot component: Button.** `size` + `variant` axes, default/hover/focus/active/disabled states. Figma + code + story catalog with every combination. This component is the mental model for the next 30.
+4. **Minimal drift detection.** Hardcoded scanner in CI: rejects `#XXX` in component files. Documented whitelist. ~1 day of implementation.
+5. **Explicit theming policy.** 1 page: themed zones (all) + theme-independent (probably none at the start). Revisit when a zone migrates.
+6. **Decision log.** 1 doc that grows. Every new token: 5 lines. Revision/Supersede model. Reading it chronologically covers the history.
+7. **Add remaining foundations on demand.** Shape when the third component repeats the same radius. Elevation when the second overlay is created. Motion when the second shared transition appears. Not on day 1.
+8. **Code Connect only after the DS stabilizes.** Mappings consume maintenance time; only worth it once the component is stable.
+
+**What NOT to do at the start:**
+
+- Motion tokens, dynamic theming, multi-brand, sophisticated color blending — all later.
+- "Cover every case" — a good DS **rejects cases** more than it accepts them.
+- A separate 50-page document — it rots. Document in parallel with the code.
+- "Any designer can contribute" — optimize for 2-3 people maintaining coherence. Scale later.
+
+**Governance — the non-technical pillar.** The 6 pillars cover technical structure; **governance** is where most DSs die. Who approves a new token? When does it become a DS component vs. a local one? How does it reject a request? In small products (1 squad), informal is enough — decide in conversation, record in the log. In medium+ products, informal doesn't scale. Mention it in the bootstrap plan, even if it's "1 person decides everything for the first 8 weeks, then we revisit".
+
+---
+
+## Where to go next
+
+- **DTCG — Design Tokens Format Module** — [designtokens.org/tr/2025.10/format/](https://www.designtokens.org/tr/2025.10/format/). Normative spec for the format (`$value`, `$type`, alias resolution). Short, dense, the common vocabulary tools like Tokens Studio and Style Dictionary try to implement.
+- **Carbon, Polaris, shadcn/ui** — public DSs with different philosophies. Compare how each handles the 6 pillars; none is prescription, all are vocabulary.
+- **OKLCH** — [oklch.com](https://oklch.com/) (interactive) and Andrey Sitnik's blog. For devs who will build a DS's color system.
+- **CSS layout: MDN Flexbox + container queries** — [developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout). Read the "min-width: 0 trick", `flex-grow/shrink/basis`, and container queries.
+- **WCAG 2.2** — [w3.org/TR/WCAG22/](https://www.w3.org/TR/WCAG22/). SC 2.4.11, 2.5.7, 2.5.8 are the most relevant for a DS.
+- **ADRs** — Michael Nygard, "Documenting Architecture Decisions" (2011). To understand pillar 6.
+- **Companion**: [docs/design-system-ai-implementable.md](docs/design-system-ai-implementable.md) — a good DS is AI-implementable by construction.

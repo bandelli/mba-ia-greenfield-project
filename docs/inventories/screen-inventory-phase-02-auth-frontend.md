@@ -1,165 +1,165 @@
 # phase-02-auth-frontend — Screen Inventory
 
-> **Phase:** 02 — Cadastro, Login e Gerenciamento de Conta (frontend slice)
+> **Phase:** 02 — Registration, Login, and Account Management (frontend slice)
 > **Status:** Validated
 > **Date:** 2026-05-14
 > **Screens in scope:** 3
 
 ---
 
-## Screen: Tela de cadastro
+## Screen: Signup screen
 
 **Route:** `/signup`
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-333 (node `Doz7n3FsRhfvelYrPhTZAG:140:333`)
-**Purpose (from project-plan.md):** "Cadastro de usuário com e-mail e senha".
+**Purpose (from project-plan.md):** "User registration with email and password".
 
 ### Component inventory
 
 | Component (Figma node)              | Type              | In DS? | Reuse?                                  | Notes |
 |-------------------------------------|-------------------|--------|-----------------------------------------|-------|
-| SignupForm (143:2399)               | Server-connected  | ✗      | `components/auth/signup-form.tsx (new)` | Form como unidade (TD-04/TD-05); submit dispara mutation de signup |
-| Card (143:2400)                     | Presentational    | ✓      | `components/ui/card.tsx`                | Container auth card |
-| BackArrow (143:2407)                | Local-interactive | ✗      | `components/auth/back-link.tsx (new)`   | Navegação client-side (Next.js `<Link>`) |
-| BrandLogo (2387:2263)               | Presentational    | ✓      | `components/auth/brand-logo.tsx`        | Inclui `components/icons/streamtube-icon.tsx` |
-| Heading "Create account" (143:2429) | Presentational    | ✗      | new                                     | `<h1>` puro-DOM |
-| Subtitle (143:2442)                 | Presentational    | ✗      | new                                     | Helper text puro-DOM |
-| FullNameField (2716:2085)           | Presentational    | ✗      | new                                     | Composição Label + Input |
+| SignupForm (143:2399)               | Server-connected  | ✗      | `components/auth/signup-form.tsx (new)` | Form as a unit (TD-04/TD-05); submit triggers the signup mutation |
+| Card (143:2400)                     | Presentational    | ✓      | `components/ui/card.tsx`                | Auth card container |
+| BackArrow (143:2407)                | Local-interactive | ✗      | `components/auth/back-link.tsx (new)`   | Client-side navigation (Next.js `<Link>`) |
+| BrandLogo (2387:2263)               | Presentational    | ✓      | `components/auth/brand-logo.tsx`        | Includes `components/icons/streamtube-icon.tsx` |
+| Heading "Create account" (143:2429) | Presentational    | ✗      | new                                     | Plain-DOM `<h1>` |
+| Subtitle (143:2442)                 | Presentational    | ✗      | new                                     | Plain-DOM helper text |
+| FullNameField (2716:2085)           | Presentational    | ✗      | new                                     | Label + Input composition |
 | FormLabel "Full Name" (2172:347)    | Presentational    | ✓      | `components/ui/label.tsx`               | — |
-| Input "Full Name" (143:2433)        | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlado via react-hook-form (TD-04) |
-| EmailField (2716:2087)              | Presentational    | ✗      | new                                     | Composição Label + Input |
+| Input "Full Name" (143:2433)        | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlled via react-hook-form (TD-04) |
+| EmailField (2716:2087)              | Presentational    | ✗      | new                                     | Label + Input composition |
 | FormLabel "Email address" (2172:350)| Presentational    | ✓      | `components/ui/label.tsx`               | — |
-| Input "Email" (143:2434)            | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlado via react-hook-form (TD-04) |
-| PasswordField (2716:2089)           | Presentational    | ✗      | new                                     | Composição Label + Input + toggle + strength meter + helper |
+| Input "Email" (143:2434)            | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlled via react-hook-form (TD-04) |
+| PasswordField (2716:2089)           | Presentational    | ✗      | new                                     | Label + Input + toggle + strength meter + helper composition |
 | FormLabel "Password" (2172:353)     | Presentational    | ✓      | `components/ui/label.tsx`               | — |
-| Input "Password" (143:2435)         | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlado via react-hook-form (TD-04) |
-| PasswordVisibilityToggle (I143:2435;82:6685) | Local-interactive | ✗ | `components/auth/password-visibility-toggle.tsx (new)` | Toggle de `type` password/text client-side |
-| PasswordStrengthMeter (143:2446)    | Local-interactive | ✗      | `components/auth/password-strength-meter.tsx (new)` | Opera apenas sobre input client-side |
-| PasswordStrengthHelper (143:2444)   | Presentational    | ✗      | new                                     | Helper text dirigido pelo strength meter |
-| ConfirmPasswordField (2716:2091)    | Presentational    | ✗      | new                                     | Composição Label + Input + toggle |
+| Input "Password" (143:2435)         | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlled via react-hook-form (TD-04) |
+| PasswordVisibilityToggle (I143:2435;82:6685) | Local-interactive | ✗ | `components/auth/password-visibility-toggle.tsx (new)` | Client-side toggle of `type` password/text |
+| PasswordStrengthMeter (143:2446)    | Local-interactive | ✗      | `components/auth/password-strength-meter.tsx (new)` | Operates only on client-side input |
+| PasswordStrengthHelper (143:2444)   | Presentational    | ✗      | new                                     | Helper text driven by the strength meter |
+| ConfirmPasswordField (2716:2091)    | Presentational    | ✗      | new                                     | Label + Input + toggle composition |
 | FormLabel "Confirm Password" (2172:356) | Presentational | ✓      | `components/ui/label.tsx`               | — |
-| Input "Confirm Password" (143:2436) | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlado via react-hook-form (TD-04) |
-| ConfirmPasswordVisibilityToggle (I143:2436;82:6685) | Local-interactive | ✗ | `components/auth/password-visibility-toggle.tsx (new)` | Toggle de `type` password/text client-side |
-| TermsCheckboxRow (2716:2093)        | Local-interactive | ✗      | `components/auth/terms-checkbox.tsx (new)` | Estado checkbox local; validado por Zod (TD-04) |
-| Checkbox (143:2445)                 | Local-interactive | ✗      | `components/ui/checkbox.tsx (new)`      | Primitive DS ainda não autorada |
-| TermsLinks (143:2439)               | Local-interactive | ✗      | new                                     | Anchors inline para /terms e /privacy (rotas fora do escopo) |
-| SubmitButton "Create account" (143:2443) | Server-connected | ✓   | `components/ui/button.tsx`              | Submit do form; dispara mutation de signup (TD-05) |
-| AuthFooter (2394:2284)              | Presentational    | ✓      | `components/auth/auth-footer.tsx`       | Inclui link "Sign in" → /login (nav client-side) |
+| Input "Confirm Password" (143:2436) | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlled via react-hook-form (TD-04) |
+| ConfirmPasswordVisibilityToggle (I143:2436;82:6685) | Local-interactive | ✗ | `components/auth/password-visibility-toggle.tsx (new)` | Client-side toggle of `type` password/text |
+| TermsCheckboxRow (2716:2093)        | Local-interactive | ✗      | `components/auth/terms-checkbox.tsx (new)` | Local checkbox state; validated by Zod (TD-04) |
+| Checkbox (143:2445)                 | Local-interactive | ✗      | `components/ui/checkbox.tsx (new)`      | DS primitive not yet authored |
+| TermsLinks (143:2439)               | Local-interactive | ✗      | new                                     | Inline anchors to /terms and /privacy (routes out of scope) |
+| SubmitButton "Create account" (143:2443) | Server-connected | ✓   | `components/ui/button.tsx`              | Form submit; triggers the signup mutation (TD-05) |
+| AuthFooter (2394:2284)              | Presentational    | ✓      | `components/auth/auth-footer.tsx`       | Includes "Sign in" link → /login (client-side nav) |
 
 ### Verbs of intent
 
 | Verb                                          | Component                            | Capability (project-plan.md)             |
-|-----------------------------------------------|--------------------------------------|------------------------------------------|
-| Cadastrar novo usuário com e-mail e senha     | SignupForm + SubmitButton (143:2443) | "Cadastro de usuário com e-mail e senha" |
+|-----------------------------------------------|--------------------------------------|-------------------------------------------|
+| Register a new user with email and password  | SignupForm + SubmitButton (143:2443) | "User registration with email and password" |
 
 ### Observations
 
-- Form classificado como Server-connected como unidade (skill rule: forms com validação local + submit ao servidor são sempre Server-connected); SubmitButton também marcado Server-connected porque a ação de submit é despachada por ele (TD-05).
-- Capabilities "Criação automática do canal do usuário a partir do prefixo do e-mail" e "Confirmação de conta via e-mail com link de ativação" são side-effects server-side da mutation de signup; não têm affordance dedicada nesta tela.
-- O link "Sign in" no AuthFooter e o back-arrow no topo dependem de navegação client-side framework-provided (Next.js `<Link>`) — Local-interactive por skill rules.
-- Visibility-toggles e strength meter operam apenas sobre input client-side.
-- Links "Terms of Service" e "Privacy Policy" apontam para rotas fora do escopo da Fase 02 — flag para Open questions.
-- Nenhum componente visível no screenshot ausente de `get_design_context`.
+- Form classified as Server-connected as a unit (skill rule: forms with local validation + server submit are always Server-connected); SubmitButton is also marked Server-connected because the submit action is dispatched by it (TD-05).
+- The capabilities "Automatic creation of the user's channel from the email prefix" and "Account confirmation via email with an activation link" are server-side side effects of the signup mutation; they have no dedicated affordance on this screen.
+- The "Sign in" link in AuthFooter and the back-arrow at the top depend on framework-provided client-side navigation (Next.js `<Link>`) — Local-interactive per skill rules.
+- Visibility toggles and the strength meter operate only on client-side input.
+- "Terms of Service" and "Privacy Policy" links point to routes out of scope for Phase 02 — flagged in Open questions.
+- No component visible in the screenshot is missing from `get_design_context`.
 
 ---
 
-## Screen: Tela de login
+## Screen: Login screen
 
 **Route:** `/login`
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=138-179 (node `Doz7n3FsRhfvelYrPhTZAG:138:179`)
-**Purpose (from project-plan.md):** "Login e controle de sessão do usuário".
+**Purpose (from project-plan.md):** "Login and user session control".
 
 ### Component inventory
 
 | Component (Figma node)                       | Type              | In DS? | Reuse?                                  | Notes |
-|----------------------------------------------|-------------------|--------|-----------------------------------------|-------|
-| LoginForm (143:2265)                         | Server-connected  | ✗      | `components/auth/login-form.tsx (new)`  | react-hook-form + Zod (TD-04); submit → `/api/auth/login` (TD-05) |
-| Card (143:1250)                              | Presentational    | ✓      | `components/ui/card.tsx`                | see screen: Tela de cadastro |
-| BrandLogo (2387:2244)                        | Presentational    | ✓      | `components/auth/brand-logo.tsx`        | see screen: Tela de cadastro; composta de StreamtubeIcon + wordmark |
-| StreamtubeIcon (I2387:2244;2417:133)         | Presentational    | ✓      | `components/icons/streamtube-icon.tsx`  | Sub-componente do BrandLogo |
-| Heading "Sign in" (143:2273)                 | Presentational    | ✗      | new                                     | `<h1>` puro-DOM |
+|------------------------------------------------|-------------------|--------|-----------------------------------------|-------|
+| LoginForm (143:2265)                         | Server-connected  | ✗      | `components/auth/login-form.tsx (new)`  | react-hook-form + Zod (TD-04); submits → `/api/auth/login` (TD-05) |
+| Card (143:1250)                              | Presentational    | ✓      | `components/ui/card.tsx`                | see screen: Signup screen |
+| BrandLogo (2387:2244)                        | Presentational    | ✓      | `components/auth/brand-logo.tsx`        | see screen: Signup screen; composed of StreamtubeIcon + wordmark |
+| StreamtubeIcon (I2387:2244;2417:133)         | Presentational    | ✓      | `components/icons/streamtube-icon.tsx`  | BrandLogo sub-component |
+| Heading "Sign in" (143:2273)                 | Presentational    | ✗      | new                                     | Plain-DOM `<h1>` |
 | FormLabel "Email address" (2172:253)         | Presentational    | ✓      | `components/ui/label.tsx`               | — |
-| Input email (147:536)                        | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlado via react-hook-form (TD-04) |
+| Input email (147:536)                        | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlled via react-hook-form (TD-04) |
 | FormLabel "Password" (2172:263)              | Presentational    | ✓      | `components/ui/label.tsx`               | — |
-| Link "Forgot password?" (147:539)            | Local-interactive | ✗      | new                                     | Nav client-side → `/forgot-password` (Next.js `<Link>`) |
-| Input password (147:540)                     | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlado via react-hook-form (TD-04); sem visibility-toggle no Figma |
-| SubmitButton "Sign in" (147:541)             | Server-connected  | ✓      | `components/ui/button.tsx`              | Trigger do submit; mutation pathway TD-05 |
-| AuthFooter (2394:2271)                       | Presentational    | ✓      | `components/auth/auth-footer.tsx`       | see screen: Tela de cadastro; link interno "Sign up" → /signup (nav client-side) |
+| Link "Forgot password?" (147:539)            | Local-interactive | ✗      | new                                     | Client-side nav → `/forgot-password` (Next.js `<Link>`) |
+| Input password (147:540)                     | Local-interactive | ✓      | `components/ui/input.tsx`               | Controlled via react-hook-form (TD-04); no visibility toggle in Figma |
+| SubmitButton "Sign in" (147:541)             | Server-connected  | ✓      | `components/ui/button.tsx`              | Submit trigger; mutation pathway TD-05 |
+| AuthFooter (2394:2271)                       | Presentational    | ✓      | `components/auth/auth-footer.tsx`       | see screen: Signup screen; internal "Sign up" link → /signup (client-side nav) |
 
 ### Verbs of intent
 
 | Verb                                                     | Component                              | Capability (project-plan.md)            |
-|----------------------------------------------------------|----------------------------------------|-----------------------------------------|
-| Autenticar usuário com e-mail e senha e iniciar sessão   | LoginForm + SubmitButton (147:541)     | "Login e controle de sessão do usuário" |
+|------------------------------------------------------------|-----------------------------------------|-------------------------------------------|
+| Authenticate the user with email and password and start a session | LoginForm + SubmitButton (147:541)     | "Login and user session control" |
 
 ### Observations
 
-- Form e SubmitButton juntos realizam o único verb server-connected; verbs table tem 1 linha porque ambos contribuem para a mesma intent de submit.
-- Input password (147:540) não tem visibility-toggle no Figma — classificado como Local-interactive apenas pelo state ownership via react-hook-form. Possível design gap.
-- O link "Forgot password?" navega para `/forgot-password` (tela inventariada como #3 nesta fase).
-- O link "Sign up" no AuthFooter navega para `/signup` (tela inventariada como #1 nesta fase).
-- Nenhuma superfície de erro/feedback (inline field error, form-level alert, loading state) presente no Figma node — flag como design gap; runtime states precisarão ser inferidos no implement ou sourced de uma variant Figma separada.
-- StreamtubeIcon é renderizado em Figma como `<img>` apontando para asset remoto, mas o filesystem snapshot tem `components/icons/streamtube-icon.tsx` como o componente DS canônico — reusar o componente DS, não o asset.
+- Form and SubmitButton together carry out the single server-connected verb; the verbs table has 1 row because both contribute to the same submit intent.
+- Input password (147:540) has no visibility toggle in Figma — classified as Local-interactive solely due to state ownership via react-hook-form. Possible design gap.
+- The "Forgot password?" link navigates to `/forgot-password` (screen #3 inventoried in this phase).
+- The "Sign up" link in AuthFooter navigates to `/signup` (screen #1 inventoried in this phase).
+- No error/feedback surface (inline field error, form-level alert, loading state) is present in the Figma node — flagged as a design gap; runtime states will need to be inferred during implementation or sourced from a separate Figma variant.
+- StreamtubeIcon renders in Figma as an `<img>` pointing to a remote asset, but the filesystem snapshot has `components/icons/streamtube-icon.tsx` as the canonical DS component — reuse the DS component, not the asset.
 
 ---
 
-## Screen: Tela de solicitação de recuperação de senha
+## Screen: Password recovery request screen
 
 **Route:** `/forgot-password`
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-289 (node `Doz7n3FsRhfvelYrPhTZAG:140:289`)
-**Purpose (from project-plan.md):** "Recuperação de senha: solicitação via e-mail → link com token → redefinição" — esta tela cobre a etapa de solicitação (envio do link por e-mail).
+**Purpose (from project-plan.md):** "Password recovery: request via email → link with token → reset" — this screen covers the request step (sending the link by email).
 
 ### Component inventory
 
 | Component (Figma node)                | Type              | In DS? | Reuse?                                      | Notes |
-|---------------------------------------|-------------------|--------|---------------------------------------------|-------|
-| ForgotPasswordForm (140:289 wrapper)  | Server-connected  | ✗      | `components/auth/forgot-password-form.tsx (new)` | Email field group + Button; submit → `POST /api/auth/forgot-password` (TD-05) |
-| Card (143:2308)                       | Presentational    | ✓      | `components/ui/card.tsx`                    | see screen: Tela de cadastro |
-| arrow_back (143:2343)                 | Local-interactive | ✗      | `components/ui/icon-button.tsx (new)`       | Nav client-side de volta para `/login` |
-| BrandLogo (2387:2252)                 | Presentational    | ✓      | `components/auth/brand-logo.tsx`            | see screen: Tela de cadastro |
-| Heading "Reset password" (143:2347)   | Presentational    | ✗      | new                                         | `<h1>` puro-DOM |
-| Helper text (143:2353)                | Presentational    | ✗      | new                                         | `<p>` puro-DOM ("Enter your email and we'll send you a reset link") |
-| EmailField group (2713:2086)          | Presentational    | ✗      | new                                         | Composição FormLabel + Input |
+|-----------------------------------------|-------------------|--------|-----------------------------------------------|-------|
+| ForgotPasswordForm (140:289 wrapper)  | Server-connected  | ✗      | `components/auth/forgot-password-form.tsx (new)` | Email field group + Button; submits → `POST /api/auth/forgot-password` (TD-05) |
+| Card (143:2308)                       | Presentational    | ✓      | `components/ui/card.tsx`                    | see screen: Signup screen |
+| arrow_back (143:2343)                 | Local-interactive | ✗      | `components/ui/icon-button.tsx (new)`       | Client-side nav back to `/login` |
+| BrandLogo (2387:2252)                 | Presentational    | ✓      | `components/auth/brand-logo.tsx`            | see screen: Signup screen |
+| Heading "Reset password" (143:2347)   | Presentational    | ✗      | new                                         | Plain-DOM `<h1>` |
+| Helper text (143:2353)                | Presentational    | ✗      | new                                         | Plain-DOM `<p>` ("Enter your email and we'll send you a reset link") |
+| EmailField group (2713:2086)          | Presentational    | ✗      | new                                         | FormLabel + Input composition |
 | FormLabel "Email address" (2172:282)  | Presentational    | ✓      | `components/ui/label.tsx`                   | — |
-| Input email (143:2351)                | Local-interactive | ✓      | `components/ui/input.tsx`                   | Controlado via react-hook-form (TD-04) |
-| SubmitButton "Send reset link" (143:2354) | Server-connected | ✓     | `components/ui/button.tsx`                  | Dispara submit → `POST /api/auth/forgot-password` (TD-05) |
-| AuthFooter (2394:2276)                | Presentational    | ✓      | `components/auth/auth-footer.tsx`           | see screen: Tela de cadastro; texto exibido no Figma é "Sign up" (provável inconsistência — esperado "Sign in") |
+| Input email (143:2351)                | Local-interactive | ✓      | `components/ui/input.tsx`                   | Controlled via react-hook-form (TD-04) |
+| SubmitButton "Send reset link" (143:2354) | Server-connected | ✓     | `components/ui/button.tsx`                  | Triggers submit → `POST /api/auth/forgot-password` (TD-05) |
+| AuthFooter (2394:2276)                | Presentational    | ✓      | `components/auth/auth-footer.tsx`           | see screen: Signup screen; the text shown in Figma is "Sign up" (likely inconsistency — "Sign in" expected) |
 
 ### Verbs of intent
 
 | Verb                                                              | Component                                          | Capability (project-plan.md)                                                                  |
-|-------------------------------------------------------------------|----------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| Solicitar envio de e-mail com link de redefinição de senha        | ForgotPasswordForm + SubmitButton (143:2354)       | "Recuperação de senha: solicitação via e-mail → link com token → redefinição"                 |
+|------------------------------------------------------------------|------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| Request an email with a password reset link        | ForgotPasswordForm + SubmitButton (143:2354)       | "Password recovery: request via email → link with token → reset"                 |
 
 ### Observations
 
-- Form normalizado como ForgotPasswordForm (Server-connected como unidade) para consistência com signup/login; estado de submit unifica EmailField + SubmitButton.
-- O AuthFooter da tela exibe link rotulado "Sign up" no Figma onde a UX usual seria "Sign in" (voltar para login). Tratado como inconsistência de design — flag para Open questions.
-- Estado de sucesso é exibido inline nesta mesma tela (sem rota dedicada "verifique seu e-mail"), conforme decisão registrada no progress file. A renderização do success state não está presente como variant separada no Figma — apenas o estado default do form foi extraído.
-- **Figma gap:** a tela "set new password" (destino do link enviado por e-mail, onde o usuário define a nova senha) não existe no arquivo Figma atual. A capability "Recuperação de senha…" só está parcialmente coberta pelo design — a etapa de redefinição precisa ser desenhada antes de ser inventariada.
-- O ícone `arrow_back` (143:2343) corresponde ao componente Figma "Icon button" do design system, mas não há wrapper React equivalente em `components/ui/`; emitido como `components/ui/icon-button.tsx (new)` para `phase-b.md` § B2.6 gerar o SI de bootstrap.
+- Form normalized as ForgotPasswordForm (Server-connected as a unit) for consistency with signup/login; submit state unifies EmailField + SubmitButton.
+- The screen's AuthFooter shows a link labeled "Sign up" in Figma where the usual UX would be "Sign in" (back to login). Treated as a design inconsistency — flagged in Open questions.
+- The success state is displayed inline on this same screen (no dedicated "check your email" route), per the decision recorded in the progress file. The success-state rendering is not present as a separate variant in Figma — only the form's default state was extracted.
+- **Figma gap:** the "set new password" screen (destination of the link sent by email, where the user sets the new password) does not exist in the current Figma file. The "Password recovery…" capability is only partially covered by the design — the reset step needs to be designed before it can be inventoried.
+- The `arrow_back` icon (143:2343) corresponds to the design system's "Icon button" Figma component, but there is no equivalent React wrapper in `components/ui/`; emitted as `components/ui/icon-button.tsx (new)` for `phase-b.md` § B2.6 to generate the bootstrap SI.
 
 ---
 
 ## Reconciliation summary
 
 | Capability (project-plan.md)                                                       | Covered by                                  | Screens                                              |
-|------------------------------------------------------------------------------------|---------------------------------------------|------------------------------------------------------|
-| "Serviço de envio de e-mails transacionais"                                        | (backend; side-effect de signup + forgot-password) | — (capability backend; sem UI direta)         |
-| "Cadastro de usuário com e-mail e senha"                                           | SignupForm + SubmitButton                   | /signup                                              |
-| "Criação automática do canal do usuário a partir do prefixo do e-mail"             | (backend; side-effect de signup)            | — (capability backend; sem UI direta)                |
-| "Confirmação de conta via e-mail com link de ativação"                             | — (de-scoped pelo usuário)                  | — (sem tela; ver Open questions)                     |
-| "Login e controle de sessão do usuário"                                            | LoginForm + SubmitButton                    | /login                                               |
-| "Logout"                                                                           | — (sem UI nesta fase)                       | — (sem tela; ver Open questions)                     |
-| "Recuperação de senha: solicitação via e-mail → link com token → redefinição"      | ForgotPasswordForm + SubmitButton (parcial — apenas solicitação) | /forgot-password (set-new-password ausente do Figma) |
-| "Telas de cadastro, login, confirmação de conta e recuperação de senha"            | Telas signup + login + forgot-password      | /signup, /login, /forgot-password (confirmação de-scoped) |
+|----------------------------------------------------------------------------------------|-------------------------------------------------|------------------------------------------------------|
+| "Transactional email sending service"                                        | (backend; side effect of signup + forgot-password) | — (backend capability; no direct UI)         |
+| "User registration with email and password"                                           | SignupForm + SubmitButton                   | /signup                                              |
+| "Automatic creation of the user's channel from the email prefix"             | (backend; side effect of signup)            | — (backend capability; no direct UI)                |
+| "Account confirmation via email with an activation link"                             | — (de-scoped by the user)                  | — (no screen; see Open questions)                     |
+| "Login and user session control"                                            | LoginForm + SubmitButton                    | /login                                               |
+| "Logout"                                                                           | — (no UI in this phase)                  | — (no screen; see Open questions)                     |
+| "Password recovery: request via email → link with token → reset"      | ForgotPasswordForm + SubmitButton (partial — request only) | /forgot-password (set-new-password missing from Figma) |
+| "Registration, login, account confirmation, and password recovery screens"            | Signup + login + forgot-password screens      | /signup, /login, /forgot-password (confirmation de-scoped) |
 
 ## Open questions
 
-- Capability "Confirmação de conta via e-mail com link de ativação" não tem tela inventariada — de-scoped pelo usuário em 2026-05-14 ("o restante não iremos implementar agora"). O fluxo end-to-end de cadastro depende desta tela para fechar (após signup → e-mail com link → tela de confirmação); precisará ser retomada em uma fase posterior. TD-07 (Email-Link Landing Pattern) prevê RSC processando o token server-side; recomenda-se gerar o inventory da tela antes de implementar.
-- Capability "Logout" não tem UI inventariada nesta fase. A "tela" de logout é, na prática, um botão dentro do chrome autenticado (avatar/menu); seu local depende de fases posteriores que introduzam o chrome (provavelmente Fase 04 — "Painel de gerenciamento" / chrome autenticado). Confirmar com `plan-validate` se logout fica fora desta fase intencionalmente.
-- Tela de redefinição de senha (set new password — destino do link enviado por e-mail) NÃO existe no Figma atual. A capability "Recuperação de senha…" só está parcialmente coberta; a etapa de redefinição precisa ser desenhada (novo node Figma) e inventariada antes do implement do fluxo completo. Até lá, `/forgot-password` envia o e-mail mas o destino do link é uma rota inexistente.
-- Tela de signup: links "Terms of Service" e "Privacy Policy" (node 143:2439) apontam para rotas (`/terms`, `/privacy`) fora do escopo da Fase 02. Decidir se: (a) renderizar como links inertes/placeholders até as rotas existirem; (b) abrir issue para criar páginas estáticas mínimas; (c) outra estratégia.
-- Tela de signup + Tela de login: nenhuma surface de erro/feedback de form-level (alert pós-submit, loading state, inline field errors) está presente no Figma. TD-04 + envelope `{ statusCode, error, message }` (phase-02-auth/TD-07) implicam que estados precisam ser exibidos. Decidir se: (a) inferir o design no implement seguindo padrão shadcn `FormMessage` + `Alert`; (b) solicitar variants de erro/loading ao designer antes do implement.
-- Tela de forgot-password: AuthFooter exibe link "Sign up" no Figma, mas a UX usual numa tela de recuperação seria "Sign in" (voltar ao login). Confirmar com o designer qual link/texto é correto; alternativa: implementar como "Sign in" baseado em UX comum.
-- Tela de forgot-password: estado de sucesso inline (após submit) não foi extraído como variant separada do Figma. O design precisa de uma variant de success-state OU o implement infere o estilo (caixa de confirmação dentro do mesmo Card).
-- Componentes planejados-mas-não-existentes detectados (`Reuse?` com sufixo ` (new)`) e que servirão de gatilho para `phase-b.md` § B2.6 (bootstrap SI synthesis): `components/auth/signup-form.tsx`, `components/auth/login-form.tsx`, `components/auth/forgot-password-form.tsx`, `components/auth/back-link.tsx`, `components/auth/password-visibility-toggle.tsx`, `components/auth/password-strength-meter.tsx`, `components/auth/terms-checkbox.tsx`, `components/ui/checkbox.tsx`, `components/ui/icon-button.tsx`. Confirmar com `plan-build` que todos serão materializados nesta fase OU diferidos para fases posteriores conforme decisão.
+- The "Account confirmation via email with an activation link" capability has no inventoried screen — de-scoped by the user on 2026-05-14 ("we won't implement the rest right now"). The end-to-end registration flow depends on this screen to close (after signup → email with link → confirmation screen); it will need to be picked up in a later phase. TD-07 (Email-Link Landing Pattern) anticipates an RSC processing the token server-side; recommend generating the screen's inventory before implementation.
+- The "Logout" capability has no UI inventoried in this phase. The logout "screen" is, in practice, a button within the authenticated chrome (avatar/menu); its location depends on later phases that introduce the chrome (likely Phase 04 — "Management dashboard" / authenticated chrome). Confirm with `plan-validate` whether logout is intentionally out of scope for this phase.
+- The password reset screen (set new password — destination of the link sent by email) does NOT exist in the current Figma file. The "Password recovery…" capability is only partially covered; the reset step needs to be designed (new Figma node) and inventoried before implementing the full flow. Until then, `/forgot-password` sends the email but the link's destination is a nonexistent route.
+- Signup screen: the "Terms of Service" and "Privacy Policy" links (node 143:2439) point to routes (`/terms`, `/privacy`) out of scope for Phase 02. Decide whether to: (a) render them as inert/placeholder links until the routes exist; (b) open an issue to create minimal static pages; (c) some other strategy.
+- Signup screen + Login screen: no form-level error/feedback surface (post-submit alert, loading state, inline field errors) is present in Figma. TD-04 + the `{ statusCode, error, message }` envelope (phase-02-auth/TD-07) imply these states need to be displayed. Decide whether to: (a) infer the design during implementation following the shadcn `FormMessage` + `Alert` pattern; (b) request error/loading variants from the designer before implementation.
+- Forgot-password screen: AuthFooter shows a "Sign up" link in Figma, but the usual UX for a recovery screen would be "Sign in" (back to login). Confirm with the designer which link/text is correct; fallback: implement as "Sign in" based on common UX.
+- Forgot-password screen: the inline success state (after submit) was not extracted as a separate Figma variant. The design needs a success-state variant OR the implementation infers the style (confirmation box within the same Card).
+- Planned-but-nonexistent components detected (`Reuse?` with the ` (new)` suffix), which will trigger `phase-b.md` § B2.6 (bootstrap SI synthesis): `components/auth/signup-form.tsx`, `components/auth/login-form.tsx`, `components/auth/forgot-password-form.tsx`, `components/auth/back-link.tsx`, `components/auth/password-visibility-toggle.tsx`, `components/auth/password-strength-meter.tsx`, `components/auth/terms-checkbox.tsx`, `components/ui/checkbox.tsx`, `components/ui/icon-button.tsx`. Confirm with `plan-build` whether all of these will be materialized in this phase OR deferred to later phases per decision.

@@ -7,9 +7,14 @@ const PG_UNIQUE_VIOLATION = '23505';
 const NICKNAME_COLUMN = 'nickname';
 const MAX_RETRIES = 5;
 
+interface PgDriverError {
+  code?: string;
+  detail?: string;
+}
+
 function isPgUniqueViolationOnColumn(err: unknown, column: string): boolean {
   if (!(err instanceof QueryFailedError)) return false;
-  const e = err as any;
+  const e = err as QueryFailedError & PgDriverError;
   return (
     e.code === PG_UNIQUE_VIOLATION &&
     typeof e.detail === 'string' &&
@@ -20,6 +25,17 @@ function isPgUniqueViolationOnColumn(err: unknown, column: string): boolean {
 @Injectable()
 export class ChannelsService {
   constructor(private readonly dataSource: DataSource) {}
+
+  // Every user has exactly one channel, auto-created at registration
+  // (phase-01-configuracao-base) — absence signals a data-integrity bug,
+  // not a normal domain outcome, so this fails loudly rather than
+  // returning null (per .claude/rules/typeorm-queries.md's findOneOrFail
+  // guidance for genuinely exceptional absence).
+  async findByUserId(userId: string): Promise<Channel> {
+    return this.dataSource
+      .getRepository(Channel)
+      .findOneByOrFail({ user_id: userId });
+  }
 
   async createChannel(userId: string, email: string): Promise<Channel> {
     const baseNickname = sanitizeNickname(email.split('@')[0]);

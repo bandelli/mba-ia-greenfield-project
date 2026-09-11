@@ -19,48 +19,48 @@ Foundation for environment variable configuration and validation in the next-fro
 
 ## Step Implementations
 
-### SI-1 — Instalar deps e criar env loader
+### SI-1 — Install deps and create env loader
 
-**Description:** Instalar `zod@^4.0.0` e `@t3-oss/env-nextjs@^0.13.0` como dependências runtime do `next-frontend`; criar `next-frontend/lib/env.ts` exportando o objeto `env` tipado via `createEnv()`; criar `next-frontend/.env.example` documentando o conjunto canônico de chaves (`API_URL` + `NODE_ENV`).
+**Description:** Install `zod@^4.0.0` and `@t3-oss/env-nextjs@^0.13.0` as runtime dependencies of `next-frontend`; create `next-frontend/lib/env.ts` exporting the `env` object typed via `createEnv()`; create `next-frontend/.env.example` documenting the canonical key set (`API_URL` + `NODE_ENV`).
 
 **Technical actions:**
 
-1. Rodar `docker compose exec next-frontend npm install zod@^4.0.0 @t3-oss/env-nextjs@^0.13.0` (comandos npm sempre dentro do container per `next-frontend/CLAUDE.md` § "Commands")
-2. Criar `next-frontend/lib/env.ts` exportando `env` via `createEnv({ server: { API_URL: z.url() }, client: {}, shared: { NODE_ENV: z.enum([...]) }, experimental__runtimeEnv: { NODE_ENV: process.env.NODE_ENV }, emptyStringAsUndefined: true })` (per `next-frontend-config-base/TD-02` Setup + `next-frontend-config-base/TD-01` idioms Zod 4 + `next-frontend-config-base/TD-03` chaves canônicas)
-3. Criar `next-frontend/.env.example` documentando `API_URL` (server-only, formato URL, exemplo Docker comentado) e `NODE_ENV` (per `next-frontend-config-base/TD-03` Setup)
-4. Rodar `docker compose exec next-frontend npx tsc --noEmit` para confirmar compilação OK
+1. Run `docker compose exec next-frontend npm install zod@^4.0.0 @t3-oss/env-nextjs@^0.13.0` (npm commands always inside the container per `next-frontend/CLAUDE.md` § "Commands")
+2. Create `next-frontend/lib/env.ts` exporting `env` via `createEnv({ server: { API_URL: z.url() }, client: {}, shared: { NODE_ENV: z.enum([...]) }, experimental__runtimeEnv: { NODE_ENV: process.env.NODE_ENV }, emptyStringAsUndefined: true })` (per `next-frontend-config-base/TD-02` Setup + `next-frontend-config-base/TD-01` Zod 4 idioms + `next-frontend-config-base/TD-03` canonical keys)
+3. Create `next-frontend/.env.example` documenting `API_URL` (server-only, URL format, commented Docker example) and `NODE_ENV` (per `next-frontend-config-base/TD-03` Setup)
+4. Run `docker compose exec next-frontend npx tsc --noEmit` to confirm compilation is OK
 
-**Tests:** _(empty — Setup SI; smoke-gated by `npx tsc --noEmit` (action 4); validation behavior é built-in via `@t3-oss/env-nextjs` runtime e não tem branching lógico no projeto para asseverar.)_
+**Tests:** _(empty — Setup SI; smoke-gated by `npx tsc --noEmit` (action 4); validation behavior is built-in via `@t3-oss/env-nextjs` runtime and has no logical branching in the project to assert.)_
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- `next-frontend/package.json` declara `zod` e `@t3-oss/env-nextjs` em `dependencies`.
-- `next-frontend/lib/env.ts` existe e exporta `env` como named export; o tipo é inferido pelo `createEnv` (sem `as` casts em consumers).
-- `next-frontend/lib/env.ts` declara `server: { API_URL: z.url() }`, `client: {}`, `shared: { NODE_ENV: z.enum(["development", "production", "test"]) }`, `experimental__runtimeEnv: { NODE_ENV: process.env.NODE_ENV }`, e `emptyStringAsUndefined: true`.
-- `next-frontend/.env.example` existe e documenta exatamente `API_URL` e `NODE_ENV` (nenhuma menção a `NEXT_PUBLIC_API_URL`).
-- `docker compose exec next-frontend npx tsc --noEmit` termina com exit code 0.
+- `next-frontend/package.json` declares `zod` and `@t3-oss/env-nextjs` in `dependencies`.
+- `next-frontend/lib/env.ts` exists and exports `env` as a named export; the type is inferred by `createEnv` (no `as` casts in consumers).
+- `next-frontend/lib/env.ts` declares `server: { API_URL: z.url() }`, `client: {}`, `shared: { NODE_ENV: z.enum(["development", "production", "test"]) }`, `experimental__runtimeEnv: { NODE_ENV: process.env.NODE_ENV }`, and `emptyStringAsUndefined: true`.
+- `next-frontend/.env.example` exists and documents exactly `API_URL` and `NODE_ENV` (no mention of `NEXT_PUBLIC_API_URL`).
+- `docker compose exec next-frontend npx tsc --noEmit` exits with code 0.
 
 ---
 
-### SI-2 — Atualizar next-frontend/CLAUDE.md para BFF estrito
+### SI-2 — Update next-frontend/CLAUDE.md for strict BFF
 
-**Description:** Reescrever a seção "Talking to the NestJS API" em `next-frontend/CLAUDE.md` para alinhar à decisão TD-03: remover a convenção planejada de `NEXT_PUBLIC_API_URL` e documentar o modelo BFF estrito — uma única chave `API_URL` server-only; browser fala com o backend apenas via Route Handlers same-origin.
+**Description:** Rewrite the "Talking to the NestJS API" section in `next-frontend/CLAUDE.md` to align with decision TD-03: remove the planned `NEXT_PUBLIC_API_URL` convention and document the strict BFF model — a single server-only `API_URL` key; the browser talks to the backend only via same-origin Route Handlers.
 
 **Technical actions:**
 
-1. Editar `next-frontend/CLAUDE.md` § "Talking to the NestJS API" — substituir o parágrafo dual-key planejado pela convenção single-key strict BFF: somente `API_URL` (server-only) existe; clientes acessam o backend exclusivamente via Route Handlers (same-origin); remover a menção a `NEXT_PUBLIC_API_URL`; referenciar `next-frontend/lib/env.ts` como source-of-truth da leitura de env (per `next-frontend-config-base/TD-03` Migração)
+1. Edit `next-frontend/CLAUDE.md` § "Talking to the NestJS API" — replace the planned dual-key paragraph with the single-key strict-BFF convention: only `API_URL` (server-only) exists; clients access the backend exclusively via Route Handlers (same-origin); remove the mention of `NEXT_PUBLIC_API_URL`; reference `next-frontend/lib/env.ts` as the source-of-truth for reading env (per `next-frontend-config-base/TD-03` Migration)
 
-**Tests:** _(empty — atualização documental; corretude validada por grep nos ACs.)_
+**Tests:** _(empty — documentation update; correctness validated by grep in the ACs.)_
 
-**Dependencies:** SI-1 _(o env layer em `lib/env.ts` deve existir antes do CLAUDE.md referenciá-lo como source-of-truth canônico)_
+**Dependencies:** SI-1 _(the env layer in `lib/env.ts` must exist before the CLAUDE.md references it as the canonical source-of-truth)_
 
 **Acceptance criteria:**
 
-- `grep -rn 'NEXT_PUBLIC_API_URL' next-frontend/` retorna zero matches após a edição.
-- `next-frontend/CLAUDE.md` § "Talking to the NestJS API" cita `API_URL` como única chave de ambiente para o backend e referencia `next-frontend/lib/env.ts` como source-of-truth.
-- A seção menciona explicitamente o modelo BFF estrito (Client Components → Route Handlers same-origin → NestJS) e remove qualquer referência a chamadas diretas do browser ao backend.
+- `grep -rn 'NEXT_PUBLIC_API_URL' next-frontend/` returns zero matches after the edit.
+- `next-frontend/CLAUDE.md` § "Talking to the NestJS API" cites `API_URL` as the single environment key for the backend and references `next-frontend/lib/env.ts` as the source-of-truth.
+- The section explicitly mentions the strict BFF model (Client Components → same-origin Route Handlers → NestJS) and removes any reference to direct browser calls to the backend.
 
 ---
 
@@ -85,11 +85,11 @@ z.string().min(1)                              // non-empty server-side secret
 
 Zod 4 moved string-format methods to top-level functions; `z.string().url()` from older blog posts is deprecated and MUST NOT be used.
 
-**Aplicação:** logic-only — applies to the single `next-frontend/lib/env.ts` module (TD-02 instantiates `createEnv` with these schemas). Future phases reuse Zod 4 for `react-hook-form` resolvers, Server Action input validation, and any contract typing that lands later. No other module in this phase imports Zod directly.
+**Application:** logic-only — applies to the single `next-frontend/lib/env.ts` module (TD-02 instantiates `createEnv` with these schemas). Future phases reuse Zod 4 for `react-hook-form` resolvers, Server Action input validation, and any contract typing that lands later. No other module in this phase imports Zod directly.
 
-**Migração:** _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
+**Migration:** _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** `npx tsc --noEmit` exits 0 on `lib/env.ts` and any consumer files; consumers reference `env.X` without `as` casts (assertion via grep on consumer files: `as\s+[A-Z]` adjacent to `env\.` returns zero matches).
 - **Integration:** N/A in this phase — Zod is exercised through TD-02's `createEnv` runtime; no isolated Zod test surface.
@@ -121,9 +121,9 @@ Boundary guarantees locked by this snippet:
 - Any client-bundle access to `server.API_URL` throws `"Attempted to access a server-side environment variable on the client"` (runtime Proxy).
 - `emptyStringAsUndefined: true` normalizes empty `.env` entries to `undefined` so Zod `.default()` fires.
 
-**Aplicação:** logic-only — `lib/env.ts` is the sole module that calls `createEnv`. Every consumer across the app imports the validated object via `import { env } from "@/lib/env"` regardless of context (RSC, Route Handler, Server Action, Client Component). Direct `process.env.X` reads in feature code are forbidden post-adoption — allowed only inside `lib/env.ts` itself and inside non-Next contexts that explicitly load env via `loadEnvConfig(process.cwd())` from `@next/env` (e.g., future Vitest setup files, codegen scripts).
+**Application:** logic-only — `lib/env.ts` is the sole module that calls `createEnv`. Every consumer across the app imports the validated object via `import { env } from "@/lib/env"` regardless of context (RSC, Route Handler, Server Action, Client Component). Direct `process.env.X` reads in feature code are forbidden post-adoption — allowed only inside `lib/env.ts` itself and inside non-Next contexts that explicitly load env via `loadEnvConfig(process.cwd())` from `@next/env` (e.g., future Vitest setup files, codegen scripts).
 
-**Migração:**
+**Migration:**
 
 | File | Current behavior | Required change | Owning SI |
 |------|-----------------|-----------------|-----------|
@@ -131,7 +131,7 @@ Boundary guarantees locked by this snippet:
 
 _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** `npx tsc --noEmit` exits 0 across `next-frontend/`. Type surface assertion: importing `env` from a `"use client"` module narrows the type — `env.API_URL` is NOT in the autocomplete suggestions on client modules (t3-env's type-level narrowing).
 - **Integration:** N/A in this phase (no Route Handler / RSC exists yet to consume `env`). The first downstream phase that introduces a Route Handler consuming `env.API_URL` validates the runtime Proxy boundary via an `*.integration.test.ts` that imports the route handler and asserts the fetched URL contains the env value.
@@ -159,15 +159,15 @@ shared: {
 
 The concrete _value_ of `API_URL` in dev (shared Compose network with `http://nestjs-api:3000` vs `http://host.docker.internal:3000`) is **out-of-scope for this TD** — that is a Docker-Compose-topology decision deferred to a future infra ad-hoc TD or Phase 02 pre-work.
 
-**Aplicação:** logic-only — `API_URL` is consumed only inside `next-frontend/app/api/**/route.ts` files (BFF Route Handlers) and Server Actions / RSC that hit the backend directly. Client Components reaching the backend MUST go through a Route Handler at the same origin (the BFF model). No future phase may introduce a `NEXT_PUBLIC_API_URL` without revisiting this TD (Revision via `/decide` or Supersede via `/research`).
+**Application:** logic-only — `API_URL` is consumed only inside `next-frontend/app/api/**/route.ts` files (BFF Route Handlers) and Server Actions / RSC that hit the backend directly. Client Components reaching the backend MUST go through a Route Handler at the same origin (the BFF model). No future phase may introduce a `NEXT_PUBLIC_API_URL` without revisiting this TD (Revision via `/decide` or Supersede via `/research`).
 
-**Migração:**
+**Migration:**
 
 | File | Current behavior | Required change | Owning SI |
 |------|-----------------|-----------------|-----------|
 | `next-frontend/CLAUDE.md` | The "Talking to the NestJS API" section names a planned `NEXT_PUBLIC_API_URL` (for client-side reads) alongside `API_URL` (server-side reads) | Rewrite the dual-key paragraph to the single-key strict-BFF model: only `API_URL` exists (server-only); browser hits the backend only via same-origin Route Handlers; remove the `NEXT_PUBLIC_API_URL` mention | SI-NN.M (Doc Update) |
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** after the doc-update SI completes, `grep -rn 'NEXT_PUBLIC_API_URL' next-frontend/` returns zero matches (currently only `next-frontend/CLAUDE.md` mentions it; updating it is sufficient).
 - **Integration:** the first downstream Route Handler that consumes `env.API_URL` has an `*.integration.test.ts` whose MSW handler intercepts `fetch` against the `${env.API_URL}/...` URL pattern — proves the key flows correctly from `.env` through t3-env through the handler.
@@ -180,15 +180,15 @@ The concrete _value_ of `API_URL` in dev (shared Compose network with `http://ne
 
 ## Dependency Map
 
-SI-1 (root) — Instalar deps e criar env loader
-└── SI-2 — depends on SI-1 (env layer em `lib/env.ts` existe antes do CLAUDE.md referenciá-lo como source-of-truth)
+SI-1 (root) — Install deps and create env loader
+└── SI-2 — depends on SI-1 (the env layer in `lib/env.ts` exists before the CLAUDE.md references it as the source-of-truth)
 
 ---
 
 ## Deliverables
 
-- [ ] SI-1 — Instalar deps e criar env loader
-- [ ] SI-2 — Atualizar `next-frontend/CLAUDE.md` para BFF estrito
+- [ ] SI-1 — Install deps and create env loader
+- [ ] SI-2 — Update `next-frontend/CLAUDE.md` for strict BFF
 
 **Full test suites:**
 

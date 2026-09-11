@@ -106,7 +106,7 @@ Files are named by phase rather than by domain. Phase NN owns exactly one file.
 
 **Scope:** Frontend
 
-**Trigger:** Decide whether to wire **only** `setupServer` (Node — Vitest BFF integration tests) at the foundation phase, or to also wire `setupWorker` (browser Service Worker — `msw/browser`) for FE-only dev sessions, and how the handler set is shared (or kept separate) between the two contexts. The user explicitly named this separation in the research scope: "separação entre handlers de teste (Node — Vitest/Jest) e handlers de dev browser (Service Worker)".
+**Trigger:** Decide whether to wire **only** `setupServer` (Node — Vitest BFF integration tests) at the foundation phase, or to also wire `setupWorker` (browser Service Worker — `msw/browser`) for FE-only dev sessions, and how the handler set is shared (or kept separate) between the two contexts. The user explicitly named this separation in the research scope: "separation between test handlers (Node — Vitest/Jest) and dev browser handlers (Service Worker)".
 
 **Context:** Two execution contexts exist for MSW in this project — and they intercept **different traffic** under the strict-BFF model:
 

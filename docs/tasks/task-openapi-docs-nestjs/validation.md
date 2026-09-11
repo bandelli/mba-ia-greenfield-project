@@ -52,5 +52,5 @@ _None._ _(UI Inventory absent — UIG-N suppressed by construction.)_
 ## Resolved Issues
 
 - **OQ-1** _(resolved_by openapi-docs-nestjs/TD-01)_ — TD-01 decided as Option A (@nestjs/swagger + CLI plugin).
-- **OQ-2** _(resolved_by openapi-docs-nestjs/TD-02)_ — TD-02 decided as Option C (Runtime UI + openapi.json exportado).
-- **OQ-3** _(resolved_by openapi-docs-nestjs/TD-03)_ — TD-03 decided as Option B (Apenas em dev/staging via env flag).
+- **OQ-2** _(resolved_by openapi-docs-nestjs/TD-02)_ — TD-02 decided as Option C (Runtime UI + exported openapi.json).
+- **OQ-3** _(resolved_by openapi-docs-nestjs/TD-03)_ — TD-03 decided as Option B (Only in dev/staging via env flag).
