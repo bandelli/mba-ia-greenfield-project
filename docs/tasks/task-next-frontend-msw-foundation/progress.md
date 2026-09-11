@@ -3,7 +3,7 @@
 **Status:** completed
 **SIs:** 5/5 completed
 
-### SI-1 — Instalar MSW + Vitest e dependências de teste
+### SI-1 — Install MSW + Vitest and test dependencies
 - **Status:** completed
 - **Tests:** no tests
 - **Observations:**
@@ -11,14 +11,14 @@
   - Added `test` and `test:watch` scripts to `next-frontend/package.json`.
   - `npx vitest --version` → `vitest/4.1.6 linux-x64 node-v25.6.0`.
 
-### SI-2 — Criar a árvore mocks/handlers/ + barrel + seed + diretório mocks/factories/
+### SI-2 — Create the mocks/handlers/ tree + barrel + seed + mocks/factories/ directory
 - **Status:** completed
 - **Tests:** no tests
 - **Observations:**
   - Created `mocks/handlers/_seed.ts` (typed empty `RequestHandler[]`), `mocks/handlers/index.ts` (barrel spreading seedHandlers), `mocks/factories/.gitkeep`.
   - `tsc --noEmit` exit 0.
 
-### SI-3 — Wire MSW na lifecycle do Vitest
+### SI-3 — Wire MSW into the Vitest lifecycle
 - **Status:** completed
 - **Tests:** no tests (smoke-gated by AC)
 - **Observations:**
@@ -27,7 +27,7 @@
   - `npm test` exit 0 with "No test files found, exiting with code 0" (no `onUnhandledRequest` warnings).
   - `tsc --noEmit` exit 0.
 
-### SI-4 — Atualizar .claude/rules/next-frontend-msw-mocks.md
+### SI-4 — Update .claude/rules/next-frontend-msw-mocks.md
 - **Status:** completed
 - **Tests:** no tests (rule doc only)
 - **Observations:**
@@ -37,7 +37,7 @@
   - Updated handler example from `mocks/handlers.ts` to `mocks/handlers/auth.ts`; preserved `paths[...]` typing and `${env.API_URL}/...` URL composition verbatim.
   - `### Exception to the contracts-barrel rule` block preserved unchanged.
 
-### SI-5 — Atualizar next-frontend/CLAUDE.md § Testing → Status
+### SI-5 — Update next-frontend/CLAUDE.md § Testing → Status
 - **Status:** completed
 - **Tests:** no tests (doc only)
 - **Observations:**

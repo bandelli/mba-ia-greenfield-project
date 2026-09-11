@@ -121,8 +121,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const signupSchema = z.object({
-  email: z.string().email("Endereço de e-mail inválido"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Minimum 8 characters"),
 });
 
 type SignupValues = z.infer<typeof signupSchema>;
@@ -188,8 +188,8 @@ export function SignupForm() {
 The error envelope `{ statusCode, error, message }` from `phase-02-auth/TD-07` flows back from the BFF Route Handler. A single helper in `lib/auth/error-mapping.ts` switches on the machine-readable `error` code and calls `form.setError` per-field; unknown codes fall through to a top-of-form `<Alert>` (per OQ-12 inline resolution). React-hook-form's `setError` API:
 
 ```typescript
-form.setError("email", { type: "server", message: "Este e-mail já está em uso." });
-form.setError("root.serverError", { type: "server", message: "Falha no servidor." });
+form.setError("email", { type: "server", message: "This email is already in use." });
+form.setError("root.serverError", { type: "server", message: "Server error." });
 ```
 
 `form.formState.errors.root?.serverError` is the canonical key for form-level errors not bound to a single field.

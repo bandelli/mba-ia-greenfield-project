@@ -26,13 +26,13 @@ sources_mtime:
 
 **Frontend Runtime spec:** see `## Technical Specifications` → `### Frontend Runtime` → `#### next-frontend-openapi-typing/TD-02 — Spec Sourcing Under Docker Bind-Mount Isolation`
 
-**Description:** Materializa o copy local de `openapi.json` dentro de `next-frontend/` para que codegen rodando no container leia `./openapi.json` (resolvido sob `/home/node/app`). O script de sync vive na raiz do repo e roda no host — não dentro de container algum, pois o monorepo inteiro só é visível do host (per `next-frontend-openapi-typing/TD-02`).
+**Description:** Materializes the local copy of `openapi.json` inside `next-frontend/` so that codegen running in the container reads `./openapi.json` (resolved under `/home/node/app`). The sync script lives at the repo root and runs on the host — not inside any container, since the entire monorepo is only visible from the host (per `next-frontend-openapi-typing/TD-02`).
 
 **Technical actions:**
 
-1. Criar `scripts/sync-openapi.sh` (executável: `chmod +x`) byte-verbatim do snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-02 → Setup` — copia `nestjs-project/openapi.json` para `next-frontend/openapi.json`.
-2. Rodar o script uma vez do repo-root no host: `bash scripts/sync-openapi.sh` para materializar `next-frontend/openapi.json` inicial.
-3. Commitar `scripts/sync-openapi.sh` + `next-frontend/openapi.json` no mesmo change (a paridade entre os dois committed copies é load-bearing para TD-03 funcionar).
+1. Create `scripts/sync-openapi.sh` (executable: `chmod +x`) byte-verbatim from the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-02 → Setup` — copies `nestjs-project/openapi.json` to `next-frontend/openapi.json`.
+2. Run the script once from the repo root on the host: `bash scripts/sync-openapi.sh` to materialize the initial `next-frontend/openapi.json`.
+3. Commit `scripts/sync-openapi.sh` + `next-frontend/openapi.json` in the same change (parity between the two committed copies is load-bearing for TD-03 to work).
 
 **Dependencies:** —
 
@@ -40,9 +40,9 @@ sources_mtime:
 
 **Acceptance criteria:**
 
-- `scripts/sync-openapi.sh` existe na raiz do repo, é executável (`test -x scripts/sync-openapi.sh`), e seu conteúdo bate byte-a-byte com o snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-02 → Setup`.
-- Rodar `bash scripts/sync-openapi.sh` no host produz `next-frontend/openapi.json` byte-idêntico a `nestjs-project/openapi.json` (verificável por `diff -q nestjs-project/openapi.json next-frontend/openapi.json` → exit 0).
-- Tanto `scripts/sync-openapi.sh` quanto `next-frontend/openapi.json` estão committed no repo no mesmo PR/commit do bootstrap.
+- `scripts/sync-openapi.sh` exists at the repo root, is executable (`test -x scripts/sync-openapi.sh`), and its content matches byte-for-byte the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-02 → Setup`.
+- Running `bash scripts/sync-openapi.sh` on the host produces `next-frontend/openapi.json` byte-identical to `nestjs-project/openapi.json` (verifiable via `diff -q nestjs-project/openapi.json next-frontend/openapi.json` → exit 0).
+- Both `scripts/sync-openapi.sh` and `next-frontend/openapi.json` are committed to the repo in the same PR/commit as the bootstrap.
 
 ---
 
@@ -50,14 +50,14 @@ sources_mtime:
 
 **Frontend Runtime spec:** see `## Technical Specifications` → `### Frontend Runtime` → `#### next-frontend-openapi-typing/TD-03 — Codegen Execution Timing & Output Commit Policy`
 
-**Description:** Estabelece o pipeline de codegen completo: instala `openapi-typescript` como dev-dep, adiciona o npm script canônico, gera `lib/api/types.gen.ts` a partir de `next-frontend/openapi.json` (do SI-1) e commita o artefato. CI freshness check sai num SI separado (SI-5) para não estourar a action cap.
+**Description:** Establishes the complete codegen pipeline: installs `openapi-typescript` as a dev-dep, adds the canonical npm script, generates `lib/api/types.gen.ts` from `next-frontend/openapi.json` (from SI-1), and commits the artifact. The CI freshness check is in a separate SI (SI-5) to avoid exceeding the action cap.
 
 **Technical actions:**
 
-1. Dentro do container `next-frontend`, rodar `npm install -D openapi-typescript` (per `**Libraries:**` em `next-frontend-openapi-typing/TD-01`; versão pinada per `docs/tasks/task-next-frontend-openapi-typing/library-refs.md` — `^7.x`).
-2. Adicionar `"openapi:types": "openapi-typescript ./openapi.json -o ./lib/api/types.gen.ts"` aos `scripts` de `next-frontend/package.json` byte-verbatim do snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-03 → Setup`.
-3. Rodar `docker compose exec next-frontend npm run openapi:types` para gerar `next-frontend/lib/api/types.gen.ts` a partir do `openapi.json` committed em SI-1.
-4. Commitar `next-frontend/package.json`, `next-frontend/package-lock.json` e `next-frontend/lib/api/types.gen.ts`. **`.gitignore` NÃO deve excluir `lib/api/types.gen.ts`** — o arquivo gerado é committed by design (per TD-03 Option C).
+1. Inside the `next-frontend` container, run `npm install -D openapi-typescript` (per `**Libraries:**` in `next-frontend-openapi-typing/TD-01`; version pinned per `docs/tasks/task-next-frontend-openapi-typing/library-refs.md` — `^7.x`).
+2. Add `"openapi:types": "openapi-typescript ./openapi.json -o ./lib/api/types.gen.ts"` to the `scripts` of `next-frontend/package.json` byte-verbatim from the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-03 → Setup`.
+3. Run `docker compose exec next-frontend npm run openapi:types` to generate `next-frontend/lib/api/types.gen.ts` from the `openapi.json` committed in SI-1.
+4. Commit `next-frontend/package.json`, `next-frontend/package-lock.json`, and `next-frontend/lib/api/types.gen.ts`. **`.gitignore` must NOT exclude `lib/api/types.gen.ts`** — the generated file is committed by design (per TD-03 Option C).
 
 **Dependencies:** SI-1 (requires `next-frontend/openapi.json` committed)
 
@@ -65,11 +65,11 @@ sources_mtime:
 
 **Acceptance criteria:**
 
-- `next-frontend/package.json` lista `openapi-typescript` em `devDependencies` com a versão pinada per `library-refs.md` (`^7.x` ou major-compatible).
-- `next-frontend/package.json` `scripts` contém a entrada `openapi:types` byte-verbatim do snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-03 → Setup`.
-- `next-frontend/lib/api/types.gen.ts` existe e exporta `paths` (verificável por `grep -E '^export (interface|type) paths' next-frontend/lib/api/types.gen.ts` → match).
-- Re-rodar `docker compose exec next-frontend npm run openapi:types` produz zero diff em `next-frontend/lib/api/types.gen.ts` (idempotência do codegen).
-- Os três arquivos (`package.json`, `package-lock.json`, `lib/api/types.gen.ts`) estão committed.
+- `next-frontend/package.json` lists `openapi-typescript` in `devDependencies` with the version pinned per `library-refs.md` (`^7.x` or major-compatible).
+- `next-frontend/package.json` `scripts` contains the `openapi:types` entry byte-verbatim from the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-03 → Setup`.
+- `next-frontend/lib/api/types.gen.ts` exists and exports `paths` (verifiable via `grep -E '^export (interface|type) paths' next-frontend/lib/api/types.gen.ts` → match).
+- Re-running `docker compose exec next-frontend npm run openapi:types` produces zero diff in `next-frontend/lib/api/types.gen.ts` (codegen idempotency).
+- All three files (`package.json`, `package-lock.json`, `lib/api/types.gen.ts`) are committed.
 
 ---
 
@@ -77,14 +77,14 @@ sources_mtime:
 
 **Frontend Runtime spec:** see `## Technical Specifications` → `### Frontend Runtime` → `#### next-frontend-openapi-typing/TD-01 — OpenAPI Codegen Tooling`
 
-**Description:** Instala `openapi-fetch` (runtime-dep) e autora o módulo server-only `lib/api/upstream.ts` que instancia o cliente HTTP tipado contra `paths` de `types.gen.ts`. Sob o BFF estrito do `next-frontend-config-base/TD-03`, este cliente só pode ser importado em código server-side; `import "server-only"` é a guarda que falha o build se um Client Component tentar consumi-lo.
+**Description:** Installs `openapi-fetch` (runtime-dep) and authors the server-only module `lib/api/upstream.ts` that instantiates the typed HTTP client against `paths` from `types.gen.ts`. Under the strict BFF from `next-frontend-config-base/TD-03`, this client can only be imported in server-side code; `import "server-only"` is the guard that fails the build if a Client Component tries to consume it.
 
 **Technical actions:**
 
-1. Dentro do container `next-frontend`, rodar `npm install openapi-fetch` (per `**Libraries:**` em `next-frontend-openapi-typing/TD-01`; versão pinada per `library-refs.md` — `^0.13.x`).
-2. Autorar `next-frontend/lib/api/upstream.ts` byte-verbatim no F2-load-bearing do snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-01 — OpenAPI Codegen Tooling → Setup` (`import "server-only";`, `createClient<paths>({ baseUrl: env.API_URL })`, export `upstream`). Imports de `openapi-fetch`, `./types.gen` e `@/lib/env` são derivable — implementer adiciona sem cobertura F2.
-3. Verificar dentro do container: `docker compose exec next-frontend npx tsc --noEmit` exit 0.
-4. Commitar `next-frontend/package.json`, `next-frontend/package-lock.json` e `next-frontend/lib/api/upstream.ts`.
+1. Inside the `next-frontend` container, run `npm install openapi-fetch` (per `**Libraries:**` in `next-frontend-openapi-typing/TD-01`; version pinned per `library-refs.md` — `^0.13.x`).
+2. Author `next-frontend/lib/api/upstream.ts` byte-verbatim for the F2-load-bearing part of the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-01 — OpenAPI Codegen Tooling → Setup` (`import "server-only";`, `createClient<paths>({ baseUrl: env.API_URL })`, export `upstream`). Imports from `openapi-fetch`, `./types.gen`, and `@/lib/env` are derivable — the implementer adds them without F2 coverage.
+3. Verify inside the container: `docker compose exec next-frontend npx tsc --noEmit` exit 0.
+4. Commit `next-frontend/package.json`, `next-frontend/package-lock.json`, and `next-frontend/lib/api/upstream.ts`.
 
 **Dependencies:** SI-2 (requires `next-frontend/lib/api/types.gen.ts` to typecheck the `createClient<paths>` instantiation)
 
@@ -92,10 +92,10 @@ sources_mtime:
 
 **Acceptance criteria:**
 
-- `next-frontend/package.json` lista `openapi-fetch` em `dependencies` com a versão pinada per `library-refs.md`.
-- `next-frontend/lib/api/upstream.ts` começa com a linha `import "server-only";` e exporta um símbolo `upstream` cuja inferência de tipo TypeScript resolve para `Client<paths>` (verificável por `tsc --noEmit` e por inspeção do hover-info no IDE).
-- Os tokens F2-load-bearing do snippet (`createClient<paths>`, `baseUrl: env.API_URL`, `import "server-only"`) aparecem byte-verbatim em `lib/api/upstream.ts`.
-- `docker compose exec next-frontend npx tsc --noEmit` exit 0 com o módulo no codebase.
+- `next-frontend/package.json` lists `openapi-fetch` in `dependencies` with the version pinned per `library-refs.md`.
+- `next-frontend/lib/api/upstream.ts` starts with the line `import "server-only";` and exports a symbol `upstream` whose TypeScript type inference resolves to `Client<paths>` (verifiable via `tsc --noEmit` and by inspecting hover-info in the IDE).
+- The F2-load-bearing tokens from the snippet (`createClient<paths>`, `baseUrl: env.API_URL`, `import "server-only"`) appear byte-verbatim in `lib/api/upstream.ts`.
+- `docker compose exec next-frontend npx tsc --noEmit` exit 0 with the module in the codebase.
 
 ---
 
@@ -103,13 +103,13 @@ sources_mtime:
 
 **Frontend Runtime spec:** see `## Technical Specifications` → `### Frontend Runtime` → `#### next-frontend-openapi-typing/TD-04 — Type Sharing Between BFF Layer and Components Layer`
 
-**Description:** Cria `next-frontend/lib/api/contracts.ts` como o **único** ponto autorizado a importar `paths` de `types.gen.ts`. O arquivo nasce sem aliases — feature SIs futuros (em fases que tocam o BFF) anexam aliases conforme os endpoints aparecem. A convenção pass-through-by-default (`type Video = paths["/videos/{id}"]...`) e a forma reshape (`type VideoCard = Pick<Video, ...>`) ficam documentadas in-file via comentário.
+**Description:** Creates `next-frontend/lib/api/contracts.ts` as the **only** authorized point that imports `paths` from `types.gen.ts`. The file starts with no aliases — future feature SIs (in phases that touch the BFF) attach aliases as endpoints appear. The pass-through-by-default convention (`type Video = paths["/videos/{id}"]...`) and the reshape form (`type VideoCard = Pick<Video, ...>`) are documented in-file via a comment.
 
 **Technical actions:**
 
-1. Autorar `next-frontend/lib/api/contracts.ts` com: (a) `import type { paths } from "./types.gen";` no topo; (b) bloco de comentário multi-linha descrevendo a convenção (pass-through alias indexa `paths["/route"]["method"]["responses"][status]["content"]["application/json"]`; reshape alias usa `Pick`/`Omit`/composição); (c) zero `export type` ainda — barril vazio pronto pra crescer. Estrutura segue o F2-load-bearing do snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-04 — Type Sharing Between BFF Layer and Components Layer → Setup`.
-2. Verificar dentro do container: `docker compose exec next-frontend npx tsc --noEmit` exit 0.
-3. Commitar `next-frontend/lib/api/contracts.ts`.
+1. Author `next-frontend/lib/api/contracts.ts` with: (a) `import type { paths } from "./types.gen";` at the top; (b) a multi-line comment block describing the convention (pass-through alias indexes `paths["/route"]["method"]["responses"][status]["content"]["application/json"]`; reshape alias uses `Pick`/`Omit`/composition); (c) zero `export type` yet — an empty barrel ready to grow. Structure follows the F2-load-bearing part of the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-04 — Type Sharing Between BFF Layer and Components Layer → Setup`.
+2. Verify inside the container: `docker compose exec next-frontend npx tsc --noEmit` exit 0.
+3. Commit `next-frontend/lib/api/contracts.ts`.
 
 **Dependencies:** SI-2 (requires `next-frontend/lib/api/types.gen.ts` existence so `import type { paths } from "./types.gen"` resolves)
 
@@ -117,9 +117,9 @@ sources_mtime:
 
 **Acceptance criteria:**
 
-- `next-frontend/lib/api/contracts.ts` existe e começa (após o comentário de cabeçalho opcional) com `import type { paths } from "./types.gen";`.
-- O arquivo NÃO exporta nenhum alias ainda — `grep -c '^export type' next-frontend/lib/api/contracts.ts` retorna `0` (a primeira feature SI futura é quem adiciona o primeiro alias).
-- O bloco de comentário descreve a convenção dual (pass-through alias keyed em `paths[...]` vs reshape alias via `Pick`/`Omit`).
+- `next-frontend/lib/api/contracts.ts` exists and starts (after the optional header comment) with `import type { paths } from "./types.gen";`.
+- The file does NOT export any alias yet — `grep -c '^export type' next-frontend/lib/api/contracts.ts` returns `0` (the first future feature SI is the one that adds the first alias).
+- The comment block describes the dual convention (pass-through alias keyed on `paths[...]` vs. reshape alias via `Pick`/`Omit`).
 - `docker compose exec next-frontend npx tsc --noEmit` exit 0.
 
 ---
@@ -128,13 +128,13 @@ sources_mtime:
 
 **Frontend Runtime spec:** see `## Technical Specifications` → `### Frontend Runtime` → `#### next-frontend-openapi-typing/TD-03 — Codegen Execution Timing & Output Commit Policy`
 
-**Description:** Materializa o gate de drift: um workflow de CI que roda `bash scripts/sync-openapi.sh` + `npm run openapi:types` + `git diff --exit-code next-frontend/openapi.json next-frontend/lib/api/types.gen.ts`. Falha quando qualquer dos dois committed artifacts está stale. A mensagem de erro do step de diff aponta o developer pro one-liner remediation. Plataforma de CI segue convenção do repo (GitHub Actions / GitLab CI / etc. — implementer resolve no momento da execução).
+**Description:** Materializes the drift gate: a CI workflow that runs `bash scripts/sync-openapi.sh` + `npm run openapi:types` + `git diff --exit-code next-frontend/openapi.json next-frontend/lib/api/types.gen.ts`. Fails when either of the two committed artifacts is stale. The diff step's error message points the developer to the one-liner remediation. The CI platform follows the repo's convention (GitHub Actions / GitLab CI / etc. — the implementer resolves this at execution time).
 
 **Technical actions:**
 
-1. Autorar arquivo de workflow CI no caminho canônico do repo (e.g., `.github/workflows/openapi-freshness.yml` quando GitHub Actions é a plataforma; ajustar conforme infra existente). Conteúdo segue byte-verbatim no F2-load-bearing o snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-03 — Codegen Execution Timing & Output Commit Policy → Setup` (3 steps: sync → gen → diff).
-2. Adicionar mensagem clara de remediation no step final (e.g., `Run: bash scripts/sync-openapi.sh && (cd next-frontend && npm run openapi:types) then commit`).
-3. Commitar o workflow file.
+1. Author the CI workflow file at the repo's canonical path (e.g., `.github/workflows/openapi-freshness.yml` when GitHub Actions is the platform; adjust per existing infra). Content follows byte-verbatim for the F2-load-bearing part of the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-03 — Codegen Execution Timing & Output Commit Policy → Setup` (3 steps: sync → gen → diff).
+2. Add a clear remediation message in the final step (e.g., `Run: bash scripts/sync-openapi.sh && (cd next-frontend && npm run openapi:types) then commit`).
+3. Commit the workflow file.
 
 **Dependencies:** SI-1 (workflow chama `scripts/sync-openapi.sh`), SI-2 (workflow chama `npm run openapi:types` e diff espera `lib/api/types.gen.ts` committed como baseline)
 
@@ -142,9 +142,9 @@ sources_mtime:
 
 **Acceptance criteria:**
 
-- Existe um workflow file no caminho canônico de CI do repo contendo, em ordem, os três steps: `bash scripts/sync-openapi.sh`, `cd next-frontend && npm run openapi:types`, `git diff --exit-code next-frontend/openapi.json next-frontend/lib/api/types.gen.ts`.
-- Em PR cujo `nestjs-project/openapi.json` permanece inalterado, o workflow exit 0 (no-drift baseline).
-- Em PR que muta `nestjs-project/openapi.json` sem rodar sync + regen localmente, o workflow exit non-zero no step de diff e a mensagem aponta para o one-liner de remediation `bash scripts/sync-openapi.sh && (cd next-frontend && npm run openapi:types)`.
+- A workflow file exists at the repo's canonical CI path containing, in order, the three steps: `bash scripts/sync-openapi.sh`, `cd next-frontend && npm run openapi:types`, `git diff --exit-code next-frontend/openapi.json next-frontend/lib/api/types.gen.ts`.
+- On a PR where `nestjs-project/openapi.json` remains unchanged, the workflow exits 0 (no-drift baseline).
+- On a PR that mutates `nestjs-project/openapi.json` without running sync + regen locally, the workflow exits non-zero at the diff step and the message points to the one-liner remediation `bash scripts/sync-openapi.sh && (cd next-frontend && npm run openapi:types)`.
 
 ---
 
@@ -152,23 +152,23 @@ sources_mtime:
 
 **Frontend Runtime spec:** see `## Technical Specifications` → `### Frontend Runtime` → `#### next-frontend-openapi-typing/TD-05 — MSW Handler Typing Against the Generated Schema`
 
-**Description:** TD-05 decide o padrão de tipagem mas NÃO bootstrap MSW em si (Vitest + `mocks/handlers.ts` + `mocks/server.ts` vivem na task separada `next-frontend-msw-foundation`). Este SI documenta o padrão em `next-frontend/CLAUDE.md § Testing` para que a task de bootstrap, quando aterrissar, adote a convenção `paths`-anchored byte-verbatim sem ter que rederivar a decisão.
+**Description:** TD-05 decides the typing pattern but does NOT bootstrap MSW itself (Vitest + `mocks/handlers.ts` + `mocks/server.ts` live in the separate task `next-frontend-msw-foundation`). This SI documents the pattern in `next-frontend/CLAUDE.md § Testing` so that the bootstrap task, when it lands, adopts the `paths`-anchored convention byte-verbatim without having to re-derive the decision.
 
 **Technical actions:**
 
-1. Editar `next-frontend/CLAUDE.md § Testing` para incluir uma sub-seção "MSW Handler Typing Convention" referenciando explicitamente `next-frontend-openapi-typing/TD-05` como a fonte da decisão.
-2. Adicionar code-block exemplo na nova sub-seção do CLAUDE.md, byte-verbatim no F2-load-bearing do snippet em `### Frontend Runtime → #### next-frontend-openapi-typing/TD-05 — MSW Handler Typing Against the Generated Schema → Setup` (`import type { paths } from "@/lib/api/types.gen"`, `HttpResponse.json<paths[...]["responses"][200]["content"]["application/json"]>(...)`, URL composta a partir de `env.API_URL`).
-3. Atualizar a sub-seção "Status — bootstrap pending" em `next-frontend/CLAUDE.md` para registrar que o padrão de tipagem está decidido (link cruzado para esta task) e que a task `next-frontend-msw-foundation` herda essa convenção quando rodar.
+1. Edit `next-frontend/CLAUDE.md § Testing` to include an "MSW Handler Typing Convention" sub-section explicitly referencing `next-frontend-openapi-typing/TD-05` as the source of the decision.
+2. Add an example code block in the new CLAUDE.md sub-section, byte-verbatim for the F2-load-bearing part of the snippet in `### Frontend Runtime → #### next-frontend-openapi-typing/TD-05 — MSW Handler Typing Against the Generated Schema → Setup` (`import type { paths } from "@/lib/api/types.gen"`, `HttpResponse.json<paths[...]["responses"][200]["content"]["application/json"]>(...)`, URL composed from `env.API_URL`).
+3. Update the "Status — bootstrap pending" sub-section in `next-frontend/CLAUDE.md` to record that the typing pattern is decided (cross-linked to this task) and that the `next-frontend-msw-foundation` task inherits this convention when it runs.
 
-**Dependencies:** SI-3 (referencia `next-frontend/lib/api/upstream.ts` indiretamente — o snippet documentado importa `paths` de `lib/api/types.gen` que o SI-2 produziu), SI-4 (referencia `lib/api/contracts.ts` na convenção)
+**Dependencies:** SI-3 (references `next-frontend/lib/api/upstream.ts` indirectly — the documented snippet imports `paths` from `lib/api/types.gen`, which SI-2 produced), SI-4 (references `lib/api/contracts.ts` in the convention)
 
 **Tests:** _(empty — Setup SI; smoke-gated by AC; behavior tests live in Migration + Verification SIs)_
 
 **Acceptance criteria:**
 
-- `next-frontend/CLAUDE.md § Testing` contém uma sub-seção (heading nível H3 ou bullet de seção) com título referenciando "MSW Handler Typing Convention" e cita explicitamente `next-frontend-openapi-typing/TD-05` como source-of-truth.
-- O code-block na sub-seção contém os tokens F2-load-bearing do snippet (`import type { paths }`, `HttpResponse.json<paths[...]>`, URL via `env.API_URL`) byte-verbatim do `### Frontend Runtime → #### next-frontend-openapi-typing/TD-05 → Setup`.
-- A sub-seção "Status — bootstrap pending" do CLAUDE.md menciona que a convenção de tipagem está decidida e referencia a task `next-frontend-msw-foundation` como owner da bootstrap.
+- `next-frontend/CLAUDE.md § Testing` contains a sub-section (H3-level heading or section bullet) titled with a reference to "MSW Handler Typing Convention" and explicitly citing `next-frontend-openapi-typing/TD-05` as the source of truth.
+- The code block in the sub-section contains the F2-load-bearing tokens from the snippet (`import type { paths }`, `HttpResponse.json<paths[...]>`, URL via `env.API_URL`) byte-verbatim from `### Frontend Runtime → #### next-frontend-openapi-typing/TD-05 → Setup`.
+- The CLAUDE.md "Status — bootstrap pending" sub-section mentions that the typing convention is decided and references the `next-frontend-msw-foundation` task as the bootstrap owner.
 
 ---
 
@@ -194,7 +194,7 @@ export const upstream = createClient<paths>({ baseUrl: env.API_URL });
 
 `import "server-only"` (Next.js primitive) turns any Client Component import of this module into a build error — defense-in-depth on top of the BFF model. `env.API_URL` is the server-only key validated by `@t3-oss/env-nextjs` (inherited from `next-frontend-config-base/TD-03`).
 
-**Aplicação:**
+**Application:**
 
 Logic-only phase — `## UI Inventory` is the `_Frontend-runtime only —` placeholder; no `### Server-connected Components` sub-block exists yet. The pattern applies to:
 
@@ -203,11 +203,11 @@ Logic-only phase — `## UI Inventory` is the `_Frontend-runtime only —` place
 
 Future UI surfaces inherit this constraint via `## Inherited Decisions Detail`; Components themselves do NOT import `openapi-fetch` (browser never calls the upstream).
 
-**Migração:**
+**Migration:**
 
 _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** `npx tsc --noEmit` succeeds on `lib/api/upstream.ts` and every consumer of `paths`. Type errors here surface contract drift before runtime.
 - **Integration:** `*.integration.test.ts` under `next-frontend/app/api/**/__tests__/` instantiates Route Handlers as functions and asserts on the typed `Response`; `msw/node` intercepts the `upstream.GET/POST` calls. Tests fail if a handler's request shape diverges from the `paths`-derived type.
@@ -230,7 +230,7 @@ echo "synced: nestjs-project/openapi.json → next-frontend/openapi.json"
 
 Both `next-frontend/openapi.json` and `nestjs-project/openapi.json` are committed; the sync script keeps them byte-identical. The script runs on the host — codegen INSIDE the container reads `./openapi.json` (i.e., `/home/node/app/openapi.json`, the mounted local copy).
 
-**Aplicação:**
+**Application:**
 
 Logic-only phase. The pattern applies to:
 
@@ -239,11 +239,11 @@ Logic-only phase. The pattern applies to:
 - Every developer workflow that touches the backend OpenAPI surface: edit a controller in `nestjs-project/` → regenerate `nestjs-project/openapi.json` via that subproject's existing script (`openapi-docs-nestjs/TD-02`) → run `bash scripts/sync-openapi.sh` from repo root → commit both files in the same PR.
 - CI workflow (per TD-03) — runs the sync script as the first step of the freshness check.
 
-**Migração:**
+**Migration:**
 
 _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** running `bash scripts/sync-openapi.sh` produces a `next-frontend/openapi.json` byte-identical to `nestjs-project/openapi.json` (verifiable via `diff -q`).
 - **Integration:** TD-03's CI freshness check (see below) is the structural verifier — it asserts that any drift between the two files is caught.
@@ -278,7 +278,7 @@ _No existing files require refactor — Setup SI is the only application of this
 
 The third step is the gate: any non-empty diff means the PR forgot to either sync (`openapi.json` stale) or regenerate (`types.gen.ts` stale). The error message MUST direct developers to `bash scripts/sync-openapi.sh && (cd next-frontend && npm run openapi:types)`.
 
-**Aplicação:**
+**Application:**
 
 Logic-only phase. The pattern applies to:
 
@@ -287,11 +287,11 @@ Logic-only phase. The pattern applies to:
 - CI workflow file (project's CI config — exact path / platform per repo conventions; the workflow does not exist yet so the SI that introduces it must be authored fresh).
 - (Optional) `.husky/pre-commit` — same three-step check locally; deferred unless husky/lefthook is already in use elsewhere in the repo.
 
-**Migração:**
+**Migration:**
 
 _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** running `npm run openapi:types` from inside the `next-frontend` container regenerates `lib/api/types.gen.ts` deterministically (same input ⇒ identical output).
 - **Integration:** the CI freshness check itself IS the integration verifier — it fails on any drift; passing means the committed pair is current.
@@ -318,7 +318,7 @@ export type VideoCard = Pick<Video, "id" | "title" | "thumbnailUrl">;
 
 `lib/api/contracts.ts` is the **only** file in the project allowed to import `paths` from `lib/api/types.gen.ts`. Components and Route Handlers both import named aliases from `@/lib/api/contracts`.
 
-**Aplicação:**
+**Application:**
 
 Logic-only phase. The pattern applies to:
 
@@ -327,11 +327,11 @@ Logic-only phase. The pattern applies to:
 - Every future Server / Client Component that consumes a BFF endpoint: imports the alias from `@/lib/api/contracts`, never from Route Handler modules.
 - Future ESLint custom rule (deferred — not part of this task's SI): restrict `from "./types.gen"` / `from "@/lib/api/types.gen"` imports to `lib/api/contracts.ts` only.
 
-**Migração:**
+**Migration:**
 
 _No existing files require refactor — Setup SI is the only application of this pattern in the current phase._
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** `npx tsc --noEmit` succeeds on `lib/api/contracts.ts` (and every consumer). Adding an alias for a non-existent `paths` key fails compile.
 - **Integration:** Route Handler integration tests assert on response shapes derived from the alias; spec changes that break a contract surface as compile failures in `contracts.ts` (load-bearing path) before runtime.
@@ -369,7 +369,7 @@ export const server = setupServer(...handlers);
 
 The MSW `setupServer` instance is wired into Vitest `setupFiles` (`server.listen()` / `server.resetHandlers()` / `server.close()` per the bootstrap task, which is out-of-scope here — see `next-frontend/CLAUDE.md` § "Status — bootstrap pending").
 
-**Aplicação:**
+**Application:**
 
 Logic-only phase. The pattern applies to:
 
@@ -378,7 +378,7 @@ Logic-only phase. The pattern applies to:
 - Every BFF integration test under `next-frontend/app/api/**/__tests__/*.integration.test.ts`: imports Route Handlers as functions, calls them with constructed `Request` objects, and asserts on the returned `Response`. Per-test overrides use `server.use(http.get(...))` typed off `paths[...]` (same anchor).
 - URL composition in handlers: uses `${env.API_URL}/...` to match the value the BFF actually calls — the test runtime sets `API_URL` to whatever the test environment routes through.
 
-**Migração:**
+**Migration:**
 
 | File | Current behavior | Required change | Owning SI |
 |------|-----------------|-----------------|-----------|
@@ -386,7 +386,7 @@ Logic-only phase. The pattern applies to:
 
 The bootstrap of Vitest + MSW + the wiring of `setupFiles` is **out-of-scope** for this task; this task only locks the **typing pattern** (`paths`-anchored fixtures, no auto-generated handlers, no `faker`). The bootstrap task adopts the pattern when it lands.
 
-**Verificação:**
+**Verification:**
 
 - **Unit:** `npx tsc --noEmit` succeeds on `mocks/handlers.ts`. A stale fixture (e.g., upstream renamed a field) fails compile.
 - **Integration:** BFF integration tests assert on specific values returned by the handlers / per-test overrides — deterministic by construction.

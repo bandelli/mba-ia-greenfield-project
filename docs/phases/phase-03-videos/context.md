@@ -17,34 +17,34 @@ sources_mtime:
 
 ## Scope
 
-**Phase name:** Upload e Processamento de Vídeos
+**Phase name:** Video Upload and Processing
 
 **Capabilities** (literal, `docs/project-plan.md`):
 
-- Serviço de armazenamento de arquivos (vídeos e thumbnails)
-- Serviço de processamento em segundo plano (filas)
-- Upload de vídeos com suporte a arquivos de até 10GB sem impacto na performance
-- Pré-cadastro automático do vídeo como rascunho ao iniciar o upload
-- Processamento automático do vídeo após upload (extração de duração e metadados)
-- Geração automática de thumbnail a partir de um frame do vídeo
-- URL única por vídeo, sem conflito com outros vídeos
-- Reprodução via streaming (sem necessidade de download completo)
-- Download do vídeo pelo usuário
+- File storage service (videos and thumbnails)
+- Background processing service (queues)
+- Video upload supporting files up to 10GB without performance impact
+- Automatic pre-registration of the video as a draft when the upload starts
+- Automatic video processing after upload (duration and metadata extraction)
+- Automatic thumbnail generation from a video frame
+- Unique URL per video, with no conflicts with other videos
+- Streaming playback (without needing a full download)
+- Video download by the user
 
 **Out of scope:** _Not specified._
 
-**Deliverables:** upload de até 10GB funcional, processamento automático do vídeo, streaming funcionando, URLs únicas geradas.
+**Deliverables:** functional upload up to 10GB, automatic video processing, working streaming, unique URLs generated.
 
 **Affected subprojects:** _Not specified._ (no explicit subproject paths mentioned in the phase's project-plan.md text; `docs/decisions/technical-decisions-phase-03-videos.md` names `nestjs-project/` as primary and `next-frontend/` as receiving the cross-layer wire contracts only)
 
 **Deferred subprojects:** _None._
 
-**Sequencing notes:** Depende de: Fase 01, Fase 02
+**Sequencing notes:** Depends on: Phase 01, Phase 02
 
 **Neighbors (for boundary detection only):**
 
-- **Phase 02:** Cadastro, Login e Gerenciamento de Conta (depende de: Fase 01)
-- **Phase 04:** Gerenciamento de Vídeos e Canal (depende de: Fase 02, Fase 03)
+- **Phase 02:** Registration, Login, and Account Management (depends on: Phase 01)
+- **Phase 04:** Video and Channel Management (depends on: Phase 02, Phase 03)
 
 ## Decisions Index
 
@@ -54,7 +54,7 @@ sources_mtime:
 | phase-03-videos/TD-02 | phase | Backend | Background Job Queue Library | decided | B (pg-boss) | pg-boss |
 | phase-03-videos/TD-03 | phase | Backend | Video Worker Deployment Model | decided | A (Dedicated worker process, same codebase) | — |
 | phase-03-videos/TD-04 | phase | Backend | Video Processing Pipeline (Metadata & Thumbnail Extraction) | decided | A (`fluent-ffmpeg`) | fluent-ffmpeg |
-|     └─ Last revision: 2026-09-08 — Fixa a regra de seleção de frame do thumbnail automático (`min(1s, 10% da duração)`). | | | | | | |
+|     └─ Last revision: 2026-09-08 — Fixes the automatic thumbnail's frame-selection rule (`min(1s, 10% of duration)`). | | | | | | |
 | phase-03-videos/TD-05 | phase | Backend | Unique Video URL / Public Identifier Strategy | decided | A (`nanoid` short opaque public ID) | nanoid |
 | phase-03-videos/TD-06 | phase | Cross-layer | Upload Protocol for Files up to 10GB | decided | A (tus protocol — `@tus/server` + `@tus/s3-store`) | @tus/server, @tus/s3-store |
 |     └─ Last revision: 2026-09-08 — Fixa o modelo de ownership do draft: upload autenticado, `userId`/`channelId` gravados em `onUploadCreate`. | | | | | | |
@@ -71,15 +71,15 @@ _Source files:_
 
 | Capability (from project-plan.md) | Covered by |
 |-----------------------------------|------------|
-| Serviço de armazenamento de arquivos (vídeos e thumbnails) | phase-03-videos/TD-01, phase-03-videos/TD-08 |
-| Serviço de processamento em segundo plano (filas) | phase-03-videos/TD-02, phase-03-videos/TD-03, phase-03-videos/TD-08 |
-| Upload de vídeos com suporte a arquivos de até 10GB sem impacto na performance | phase-03-videos/TD-06, phase-03-videos/TD-09 |
-| Pré-cadastro automático do vídeo como rascunho ao iniciar o upload | phase-03-videos/TD-06, phase-03-videos/TD-10 |
-| Processamento automático do vídeo após upload (extração de duração e metadados) | phase-03-videos/TD-03, phase-03-videos/TD-04, phase-03-videos/TD-09, phase-03-videos/TD-10 |
-| Geração automática de thumbnail a partir de um frame do vídeo | phase-03-videos/TD-04 |
-| URL única por vídeo, sem conflito com outros vídeos | phase-03-videos/TD-05 |
-| Reprodução via streaming (sem necessidade de download completo) | phase-03-videos/TD-07 |
-| Download do vídeo pelo usuário | phase-03-videos/TD-07 |
+| File storage service (videos and thumbnails) | phase-03-videos/TD-01, phase-03-videos/TD-08 |
+| Background processing service (queues) | phase-03-videos/TD-02, phase-03-videos/TD-03, phase-03-videos/TD-08 |
+| Video upload supporting files up to 10GB without performance impact | phase-03-videos/TD-06, phase-03-videos/TD-09 |
+| Automatic pre-registration of the video as a draft when the upload starts | phase-03-videos/TD-06, phase-03-videos/TD-10 |
+| Automatic video processing after upload (duration and metadata extraction) | phase-03-videos/TD-03, phase-03-videos/TD-04, phase-03-videos/TD-09, phase-03-videos/TD-10 |
+| Automatic thumbnail generation from a video frame | phase-03-videos/TD-04 |
+| Unique URL per video, with no conflicts with other videos | phase-03-videos/TD-05 |
+| Streaming playback (without needing a full download) | phase-03-videos/TD-07 |
+| Video download by the user | phase-03-videos/TD-07 |
 
 ## Decisions Detail
 
@@ -103,7 +103,7 @@ _Source files:_
 **Recommendation:** directly matches the architecture diagram's self-hosted FFmpeg worker, covers both required operations (metadata via `ffprobe`, thumbnail via `screenshots()`) with a mature, well-documented API, and avoids both Option B's needless reimplementation and Option C's unwarranted vendor dependency for a scope this narrow.
 **Libraries:** fluent-ffmpeg
 **Revisions:**
-- 2026-09-08 — Fixa a regra de seleção de frame para o thumbnail automático: captura no menor valor entre 1 segundo e 10% da duração total do vídeo (`min(1s, 10% da duração)`), passado como `timestamps` para `.screenshots()`. Rationale: min(1s, 10% da duração) — evita frames pretos de abertura/fade-in tanto em vídeos curtos quanto longos, sem exigir uma segunda passada de detecção de cena.
+- 2026-09-08 — Fixes the frame-selection rule for the automatic thumbnail: captures at the smaller of 1 second and 10% of the video's total duration (`min(1s, 10% of duration)`), passed as `timestamps` to `.screenshots()`. Rationale: min(1s, 10% of duration) — avoids black opening/fade-in frames in both short and long videos, without requiring a second scene-detection pass.
 
 ### phase-03-videos/TD-05
 
@@ -112,10 +112,10 @@ _Source files:_
 
 ### phase-03-videos/TD-06
 
-**Recommendation:** it is the only option where resumability (an explicit project-plan.md requirement) is a property of the protocol rather than custom code the team must get right for every edge case (partial chunk, expired session, concurrent resume). It also gives the "pré-cadastro automático ao iniciar o upload" bullet a precise, well-documented implementation point (`onUploadCreate`) instead of an ad-hoc endpoint. The cost — a non-REST protocol mounted as middleware — is confined to a single upload route; every other endpoint in the API is unaffected.
+**Recommendation:** it is the only option where resumability (an explicit project-plan.md requirement) is a property of the protocol rather than custom code the team must get right for every edge case (partial chunk, expired session, concurrent resume). It also gives the "automatic pre-registration when the upload starts" bullet a precise, well-documented implementation point (`onUploadCreate`) instead of an ad-hoc endpoint. The cost — a non-REST protocol mounted as middleware — is confined to a single upload route; every other endpoint in the API is unaffected.
 **Libraries:** @tus/server, @tus/s3-store
 **Revisions:**
-- 2026-09-08 — Fixa o modelo de ownership do draft criado em `onUploadCreate`: o endpoint de upload exige um usuário autenticado (reutilizando o guard JWT de `phase-02-auth`), e o hook grava `userId`/`channelId` no draft `Video` no mesmo momento em que ele é criado — antes de qualquer byte do arquivo trafegar. Rationale: autenticado, ownership imediato — evita drafts órfãos e mantém o "pré-cadastro automático" já dono do vídeo desde a primeira requisição, sem depender de uma etapa posterior de atribuição na Fase 04.
+- 2026-09-08 — Fixes the ownership model of the draft created in `onUploadCreate`: the upload endpoint requires an authenticated user (reusing the JWT guard from `phase-02-auth`), and the hook records `userId`/`channelId` on the draft `Video` at the same moment it is created — before any byte of the file is transferred. Rationale: authenticated, immediate ownership — avoids orphan drafts and keeps the "automatic pre-registration" already owning the video from the first request, without depending on a later assignment step in Phase 04.
 
 ### phase-03-videos/TD-07
 
@@ -134,7 +134,7 @@ _Source files:_
 
 ### phase-03-videos/TD-10
 
-**Recommendation:** it is the only option that reaches both required terminal states (`pronto` and `erro`) under normal operation while not wasting a whole upload on a failure that a bounded retry would have recovered from for free. `pg-boss`'s `retryLimit`/`retryBackoff` options (TD-02's own dependency) implement the bounded-retry mechanics directly — no new library, no hand-rolled retry/backoff logic to write or test. Option B is rejected because it conflates transient infrastructure faults with genuinely broken uploads at the cost of the full 10GB upload; Option C is rejected because it fails the assignment's literal "pronto/erro" state-machine requirement outright.
+**Recommendation:** it is the only option that reaches both required terminal states (`ready` and `error`) under normal operation while not wasting a whole upload on a failure that a bounded retry would have recovered from for free. `pg-boss`'s `retryLimit`/`retryBackoff` options (TD-02's own dependency) implement the bounded-retry mechanics directly — no new library, no hand-rolled retry/backoff logic to write or test. Option B is rejected because it conflates transient infrastructure faults with genuinely broken uploads at the cost of the full 10GB upload; Option C is rejected because it fails the assignment's literal "ready/error" state-machine requirement outright.
 **Libraries:** —
 
 ## Inherited Decisions Detail
@@ -248,17 +248,17 @@ _Source files:_
 
 ### openapi-docs-nestjs/TD-01
 
-**Recommendation:** é a única opção que preserva as decisões anteriores (`class-validator` em TD-06 de phase-02-auth) sem re-platform; o CLI plugin com `classValidatorShim: true` aproveita os decoradores `class-validator` existentes para inferir schemas, mantendo o boilerplate baixo. Nestia tem mérito técnico real mas o custo de migração do stack de validação inviabiliza-a sem uma decisão upstream de supersede de TD-06. Manual authoring é descartado.
+**Recommendation:** it is the only option that preserves prior decisions (`class-validator` in phase-02-auth's TD-06) without a re-platform; the CLI plugin with `classValidatorShim: true` leverages the existing `class-validator` decorators to infer schemas, keeping boilerplate low. Nestia has real technical merit but the validation-stack migration cost makes it unviable without an upstream decision superseding TD-06. Manual authoring is discarded.
 **Libraries:** @nestjs/swagger
 
 ### openapi-docs-nestjs/TD-02
 
-**Recommendation:** o custo marginal sobre Option A é apenas um npm script (~15 linhas) e o benefício é uma fundação correta para futura integração FE (codegen offline) sem perder a UI interativa que dev/QA usam. Option B sozinho pune a experiência de desenvolvimento em dev/local; Option A sozinho compromete o pipeline de codegen futuro. Combinar é dominante.
+**Recommendation:** the marginal cost over Option A is just an npm script (~15 lines) and the benefit is a correct foundation for future FE integration (offline codegen) without losing the interactive UI dev/QA use. Option B alone penalizes the dev/local development experience; Option A alone compromises the future codegen pipeline. Combining them is dominant.
 **Libraries:** —
 
 ### openapi-docs-nestjs/TD-03
 
-**Recommendation:** alinha com a postura defensiva já estabelecida em phase 02 e não compromete consumidores legítimos (o `openapi.json` commitado em TD-02 cumpre o papel de "spec consultável fora da UI"). Re-abrir como Option A ou C é trivial no futuro se um caso de uso de API pública aparecer.
+**Recommendation:** aligns with the defensive posture already established in phase 02 and does not compromise legitimate consumers (the `openapi.json` committed in TD-02 fulfills the role of a "spec consultable outside the UI"). Reopening as Option A or C is trivial in the future if a public-API use case appears.
 **Libraries:** —
 
 ## Inherited Conventions
@@ -274,12 +274,12 @@ _Source files:_
 
 | Capability | Status | Origin phase | Rationale |
 |-----------|--------|--------------|-----------|
-| Telas de frontend | deferred | phase-01-configuracao-base | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
-| Telas de cadastro, login, confirmação de conta e recuperação de senha | deferred | phase-02-auth | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
-| "Confirmação de conta via e-mail com link de ativação" | deferred | phase-02-auth-frontend | deferred_to_next_phase — UI landing screen de-scoped 2026-05-14; FE confirmation flow (TD-07) picked up by a future phase. BE side unchanged in `phase-02-auth`. |
+| Frontend screens | deferred | phase-01-configuracao-base | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
+| Registration, login, account confirmation, and password recovery screens | deferred | phase-02-auth | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
+| "Account confirmation via email with an activation link" | deferred | phase-02-auth-frontend | deferred_to_next_phase — UI landing screen de-scoped 2026-05-14; FE confirmation flow (TD-07) picked up by a future phase. BE side unchanged in `phase-02-auth`. |
 | "Logout" | deferred | phase-02-auth-frontend | deferred_to_next_phase — logout button lives inside authenticated chrome (typically Phase 04). Phase 02 still implements POST `/api/auth/logout` (BFF route handler + `session.destroy()`) so the contract is ready when the chrome lands. |
-| "Recuperação de senha (destination screen / set-new-password)" | deferred | phase-02-auth-frontend | deferred_to_next_phase — `/forgot-password` ships this phase sending the e-mail; the reset-password destination screen is absent from Figma → link destination remains a 404 until a later phase delivers the screen via `/screen-inventory` extension run. Documented as a known gap. |
-| "Telas de cadastro, login, confirmação de conta e recuperação de senha" | deferred | phase-02-auth-frontend | a tela de confirmação da conta não será implementada nesta fase corrente, será adiada — the umbrella bullet's full coverage requires the confirmação and reset-password destination screens; both are deferred per Non-UI rows above. The 3 ship-this-phase telas (signup, login, forgot-password) are inventoried and covered by their own verbs; the umbrella bullet itself is deferred to the phase that lands the missing screens. |
+| "Password recovery (destination screen / set-new-password)" | deferred | phase-02-auth-frontend | deferred_to_next_phase — `/forgot-password` ships this phase sending the email; the reset-password destination screen is absent from Figma → link destination remains a 404 until a later phase delivers the screen via `/screen-inventory` extension run. Documented as a known gap. |
+| "Registration, login, account confirmation, and password recovery screens" | deferred | phase-02-auth-frontend | the account confirmation screen will not be implemented in this current phase, it will be deferred — the umbrella bullet's full coverage requires the confirmation and reset-password destination screens; both are deferred per Non-UI rows above. The 3 ship-this-phase screens (signup, login, forgot-password) are inventoried and covered by their own verbs; the umbrella bullet itself is deferred to the phase that lands the missing screens. |
 
 ## Non-UI / Deferred Capabilities
 
@@ -316,4 +316,4 @@ _No testing guide artifact exists yet for a background worker entrypoint (`src/w
 | `lib/` utility / boundary module with branching or shape assumptions (e.g. a tus-client wrapper per TD-06) | `*.test.ts` |
 | Client component (`"use client"`) with state/handlers | `*.test.tsx` — RTL + `jsdom` docblock, mock `next/navigation`, MSW for fetch |
 
-_No UI screen is planned for this phase (project-plan.md has no "Tela"/"Página" bullet for Fase 03) — the Pages/Layouts/Feature-component rows of the checklist do not apply yet. `next-frontend`'s involvement is limited to the two Cross-layer wire contracts (TD-06 upload handshake, TD-07 media delivery), consumed by future phases' screens._
+_No UI screen is planned for this phase (project-plan.md has no "Screen"/"Page" bullet for Phase 03) — the Pages/Layouts/Feature-component rows of the checklist do not apply yet. `next-frontend`'s involvement is limited to the two Cross-layer wire contracts (TD-06 upload handshake, TD-07 media delivery), consumed by future phases' screens._

@@ -8,27 +8,27 @@ sources_mtime:
   docs/decisions/technical-decisions-openapi-docs-nestjs.md: "2026-09-07T21:58:17"
 ---
 
-# Phase 03 — Upload e Processamento de Vídeos
+# Phase 03 — Video Upload and Processing
 
 ## Objective
 
-Implementar o serviço de armazenamento de arquivos (vídeos e thumbnails) e de processamento em segundo plano (filas), o upload de vídeos com suporte a arquivos de até 10GB sem impacto na performance com pré-cadastro automático do vídeo como rascunho ao iniciar o upload, o processamento automático do vídeo após upload (extração de duração e metadados e geração automática de thumbnail) com o ciclo de status do vídeo (rascunho → processando → pronto/erro) e tratamento de falha de processamento, a geração de URL única por vídeo sem conflito com outros vídeos, e a reprodução via streaming e o download do vídeo pelo usuário — entregando upload de até 10GB funcional, processamento automático do vídeo, streaming funcionando e URLs únicas geradas.
+Implement the file storage service (videos and thumbnails) and the background processing service (queues), video upload supporting files up to 10GB without performance impact with automatic pre-registration of the video as a draft when the upload starts, automatic video processing after upload (duration/metadata extraction and automatic thumbnail generation) with the video status lifecycle (draft → processing → ready/error) and processing-failure handling, unique URL generation per video with no conflicts with other videos, and streaming playback and download of the video by the user — delivering a functional upload of up to 10GB, automatic video processing, working streaming, and unique URLs generated.
 
 ---
 
 ## Step Implementations
 
-### SI-03.1 — Storage module (cliente S3-compatible)
+### SI-03.1 — Storage module (S3-compatible client)
 
-**Description:** Cria o serviço de armazenamento de arquivos (vídeos e thumbnails) sobre `@aws-sdk/client-s3`, configurável para MinIO (dev) ou S3 real (prod) sem mudança de código.
+**Description:** Creates the file storage service (videos and thumbnails) on top of `@aws-sdk/client-s3`, configurable for MinIO (dev) or real S3 (prod) with no code change.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/storage/storage.config.ts` — factory `registerAs('storage', ...)` com `endpoint`, `forcePathStyle`, `region`, `bucket`, credenciais via env (per `phase-03-videos/TD-01`, seguindo a convenção `registerAs` de `phase-01-configuracao-base/TD-03`)
-2. Adicionar as chaves de storage ao schema Joi de `env.validation.ts` (per `phase-01-configuracao-base/TD-02`)
-3. Criar `nestjs-project/src/storage/storage.service.ts` — `StorageService` encapsulando `S3Client` (`putObject`, `getObject`, `deleteObject`) e `@aws-sdk/s3-request-presigner` (`getPresignedUrl`) (per `phase-03-videos/TD-01`)
-4. Criar `nestjs-project/src/storage/storage.module.ts` — `StorageModule` com `ConfigModule.forFeature(storageConfig)` e export de `StorageService`
-5. Registrar `StorageModule` em `AppModule`
+1. Create `nestjs-project/src/storage/storage.config.ts` — `registerAs('storage', ...)` factory with `endpoint`, `forcePathStyle`, `region`, `bucket`, credentials via env (per `phase-03-videos/TD-01`, following the `registerAs` convention from `phase-01-configuracao-base/TD-03`)
+2. Add the storage keys to `env.validation.ts`'s Joi schema (per `phase-01-configuracao-base/TD-02`)
+3. Create `nestjs-project/src/storage/storage.service.ts` — `StorageService` wrapping `S3Client` (`putObject`, `getObject`, `deleteObject`) and `@aws-sdk/s3-request-presigner` (`getPresignedUrl`) (per `phase-03-videos/TD-01`)
+4. Create `nestjs-project/src/storage/storage.module.ts` — `StorageModule` with `ConfigModule.forFeature(storageConfig)` and exporting `StorageService`
+5. Register `StorageModule` in `AppModule`
 
 **Tests:**
 
@@ -41,23 +41,23 @@ Implementar o serviço de armazenamento de arquivos (vídeos e thumbnails) e de 
 
 **Acceptance criteria:**
 
-- `StorageService.putObject` com um buffer válido armazena o objeto no bucket configurado e retorna a chave gerada.
-- `StorageService.deleteObject` remove um objeto existente do bucket.
-- `StorageService.getPresignedUrl` para uma chave existente retorna uma URL assinada válida por tempo limitado.
-- A mesma configuração (`endpoint` + `forcePathStyle`) funciona tanto contra MinIO (dev) quanto contra um endpoint S3-compatible de produção, sem branching de código (per `phase-03-videos/TD-01`).
+- `StorageService.putObject` with a valid buffer stores the object in the configured bucket and returns the generated key.
+- `StorageService.deleteObject` removes an existing object from the bucket.
+- `StorageService.getPresignedUrl` for an existing key returns a signed URL valid for a limited time.
+- The same configuration (`endpoint` + `forcePathStyle`) works against both MinIO (dev) and a production S3-compatible endpoint, with no code branching (per `phase-03-videos/TD-01`).
 
 ---
 
-### SI-03.2 — Fila de processamento em segundo plano (pg-boss)
+### SI-03.2 — Background processing queue (pg-boss)
 
-**Description:** Cria o serviço de fila em segundo plano sobre `pg-boss`, reaproveitando a conexão PostgreSQL já operada pelo projeto.
+**Description:** Creates the background queue service on top of `pg-boss`, reusing the PostgreSQL connection the project already operates.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/queue/queue.config.ts` — factory `registerAs('queue', ...)` reaproveitando a string de conexão do `databaseConfig` (per `phase-03-videos/TD-02`, `phase-01-configuracao-base/TD-03`)
-2. Criar `nestjs-project/src/queue/queue.service.ts` — `QueueService` encapsulando `pg-boss` (`start()`, `send()`, `work()`) (per `phase-03-videos/TD-02`)
-3. Criar `nestjs-project/src/queue/queue.module.ts` — `QueueModule` com export de `QueueService`
-4. Registrar `QueueModule` em `AppModule`
+1. Create `nestjs-project/src/queue/queue.config.ts` — `registerAs('queue', ...)` factory reusing `databaseConfig`'s connection string (per `phase-03-videos/TD-02`, `phase-01-configuracao-base/TD-03`)
+2. Create `nestjs-project/src/queue/queue.service.ts` — `QueueService` wrapping `pg-boss` (`start()`, `send()`, `work()`) (per `phase-03-videos/TD-02`)
+3. Create `nestjs-project/src/queue/queue.module.ts` — `QueueModule` exporting `QueueService`
+4. Register `QueueModule` in `AppModule`
 
 **Tests:**
 
@@ -70,22 +70,22 @@ Implementar o serviço de armazenamento de arquivos (vídeos e thumbnails) e de 
 
 **Acceptance criteria:**
 
-- `QueueService.send('video.uploaded', payload)` insere um job na fila (per `phase-03-videos/TD-02`, produtor definido em `phase-03-videos/TD-09`).
-- Um job registrado via `QueueService.work` é processado por um handler ativo.
-- Um job cujo handler lança exceção é reenviado automaticamente até o limite de retry/backoff configurado por `pg-boss` (per `phase-03-videos/TD-02`).
+- `QueueService.send('video.uploaded', payload)` inserts a job into the queue (per `phase-03-videos/TD-02`, producer defined in `phase-03-videos/TD-09`).
+- A job registered via `QueueService.work` is processed by an active handler.
+- A job whose handler throws is automatically resent up to the retry/backoff limit configured by `pg-boss` (per `phase-03-videos/TD-02`).
 
 ---
 
-### SI-03.3 — Pipeline de processamento de vídeo (metadados + thumbnail)
+### SI-03.3 — Video processing pipeline (metadata + thumbnail)
 
-**Description:** Cria o serviço que extrai duração/metadados via `ffprobe` e gera a thumbnail automática via `fluent-ffmpeg`, aplicando a regra de seleção de frame fixada em Revision.
+**Description:** Creates the service that extracts duration/metadata via `ffprobe` and generates the automatic thumbnail via `fluent-ffmpeg`, applying the frame-selection rule fixed in the Revision.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/processing/video-processing.service.ts` — `VideoProcessingService.extractMetadata(key)` chamando `ffmpeg.ffprobe` sobre o objeto lido via `StorageService` (per `phase-03-videos/TD-04`)
-2. Implementar `VideoProcessingService.generateThumbnail(key)` — `.screenshots({ timestamps: [...] })` capturando o frame em `min(1s, 10% da duração)`, persistindo a thumbnail via `StorageService.putObject` (per `phase-03-videos/TD-04` e sua Revision de 2026-09-08)
-3. Criar `nestjs-project/src/processing/processing.module.ts` — `ProcessingModule` importando `StorageModule`, export de `VideoProcessingService`
-4. Registrar `ProcessingModule` em `AppModule`
+1. Create `nestjs-project/src/processing/video-processing.service.ts` — `VideoProcessingService.extractMetadata(key)` calling `ffmpeg.ffprobe` on the object read via `StorageService` (per `phase-03-videos/TD-04`)
+2. Implement `VideoProcessingService.generateThumbnail(key)` — `.screenshots({ timestamps: [...] })` capturing the frame at `min(1s, 10% of duration)`, persisting the thumbnail via `StorageService.putObject` (per `phase-03-videos/TD-04` and its 2026-09-08 Revision)
+3. Create `nestjs-project/src/processing/processing.module.ts` — `ProcessingModule` importing `StorageModule`, exporting `VideoProcessingService`
+4. Register `ProcessingModule` in `AppModule`
 
 **Tests:**
 
@@ -94,146 +94,146 @@ Implementar o serviço de armazenamento de arquivos (vídeos e thumbnails) e de 
 | `ProcessingModule` | Unit: compilation test | `processing.module.spec.ts` |
 | `VideoProcessingService` | Unit: real `fluent-ffmpeg` lib against a fixture video file | `video-processing.service.spec.ts` |
 
-**Dependencies:** SI-03.1 — `StorageService` fornece leitura do objeto original e escrita da thumbnail gerada.
+**Dependencies:** SI-03.1 — `StorageService` provides reading of the original object and writing of the generated thumbnail.
 
 **Acceptance criteria:**
 
-- `VideoProcessingService.extractMetadata` retorna duração e metadados corretos para um arquivo de vídeo válido.
-- `VideoProcessingService.generateThumbnail` captura o frame em `min(1s, 10% da duração)` do vídeo (per `phase-03-videos/TD-04` Revision, 2026-09-08).
-- A thumbnail gerada é persistida no object storage via `StorageService.putObject`.
+- `VideoProcessingService.extractMetadata` returns correct duration and metadata for a valid video file.
+- `VideoProcessingService.generateThumbnail` captures the frame at `min(1s, 10% of duration)` of the video (per `phase-03-videos/TD-04` Revision, 2026-09-08).
+- The generated thumbnail is persisted to object storage via `StorageService.putObject`.
 
 ---
 
-### SI-03.4 — Worker de vídeo (processo dedicado)
+### SI-03.4 — Video worker (dedicated process)
 
-**Description:** Cria o entrypoint do worker dedicado que consome a fila `video.uploaded`, delega ao pipeline de processamento e reflete o resultado no ciclo de status do `Video` — isolando o processamento pesado do processo da API.
+**Description:** Creates the dedicated worker entrypoint that consumes the `video.uploaded` queue, delegates to the processing pipeline, and reflects the result in the `Video`'s status lifecycle — isolating heavy processing from the API process.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/worker/main.ts` — bootstrap standalone (`NestFactory.createApplicationContext`) que registra `QueueService.work('video.uploaded', handler)` chamando `VideoProcessingService`; em caso de sucesso, atualiza `Video.status = 'ready'` (per `phase-03-videos/TD-03`; status per `phase-03-videos/TD-10`)
-2. Adicionar stage/target `video-worker` ao `Dockerfile` do `nestjs-project/`, com `ffmpeg`/`ffprobe` instalados na imagem (per `phase-03-videos/TD-03`, `TD-04`)
-3. Adicionar script `worker:start` ao `package.json`
-4. Implementar o listener de conclusão do job (`pg-boss`'s `onComplete`/estado final `failed`) — quando o job `video.uploaded` esgota o `retryLimit` configurado em `phase-03-videos/TD-10`, atualiza `Video.status = 'error'` e persiste a última mensagem de falha em `Video.processingError` (per `phase-03-videos/TD-10`)
+1. Create `nestjs-project/src/worker/main.ts` — standalone bootstrap (`NestFactory.createApplicationContext`) registering `QueueService.work('video.uploaded', handler)` calling `VideoProcessingService`; on success, updates `Video.status = 'ready'` (per `phase-03-videos/TD-03`; status per `phase-03-videos/TD-10`)
+2. Add a `video-worker` stage/target to the `nestjs-project/` `Dockerfile`, with `ffmpeg`/`ffprobe` installed in the image (per `phase-03-videos/TD-03`, `TD-04`)
+3. Add a `worker:start` script to `package.json`
+4. Implement the job-completion listener (`pg-boss`'s `onComplete`/final `failed` state) — when the `video.uploaded` job exhausts the `retryLimit` configured in `phase-03-videos/TD-10`, updates `Video.status = 'error'` and persists the last failure message in `Video.processingError` (per `phase-03-videos/TD-10`)
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `worker/main.ts` | Unit: bootstrap/compilation test — modelo de cobertura mais próximo enquanto não existe guia dedicado a entrypoints de worker (per nota em `## Testing Requirements` do context.md) | `main.spec.ts` |
+| `worker/main.ts` | Unit: bootstrap/compilation test — the closest coverage model while no guide dedicated to worker entrypoints exists yet (per the note in context.md's `## Testing Requirements`) | `main.spec.ts` |
 
-**Dependencies:** SI-03.2 (fila), SI-03.3 (pipeline de processamento), SI-03.5 (entidade `Video` — status/processingError)
+**Dependencies:** SI-03.2 (queue), SI-03.3 (processing pipeline), SI-03.5 (`Video` entity — status/processingError)
 
 **Acceptance criteria:**
 
-- O processo do worker inicia de forma independente do processo da API — falhas do worker não derrubam a API (per `phase-03-videos/TD-03`).
-- Um job publicado em `video.uploaded` é consumido pelo worker e resulta em metadados extraídos, thumbnail gerada e `Video.status = 'ready'`.
-- Um job cujo handler falha repetidamente até esgotar o `retryLimit` resulta em `Video.status = 'error'` com `Video.processingError` preenchido (per `phase-03-videos/TD-10`).
+- The worker process starts independently of the API process — worker failures do not bring down the API (per `phase-03-videos/TD-03`).
+- A job published to `video.uploaded` is consumed by the worker and results in extracted metadata, a generated thumbnail, and `Video.status = 'ready'`.
+- A job whose handler fails repeatedly until the `retryLimit` is exhausted results in `Video.status = 'error'` with `Video.processingError` populated (per `phase-03-videos/TD-10`).
 
 ---
 
-### SI-03.5 — Entidade Video: identificador público único, ownership e ciclo de status
+### SI-03.5 — Video entity: unique public identifier, ownership, and status lifecycle
 
-**Description:** Cria a entidade `Video` com o identificador público opaco (`nanoid`), os campos de ownership (`userId`, `channelId`) fixados na Revision de `phase-03-videos/TD-06`, e o ciclo de status (`status`/`processingError`) decidido em `phase-03-videos/TD-10`.
+**Description:** Creates the `Video` entity with the opaque public identifier (`nanoid`), the ownership fields (`userId`, `channelId`) fixed in `phase-03-videos/TD-06`'s Revision, and the status lifecycle (`status`/`processingError`) decided in `phase-03-videos/TD-10`.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/videos/video.entity.ts` — colunas `userId` (uuid, FK → `User`) e `channelId` (uuid, FK → `Channel`), ambas `not null` (per `phase-03-videos/TD-06` Revision, 2026-09-08); coluna de identificador público via `nanoid` (per `phase-03-videos/TD-05`); coluna `status` (enum `draft`/`processing`/`ready`/`error`, not null, default `draft`) e coluna `processingError` (text, nullable) (per `phase-03-videos/TD-10`) — demais colunas (chaves de storage, duração/metadados) ficam fora do escopo desta fase (per a nota "This document decides the Video entity's status lifecycle... but NOT the rest of its schema" em `phase-03-videos`)
-2. Criar migration TypeORM para a tabela `video`
-3. Criar `nestjs-project/src/videos/videos.module.ts` — `VideosModule` com `TypeOrmModule.forFeature([Video])`
-4. Registrar `VideosModule` em `AppModule`
+1. Create `nestjs-project/src/videos/video.entity.ts` — `userId` (uuid, FK → `User`) and `channelId` (uuid, FK → `Channel`) columns, both `not null` (per `phase-03-videos/TD-06` Revision, 2026-09-08); public identifier column via `nanoid` (per `phase-03-videos/TD-05`); `status` column (enum `draft`/`processing`/`ready`/`error`, not null, default `draft`) and `processingError` column (text, nullable) (per `phase-03-videos/TD-10`) — the remaining columns (storage keys, duration/metadata) are out of scope for this phase (per the note "This document decides the Video entity's status lifecycle... but NOT the rest of its schema" in `phase-03-videos`)
+2. Create a TypeORM migration for the `video` table
+3. Create `nestjs-project/src/videos/videos.module.ts` — `VideosModule` with `TypeOrmModule.forFeature([Video])`
+4. Register `VideosModule` in `AppModule`
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `Video` (entity) | Integration: constraints, defaults, unique index no identificador público, default de `status` | `video.entity.integration-spec.ts` |
+| `Video` (entity) | Integration: constraints, defaults, unique index on the public identifier, `status` default | `video.entity.integration-spec.ts` |
 | `VideosModule` | Unit: compilation test | `videos.module.spec.ts` |
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- Inserir um `Video` sem `userId` ou sem `channelId` viola a constraint `not null`.
-- Dois `Video`s nunca recebem o mesmo identificador público (unique index, per `phase-03-videos/TD-05`).
-- O identificador público é curto e URL-safe (per `phase-03-videos/TD-05`).
-- Um `Video` criado sem `status` explícito recebe o default `draft`; `processingError` é `null` por padrão (per `phase-03-videos/TD-10`).
+- Inserting a `Video` without `userId` or without `channelId` violates the `not null` constraint.
+- Two `Video`s never receive the same public identifier (unique index, per `phase-03-videos/TD-05`).
+- The public identifier is short and URL-safe (per `phase-03-videos/TD-05`).
+- A `Video` created without an explicit `status` gets the `draft` default; `processingError` is `null` by default (per `phase-03-videos/TD-10`).
 
 ---
 
-### SI-03.6 — Endpoint de upload (protocolo tus, autenticação e validação)
+### SI-03.6 — Upload endpoint (tus protocol, authentication, and validation)
 
-**Description:** Monta o middleware tus resumível, exige autenticação, cria o rascunho `Video` com ownership imediato, aplica a validação de conteúdo em duas camadas (fast-reject + checagem autoritativa) e transiciona o status do vídeo para `processing` ao publicar o job de processamento.
+**Description:** Mounts the resumable tus middleware, requires authentication, creates the `Video` draft with immediate ownership, applies two-layer content validation (fast-reject + authoritative check), and transitions the video status to `processing` when the processing job is published.
 
 **Technical actions:**
 
-1. Montar `@tus/server` + `@tus/s3-store` como middleware Express dentro do `nestjs-api` (per `phase-03-videos/TD-06`), atrás de guard de autenticação reaproveitado de `phase-02-auth` (per `phase-03-videos/TD-06` Revision, 2026-09-08)
-2. Implementar `onUploadCreate` — rejeita (400) quando o tipo declarado em `Upload-Metadata` falha o allow-list; caso passe, cria o rascunho `Video` (`status: draft`) gravando `userId`/`channelId` do caller autenticado (per `phase-03-videos/TD-06` Revision, `phase-03-videos/TD-09`; `status` default per `phase-03-videos/TD-10`)
-3. Implementar `onUploadFinish` — roda `ffprobe` sobre o objeto completo (via `VideoProcessingService.extractMetadata`); em caso de falha, apaga o objeto S3 e o rascunho `Video` (422); em caso de sucesso, atualiza `Video.status = 'processing'` e publica o job `video.uploaded` via `QueueService.send` com `retryLimit: 3, retryBackoff: true` (per `phase-03-videos/TD-09`; status e política de retry per `phase-03-videos/TD-10`)
-4. Mapear os erros `UPLOAD_INVALID_FILE_TYPE` (400), `UPLOAD_UNAUTHENTICATED` (401) e `UPLOAD_CONTENT_VALIDATION_FAILED` (422) no filtro de exceção de domínio herdado (per `phase-02-auth/TD-07`)
+1. Mount `@tus/server` + `@tus/s3-store` as Express middleware inside `nestjs-api` (per `phase-03-videos/TD-06`), behind an auth guard reused from `phase-02-auth` (per `phase-03-videos/TD-06` Revision, 2026-09-08)
+2. Implement `onUploadCreate` — rejects (400) when the type declared in `Upload-Metadata` fails the allow-list; on pass, creates the `Video` draft (`status: draft`) recording `userId`/`channelId` from the authenticated caller (per `phase-03-videos/TD-06` Revision, `phase-03-videos/TD-09`; `status` default per `phase-03-videos/TD-10`)
+3. Implement `onUploadFinish` — runs `ffprobe` on the complete object (via `VideoProcessingService.extractMetadata`); on failure, deletes the S3 object and the `Video` draft (422); on success, updates `Video.status = 'processing'` and publishes the `video.uploaded` job via `QueueService.send` with `retryLimit: 3, retryBackoff: true` (per `phase-03-videos/TD-09`; status and retry policy per `phase-03-videos/TD-10`)
+4. Map the `UPLOAD_INVALID_FILE_TYPE` (400), `UPLOAD_UNAUTHENTICATED` (401), and `UPLOAD_CONTENT_VALIDATION_FAILED` (422) errors in the inherited domain-exception filter (per `phase-02-auth/TD-07`)
 
-**Route:** POST /videos/uploads (sessão tus — múltiplos métodos tus montados no mesmo path)
+**Route:** POST /videos/uploads (tus session — multiple tus methods mounted on the same path)
 **Test Specs:** see `nestjs-project/specs/video-upload.plan.md`
 **Authorization:** Authenticated (per `phase-03-videos/TD-06` Revision, 2026-09-08)
 
-**Tests:** _(empty — Middleware: E2E only per convenção do projeto, movido para /plan-test-specs spec)_
+**Tests:** _(empty — Middleware: E2E only per the project's convention, moved to a /plan-test-specs spec)_
 
-**Dependencies:** SI-03.1 (storage), SI-03.2 (fila), SI-03.5 (entidade Video)
+**Dependencies:** SI-03.1 (storage), SI-03.2 (queue), SI-03.5 (`Video` entity)
 
 **Acceptance criteria:**
 
-- Uma sessão de upload sem caller autenticado retorna `401` com `errorCode: "UPLOAD_UNAUTHENTICATED"`.
-- Uma sessão de upload com `Upload-Metadata` declarando um tipo fora do allow-list de vídeo retorna `400` com `errorCode: "UPLOAD_INVALID_FILE_TYPE"`, sem criar rascunho.
-- Uma sessão de upload válida cria um rascunho `Video` com `status: draft` e `userId`/`channelId` do caller, antes de qualquer byte do arquivo trafegar.
-- Um upload completo cujo conteúdo falha na checagem `ffprobe` retorna `422` com `errorCode: "UPLOAD_CONTENT_VALIDATION_FAILED"`, e remove tanto o objeto S3 quanto o rascunho `Video`.
-- Um upload completo e válido atualiza `Video.status` para `processing` e publica o job `video.uploaded` na fila com retry limitado (per `phase-03-videos/TD-10`).
+- An upload session with no authenticated caller returns `401` with `errorCode: "UPLOAD_UNAUTHENTICATED"`.
+- An upload session with `Upload-Metadata` declaring a type outside the video allow-list returns `400` with `errorCode: "UPLOAD_INVALID_FILE_TYPE"`, without creating a draft.
+- A valid upload session creates a `Video` draft with `status: draft` and the caller's `userId`/`channelId`, before any byte of the file is transferred.
+- A completed upload whose content fails the `ffprobe` check returns `422` with `errorCode: "UPLOAD_CONTENT_VALIDATION_FAILED"`, and removes both the S3 object and the `Video` draft.
+- A complete, valid upload updates `Video.status` to `processing` and publishes the `video.uploaded` job to the queue with bounded retry (per `phase-03-videos/TD-10`).
 
 ---
 
-### SI-03.7 — Endpoints de streaming e download (URLs pré-assinadas)
+### SI-03.7 — Streaming and download endpoints (presigned URLs)
 
-**Description:** Expõe os endpoints que emitem URLs pré-assinadas de curta duração para reprodução via streaming e para download do vídeo processado, condicionado ao vídeo estar `ready`.
+**Description:** Exposes the endpoints that issue short-lived presigned URLs for streaming playback and for downloading the processed video, conditioned on the video being `ready`.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/videos/videos.controller.ts` com `GET /videos/:id/stream-url` e `GET /videos/:id/download-url`, ambos chamando `StorageService.getPresignedUrl` (per `phase-03-videos/TD-07`)
-2. Mapear o erro `404` quando o `Video` não existe ou quando `Video.status !== 'ready'` (per `phase-03-videos/TD-10`)
+1. Create `nestjs-project/src/videos/videos.controller.ts` with `GET /videos/:id/stream-url` and `GET /videos/:id/download-url`, both calling `StorageService.getPresignedUrl` (per `phase-03-videos/TD-07`)
+2. Map the `404` error for when the `Video` doesn't exist or when `Video.status !== 'ready'` (per `phase-03-videos/TD-10`)
 
 **Route:** GET /videos/:id/stream-url, GET /videos/:id/download-url
 **Test Specs:** see `nestjs-project/specs/video-delivery.plan.md`
-**Authorization:** Owner (per `## Technical Specifications` → Authorization Matrix; visibilidade pública/unlisted fica para a Fase 04)
+**Authorization:** Owner (per `## Technical Specifications` → Authorization Matrix; public/unlisted visibility is left for Phase 04)
 
-**Tests:** _(empty — Controller: E2E only per convenção do projeto, movido para /plan-test-specs spec)_
+**Tests:** _(empty — Controller: E2E only per the project's convention, moved to a /plan-test-specs spec)_
 
-**Dependencies:** SI-03.1 (storage), SI-03.5 (entidade Video)
+**Dependencies:** SI-03.1 (storage), SI-03.5 (`Video` entity)
 
 **Acceptance criteria:**
 
-- `GET /videos/:id/stream-url` para um vídeo do próprio usuário com `status: ready` retorna `200` com uma `url` pré-assinada válida por tempo limitado.
-- `GET /videos/:id/download-url` para um vídeo do próprio usuário com `status: ready` retorna `200` com uma `url` pré-assinada válida por tempo limitado.
-- `GET /videos/:id/stream-url` para um `id` inexistente retorna `404`.
-- `GET /videos/:id/stream-url` para um vídeo do próprio usuário cujo `status` seja `draft`, `processing` ou `error` retorna `404` (per `phase-03-videos/TD-10`).
+- `GET /videos/:id/stream-url` for the caller's own video with `status: ready` returns `200` with a presigned `url` valid for a limited time.
+- `GET /videos/:id/download-url` for the caller's own video with `status: ready` returns `200` with a presigned `url` valid for a limited time.
+- `GET /videos/:id/stream-url` for a nonexistent `id` returns `404`.
+- `GET /videos/:id/stream-url` for the caller's own video whose `status` is `draft`, `processing`, or `error` returns `404` (per `phase-03-videos/TD-10`).
 
 ---
 
-### SI-03.8 — Topologia Docker Compose para nova infraestrutura
+### SI-03.8 — Docker Compose topology for new infrastructure
 
-**Description:** Estende o `compose.yaml` do `nestjs-project` com os serviços de infraestrutura introduzidos nesta fase (object storage e worker dedicado).
+**Description:** Extends `nestjs-project`'s `compose.yaml` with the infrastructure services introduced in this phase (object storage and dedicated worker).
 
 **Technical actions:**
 
-1. Adicionar serviço `minio` ao `nestjs-project/compose.yaml`, na mesma rede padrão de `nestjs-api`/`db` (per `phase-03-videos/TD-08`)
-2. Adicionar serviço `video-worker` ao `compose.yaml`, usando o stage/target criado em `SI-03.4` (per `phase-03-videos/TD-08`)
-3. Atualizar `nestjs-project/CLAUDE.md` com a nova seção `## Services` documentando `minio` e `video-worker`
+1. Add the `minio` service to `nestjs-project/compose.yaml`, on the same default network as `nestjs-api`/`db` (per `phase-03-videos/TD-08`)
+2. Add the `video-worker` service to `compose.yaml`, using the stage/target created in `SI-03.4` (per `phase-03-videos/TD-08`)
+3. Update `nestjs-project/CLAUDE.md` with the new `## Services` section documenting `minio` and `video-worker`
 
-**Tests:** _(empty — Infra: configuração de compose, sem lógica testável em código)_
+**Tests:** _(empty — Infra: compose configuration, no testable logic in code)_
 
-**Dependencies:** SI-03.1 (storage), SI-03.2 (fila), SI-03.4 (worker)
+**Dependencies:** SI-03.1 (storage), SI-03.2 (queue), SI-03.4 (worker)
 
 **Acceptance criteria:**
 
-- `docker compose up` sobe `minio` e `video-worker` junto com os serviços existentes (`nestjs-api`, `db`, `mailpit`).
-- `nestjs-api` e `video-worker` alcançam `minio` pelo nome do serviço Compose (`http://minio:9000`), nunca via `localhost`.
-- O `nestjs-project/compose.yaml` permanece o único arquivo de orquestração do backend — `next-frontend/` continua com stack separada (per `phase-03-videos/TD-08`).
+- `docker compose up` brings up `minio` and `video-worker` alongside the existing services (`nestjs-api`, `db`, `mailpit`).
+- `nestjs-api` and `video-worker` reach `minio` by the Compose service name (`http://minio:9000`), never via `localhost`.
+- `nestjs-project/compose.yaml` remains the only backend orchestration file — `next-frontend/` keeps a separate stack (per `phase-03-videos/TD-08`).
 
 ---
 
@@ -280,7 +280,7 @@ Implementar o serviço de armazenamento de arquivos (vídeos e thumbnails) e de 
 
 #### GET /videos/:id/stream-url (SI-03.7)
 
-_Route inferred from TD-07's topic ("Media Delivery Mechanism for Streaming & Download") and the "Reprodução via streaming" capability — not verbatim in the Recommendation prose; confirm during `/implement`._
+_Route inferred from TD-07's topic ("Media Delivery Mechanism for Streaming & Download") and the "Streaming playback" capability — not verbatim in the Recommendation prose; confirm during `/implement`._
 
 **Response 200:**
 - url: string — short-lived presigned object-storage URL *(per phase-03-videos/TD-07)*
@@ -308,7 +308,7 @@ _Route inferred the same way as the stream-url endpoint above — not verbatim i
 | GET /videos/:id/stream-url | _TBD¹_ | _TBD¹_ | ✓ |
 | GET /videos/:id/download-url | _TBD¹_ | _TBD¹_ | ✓ |
 
-¹ Public/unlisted video visibility is decided in Phase 04 ("Visibilidade do vídeo: público ou unlisted", per `docs/project-plan.md`'s Fase 04 scope) — not yet resolved by any `phase-03-videos` TD. Owner access is always allowed regardless of visibility.
+¹ Public/unlisted video visibility is decided in Phase 04 ("Video visibility: public or unlisted", per `docs/project-plan.md`'s Phase 04 scope) — not yet resolved by any `phase-03-videos` TD. Owner access is always allowed regardless of visibility.
 
 ### Error Catalog
 
@@ -333,7 +333,7 @@ _Route inferred the same way as the stream-url endpoint above — not verbatim i
 **Trigger:** fires once `onUploadFinish`'s authoritative content-validation check passes (per `phase-03-videos/TD-09`); `Video.status` transitions to `processing` at the same time (per `phase-03-videos/TD-10`)
 **Delivery semantics:** at-least-once, via `pg-boss` retry/backoff/dead-letter primitives (per `phase-03-videos/TD-02`). Sent with a bounded retry policy — `retryLimit: 3`, `retryBackoff: true` — instead of `pg-boss`'s low defaults, so a transient failure self-heals without a full 10GB re-upload *(per phase-03-videos/TD-10)*.
 
-The worker consumes this job to run `fluent-ffmpeg` metadata extraction and thumbnail generation — frame captured at `min(1s, 10% da duração)` (per `phase-03-videos/TD-04` and its 2026-09-08 Revision). On success, the worker sets `Video.status = ready`. On exhausted retries, a job-completion listener sets `Video.status = error` and persists the last failure's message in `Video.processingError` (per `phase-03-videos/TD-10`).
+The worker consumes this job to run `fluent-ffmpeg` metadata extraction and thumbnail generation — frame captured at `min(1s, 10% of duration)` (per `phase-03-videos/TD-04` and its 2026-09-08 Revision). On success, the worker sets `Video.status = ready`. On exhausted retries, a job-completion listener sets `Video.status = error` and persists the last failure's message in `Video.processingError` (per `phase-03-videos/TD-10`).
 
 ---
 
@@ -356,14 +356,14 @@ SI-03.5 (root, independent — also feeds SI-03.4, SI-03.6, SI-03.7 above)
 
 ## Deliverables
 
-- [ ] SI-03.1 — Storage module (cliente S3-compatible)
-- [ ] SI-03.2 — Fila de processamento em segundo plano (pg-boss)
-- [ ] SI-03.3 — Pipeline de processamento de vídeo (metadados + thumbnail)
-- [ ] SI-03.4 — Worker de vídeo (processo dedicado)
-- [ ] SI-03.5 — Entidade Video: identificador público único, ownership e ciclo de status
-- [ ] SI-03.6 — Endpoint de upload (protocolo tus, autenticação e validação)
-- [ ] SI-03.7 — Endpoints de streaming e download (URLs pré-assinadas)
-- [ ] SI-03.8 — Topologia Docker Compose para nova infraestrutura
+- [ ] SI-03.1 — Storage module (S3-compatible client)
+- [ ] SI-03.2 — Background processing queue (pg-boss)
+- [ ] SI-03.3 — Video processing pipeline (metadata + thumbnail)
+- [ ] SI-03.4 — Video worker (dedicated process)
+- [ ] SI-03.5 — Video entity: unique public identifier, ownership, and status lifecycle
+- [ ] SI-03.6 — Upload endpoint (tus protocol, authentication, and validation)
+- [ ] SI-03.7 — Streaming and download endpoints (presigned URLs)
+- [ ] SI-03.8 — Docker Compose topology for new infrastructure
 
 **Full test suites:**
 

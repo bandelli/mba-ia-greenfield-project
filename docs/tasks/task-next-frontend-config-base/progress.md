@@ -3,7 +3,7 @@
 **Status:** in_progress
 **SIs:** 2/2 completed
 
-### SI-1 — Instalar deps e criar env loader
+### SI-1 — Install deps and create env loader
 - **Status:** completed
 - **Tests:** no tests
 - **Observations:**
@@ -11,7 +11,7 @@
   - Type-check (`npx tsc --noEmit`) passed clean.
   - `.env.example` documents `API_URL` with Docker (`nestjs-api:3000`) and host (`localhost:3000`) variants; `NODE_ENV` is documented but left commented since Next.js sets it automatically per command.
 
-### SI-2 — Atualizar next-frontend/CLAUDE.md para BFF estrito
+### SI-2 — Update next-frontend/CLAUDE.md for strict BFF
 - **Status:** completed
 - **Tests:** no tests
 - **Observations:**

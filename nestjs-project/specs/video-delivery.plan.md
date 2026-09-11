@@ -6,17 +6,17 @@ si: SI-03.7
 target_file: test/video-delivery.e2e-spec.ts
 ---
 
-# Endpoints de streaming e download (URLs pré-assinadas) — Test Plan
+# Streaming and download endpoints (presigned URLs) — Test Plan
 
 ## Application Overview
 
-`GET /videos/:id/stream-url` e `GET /videos/:id/download-url` emitem URLs pré-assinadas de curta duração apontando diretamente para o object storage, para que o browser reproduza via streaming ou baixe o vídeo sem que os bytes passem pela API. Ambos os endpoints exigem que o caller seja o dono (`owner`) do vídeo — a visibilidade pública/unlisted para outros usuários é decidida em uma fase futura (Fase 04) e não é coberta aqui. Um `id` que não corresponde a nenhum `Video` retorna `404`.
+`GET /videos/:id/stream-url` and `GET /videos/:id/download-url` issue short-lived presigned URLs pointing directly at object storage, so the browser plays via streaming or downloads the video without the bytes passing through the API. Both endpoints require the caller to be the video's owner (`owner`) — public/unlisted visibility for other users is decided in a future phase (Phase 04) and is not covered here. An `id` that doesn't match any `Video` returns `404`.
 
 ## Test Scenarios
 
-### 1. Emissão de URL de streaming
+### 1. Streaming URL issuance
 
-**Setup:** `Test.createTestingModule({ imports: [AppModule] }).compile()` + `cleanAllTables(dataSource)` em `beforeEach` (per `.claude/rules/nestjs-testing.md`); global `ValidationPipe` e `DomainExceptionFilter`/`ValidationExceptionFilter` aplicados manualmente em `beforeAll`; fixture de um `Video` pré-existente pertencente ao caller autenticado do teste.
+**Setup:** `Test.createTestingModule({ imports: [AppModule] }).compile()` + `cleanAllTables(dataSource)` in `beforeEach` (per `.claude/rules/nestjs-testing.md`); global `ValidationPipe` and `DomainExceptionFilter`/`ValidationExceptionFilter` applied manually in `beforeAll`; fixture of a pre-existing `Video` belonging to the test's authenticated caller.
 
 #### 1.1. stream-url-video-proprio-200
 
@@ -25,13 +25,13 @@ target_file: test/video-delivery.e2e-spec.ts
 **Last sync:** 2026-09-09T00:36:27Z
 
 **Steps:**
-  1. Caller autenticado, dono do vídeo, chama `GET /videos/:id/stream-url` com um `id` existente
-    - expect: resposta `200`
-    - expect: o corpo contém `url`, uma URL pré-assinada de object storage válida por tempo limitado
+  1. Authenticated caller, owner of the video, calls `GET /videos/:id/stream-url` with an existing `id`
+    - expect: `200` response
+    - expect: the body contains `url`, a presigned object-storage URL valid for a limited time
 
-### 2. Emissão de URL de download
+### 2. Download URL issuance
 
-**Setup:** mesmo bootstrap do Grupo 1.
+**Setup:** same bootstrap as Group 1.
 
 #### 2.1. download-url-video-proprio-200
 
@@ -40,13 +40,13 @@ target_file: test/video-delivery.e2e-spec.ts
 **Last sync:** 2026-09-09T00:36:27Z
 
 **Steps:**
-  1. Caller autenticado, dono do vídeo, chama `GET /videos/:id/download-url` com um `id` existente
-    - expect: resposta `200`
-    - expect: o corpo contém `url`, uma URL pré-assinada de object storage válida por tempo limitado
+  1. Authenticated caller, owner of the video, calls `GET /videos/:id/download-url` with an existing `id`
+    - expect: `200` response
+    - expect: the body contains `url`, a presigned object-storage URL valid for a limited time
 
-### 3. Vídeo inexistente
+### 3. Nonexistent video
 
-**Setup:** mesmo bootstrap do Grupo 1, sem fixture de `Video` para o `id` usado.
+**Setup:** same bootstrap as Group 1, with no `Video` fixture for the `id` used.
 
 #### 3.1. stream-url-video-inexistente-404
 
@@ -55,12 +55,12 @@ target_file: test/video-delivery.e2e-spec.ts
 **Last sync:** 2026-09-09T00:36:27Z
 
 **Steps:**
-  1. Caller autenticado chama `GET /videos/:id/stream-url` com um `id` que não corresponde a nenhum `Video`
-    - expect: resposta `404`
+  1. Authenticated caller calls `GET /videos/:id/stream-url` with an `id` that doesn't match any `Video`
+    - expect: `404` response
 
-### 4. Vídeo ainda não pronto (status != ready)
+### 4. Video not yet ready (status != ready)
 
-**Setup:** mesmo bootstrap do Grupo 1, com fixture de `Video` pertencente ao caller cujo `status` é `draft`, `processing` ou `error` (per `phase-03-videos/TD-10`).
+**Setup:** same bootstrap as Group 1, with a `Video` fixture belonging to the caller whose `status` is `draft`, `processing`, or `error` (per `phase-03-videos/TD-10`).
 
 #### 4.1. stream-url-video-nao-pronto-404
 
@@ -69,5 +69,5 @@ target_file: test/video-delivery.e2e-spec.ts
 **Last sync:** 2026-09-09T22:23:59Z
 
 **Steps:**
-  1. Caller autenticado, dono do vídeo, chama `GET /videos/:id/stream-url` para um vídeo cujo `status` é `draft`, `processing` ou `error`
-    - expect: resposta `404`
+  1. Authenticated caller, owner of the video, calls `GET /videos/:id/stream-url` for a video whose `status` is `draft`, `processing`, or `error`
+    - expect: `404` response

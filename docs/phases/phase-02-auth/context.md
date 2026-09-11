@@ -12,30 +12,30 @@ sources_mtime:
 
 ## Scope
 
-**Phase name:** Fase 02 — Cadastro, Login e Gerenciamento de Conta
+**Phase name:** Phase 02 — Registration, Login, and Account Management
 
 **Capabilities**
 
-- Serviço de envio de e-mails transacionais
-- Cadastro de usuário com e-mail e senha
-- Criação automática do canal do usuário a partir do prefixo do e-mail
-- Confirmação de conta via e-mail com link de ativação
-- Login e controle de sessão do usuário
+- Transactional email sending service
+- User registration with email and password
+- Automatic creation of the user's channel from the email prefix
+- Account confirmation via email with an activation link
+- Login and user session control
 - Logout
-- Recuperação de senha: solicitação via e-mail → link com token → redefinição
-- Telas de cadastro, login, confirmação de conta e recuperação de senha
+- Password recovery: request via email → link with token → reset
+- Registration, login, account confirmation, and password recovery screens
 
-**Out of scope:** Upload de vídeos, processamento, comments e demais funcionalidades de fases posteriores.
+**Out of scope:** Video upload, processing, comments, and other features from later phases.
 
-**Deliverables:** fluxo completo de cadastro → confirmação → login → recuperação de senha funcionando. Canal criado automaticamente para cada usuário.
+**Deliverables:** complete registration → confirmation → login → password recovery flow working. Channel automatically created for each user.
 
 **Affected subprojects:** `nestjs-project/`
 
-**Deferred subprojects:** `next-frontend/` — telas de cadastro/login/confirmação/recuperação ficam diferidas para uma fase futura ao iniciar o subprojeto frontend.
+**Deferred subprojects:** `next-frontend/` — registration/login/confirmation/recovery screens are deferred to a future phase when the frontend subproject is initialized.
 
-**Sequencing notes:** Depends on Fase 01 — Configuração Base do Projeto.
+**Sequencing notes:** Depends on Phase 01 — Base Project Configuration.
 
-**Neighbors (for boundary detection only):** Fase 01 (prior), Fase 03 — Upload e Processamento de Vídeos (next).
+**Neighbors (for boundary detection only):** Phase 01 (prior), Phase 03 — Video Upload and Processing (next).
 
 ## Decisions Index
 
@@ -60,14 +60,14 @@ _Source files:_
 
 | Capability | Covered by |
 |------------|------------|
-| Serviço de envio de e-mails transacionais | phase-02-auth/TD-05 |
-| Cadastro de usuário com e-mail e senha | phase-02-auth/TD-01, phase-02-auth/TD-06, phase-02-auth/TD-07 |
-| Criação automática do canal do usuário a partir do prefixo do e-mail | phase-02-auth/TD-10 |
-| Confirmação de conta via e-mail com link de ativação | phase-02-auth/TD-04 |
-| Login e controle de sessão do usuário | phase-02-auth/TD-02, phase-02-auth/TD-03, phase-02-auth/TD-06, phase-02-auth/TD-07, phase-02-auth/TD-08, phase-02-auth/TD-09 |
+| Transactional email sending service | phase-02-auth/TD-05 |
+| User registration with email and password | phase-02-auth/TD-01, phase-02-auth/TD-06, phase-02-auth/TD-07 |
+| Automatic creation of the user's channel from the email prefix | phase-02-auth/TD-10 |
+| Account confirmation via email with an activation link | phase-02-auth/TD-04 |
+| Login and user session control | phase-02-auth/TD-02, phase-02-auth/TD-03, phase-02-auth/TD-06, phase-02-auth/TD-07, phase-02-auth/TD-08, phase-02-auth/TD-09 |
 | Logout | _Inherited from TD-02 (auth library) and TD-03 (refresh-token rotation) — revocation reuses the same session infrastructure; no separate TD._ |
-| Recuperação de senha: solicitação via e-mail → link com token → redefinição | phase-02-auth/TD-04, phase-02-auth/TD-06, phase-02-auth/TD-07 |
-| Telas de cadastro, login, confirmação de conta e recuperação de senha | _Deferred — `next-frontend/` not initialized in this phase._ |
+| Password recovery: request via email → link with token → reset | phase-02-auth/TD-04, phase-02-auth/TD-06, phase-02-auth/TD-07 |
+| Registration, login, account confirmation, and password recovery screens | _Deferred — `next-frontend/` not initialized in this phase._ |
 
 ## Decisions Detail
 
@@ -178,7 +178,7 @@ _No inherited deferred capabilities._
 
 | Capability | Status | Rationale | TD refs |
 |------------|--------|-----------|---------|
-| Telas de cadastro, login, confirmação de conta e recuperação de senha | deferred | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. | — |
+| Registration, login, account confirmation, and password recovery screens | deferred | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. | — |
 
 ## Testing Requirements
 

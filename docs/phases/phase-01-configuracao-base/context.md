@@ -10,19 +10,19 @@ sources_mtime:
 
 ## Scope
 
-**Phase name:** Fase 01 — Configuração Base do Projeto
+**Phase name:** Phase 01 — Base Project Configuration
 
 **Capabilities**
 
-- Repositório com estrutura de monorepo (frontend e backend)
-- Projeto Next.js (frontend) (será criado depois, não agora) e Nest.js (backend) inicializados
-- Ambiente de desenvolvimento local com todos os serviços via Docker Compose
-- Estrutura inicial do banco de dados PostgreSQL (schema, migrations e seeds) (sem tabelas ainda)
-- Fundação de IA para coding.
+- Repository with a monorepo structure (frontend and backend)
+- Next.js project (frontend) (to be created later, not now) and Nest.js project (backend) initialized
+- Local development environment with all services via Docker Compose
+- Initial PostgreSQL database structure (schema, migrations, and seeds) (no tables yet)
+- AI foundation for coding.
 
 **Out of scope:** All runtime features that depend on entities (auth, uploads, comments, etc.) — they start in Phase 02+.
 
-**Deliverables:** ambiente de desenvolvimento funcional, banco de dados configurado.
+**Deliverables:** functional development environment, configured database.
 
 **Affected subprojects:** `nestjs-project/`
 
@@ -30,7 +30,7 @@ sources_mtime:
 
 **Sequencing notes:** This is the first phase; no prior phase to depend on.
 
-**Neighbors (for boundary detection only):** Fase 02 — Cadastro, Login e Gerenciamento de Conta.
+**Neighbors (for boundary detection only):** Phase 02 — Registration, Login, and Account Management.
 
 ## Decisions Index
 
@@ -49,11 +49,11 @@ _Source files:_
 
 | Capability | Covered by |
 |------------|------------|
-| Repositório com estrutura de monorepo (frontend e backend) | _Not covered by a TD — pre-existing repo structure; no open technical decision._ |
-| Projeto Next.js (frontend) (será criado depois, não agora) e Nest.js (backend) inicializados | phase-01-configuracao-base/TD-01, phase-01-configuracao-base/TD-03 |
-| Ambiente de desenvolvimento local com todos os serviços via Docker Compose | phase-01-configuracao-base/TD-02, phase-01-configuracao-base/TD-03 |
-| Estrutura inicial do banco de dados PostgreSQL (schema, migrations e seeds) (sem tabelas ainda) | phase-01-configuracao-base/TD-04 |
-| Fundação de IA para coding. | _Not covered by a TD — handled by CLAUDE.md, Claude skills, and editor configuration; no open technical decision._ |
+| Repository with a monorepo structure (frontend and backend) | _Not covered by a TD — pre-existing repo structure; no open technical decision._ |
+| Next.js project (frontend) (to be created later, not now) and Nest.js project (backend) initialized | phase-01-configuracao-base/TD-01, phase-01-configuracao-base/TD-03 |
+| Local development environment with all services via Docker Compose | phase-01-configuracao-base/TD-02, phase-01-configuracao-base/TD-03 |
+| Initial PostgreSQL database structure (schema, migrations, and seeds) (no tables yet) | phase-01-configuracao-base/TD-04 |
+| AI foundation for coding. | _Not covered by a TD — handled by CLAUDE.md, Claude skills, and editor configuration; no open technical decision._ |
 
 ## Decisions Detail
 
@@ -97,7 +97,7 @@ _No inherited deferred capabilities._
 
 | Capability | Status | Rationale | TD refs |
 |------------|--------|-----------|---------|
-| Telas de frontend | deferred | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. | — |
+| Frontend screens | deferred | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. | — |
 
 ## Testing Requirements
 

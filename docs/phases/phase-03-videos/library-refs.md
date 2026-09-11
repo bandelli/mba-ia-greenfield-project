@@ -125,7 +125,7 @@ ffmpeg('/path/to/video.avi')
   });
 ```
 
-`timestamps` accepts seconds, percentage strings, or `hh:mm:ss` strings — used by `VideoProcessingService` to implement `min(1s, 10% da duração)` per `phase-03-videos/TD-04`'s revision. Also does not work on input streams (same caveat as `ffprobe`).
+`timestamps` accepts seconds, percentage strings, or `hh:mm:ss` strings — used by `VideoProcessingService` to implement `min(1s, 10% of duration)` per `phase-03-videos/TD-04`'s revision. Also does not work on input streams (same caveat as `ffprobe`).
 
 ## nanoid
 

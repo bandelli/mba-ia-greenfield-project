@@ -6,12 +6,12 @@ date: 2026-09-07
 scope_description: "Upload and background processing of videos for Phase 03: object storage backend, queue library and worker deployment model, resumable upload protocol for files up to 10GB, video metadata/thumbnail extraction pipeline, unique video URL strategy, streaming/download delivery mechanism, the Docker Compose topology for the new infrastructure services, upload content validation, and the video status lifecycle with processing-failure handling."
 ---
 
-# Technical Decisions — Phase 03: Upload e Processamento de Vídeos
+# Technical Decisions — Phase 03: Video Upload and Processing
 
 _Subprojects in scope:_
 
 - `nestjs-project/` — primary subproject. Owns the storage client, the upload endpoint(s), the background queue and its worker(s), the FFmpeg-based processing pipeline, the video entity/draft lifecycle, the unique-URL generator, and the streaming/download endpoints.
-- `next-frontend/` — receives the client side of the two cross-layer contracts decided here: the upload protocol's browser-side handshake (TD-06) and how the browser eventually requests video bytes for streaming/download (TD-07). No dedicated upload or player screen is planned in this phase (project-plan.md lists no UI bullet for Fase 03 — the upload trigger UI and the player page are introduced in later phases); this document settles only the wire contracts those future screens will consume, not their UI.
+- `next-frontend/` — receives the client side of the two cross-layer contracts decided here: the upload protocol's browser-side handshake (TD-06) and how the browser eventually requests video bytes for streaming/download (TD-07). No dedicated upload or player screen is planned in this phase (project-plan.md lists no UI bullet for Phase 03 — the upload trigger UI and the player page are introduced in later phases); this document settles only the wire contracts those future screens will consume, not their UI.
 
 > Cross-doc anchors (already decided — do NOT reopen):
 > - **Strict BFF — single server-only `API_URL`:** `next-frontend-config-base/TD-03`. The browser talks only to same-origin `/api/...` routes for everything except what TD-07 below explicitly carves out as an exception for media bytes.
@@ -24,7 +24,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Serviço de armazenamento de arquivos (vídeos e thumbnails)
+**Capability:** File storage service (videos and thumbnails)
 
 **Context:** The architecture diagram (`docs/diagrams/software-arch.mermaid`) names an "Object Storage (S3/MinIO)" container: MinIO in local/dev, S3-compatible storage in production. No storage client exists yet in `nestjs-project/`. The choice of client library shapes every later TD in this document — presigned URLs (TD-06, TD-07), the worker's read/write path (TD-03, TD-04), and the Compose service added in TD-08.
 
@@ -56,7 +56,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Serviço de processamento em segundo plano (filas)
+**Capability:** Background processing service (queues)
 
 **Context:** Video processing (TD-04) must run outside the HTTP request/response cycle. `nestjs-project/`'s current infrastructure is PostgreSQL + Mailpit only (`nestjs-project/compose.yaml`) — no Redis. The choice of queue library determines whether a new infrastructure dependency (Redis) is introduced or the existing PostgreSQL is reused.
 
@@ -88,7 +88,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Serviço de processamento em segundo plano (filas)", "Processamento automático do vídeo após upload (extração de duração e metadados)"
+**Capability:** Transversal — covers: "Background processing service (queues)", "Automatic video processing after upload (duration and metadata extraction)"
 
 **Context:** The architecture diagram depicts "Video Worker (FFmpeg)" as a container distinct from the API. FFmpeg processing is CPU-bound and can run for minutes on large files; the question is whether that work executes inside the same Node.js process that serves HTTP traffic, or in a dedicated process/container. This decision depends on TD-02 (both BullMQ and pg-boss support a `.work()`/`@Processor()` handler running in any Node process, in or out of the HTTP app).
 
@@ -119,7 +119,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Processamento automático do vídeo após upload (extração de duração e metadados)", "Geração automática de thumbnail a partir de um frame do vídeo"
+**Capability:** Transversal — covers: "Automatic video processing after upload (duration and metadata extraction)", "Automatic thumbnail generation from a video frame"
 
 **Context:** After upload completes, the worker (TD-03) must extract video duration/metadata and generate a thumbnail from a frame. No transcoding to alternate resolutions/formats is in scope for this phase (project-plan.md does not mention adaptive bitrate or multi-quality playback) — the job is limited to reading metadata and producing one thumbnail image.
 
@@ -146,7 +146,7 @@ _Subprojects in scope:_
 **Libraries:** fluent-ffmpeg
 
 **Revisions:**
-- 2026-09-08 — Fixa a regra de seleção de frame para o thumbnail automático: captura no menor valor entre 1 segundo e 10% da duração total do vídeo (`min(1s, 10% da duração)`), passado como `timestamps` para `.screenshots()`. Rationale: min(1s, 10% da duração) — evita frames pretos de abertura/fade-in tanto em vídeos curtos quanto longos, sem exigir uma segunda passada de detecção de cena.
+- 2026-09-08 — Fixes the frame-selection rule for the automatic thumbnail: captures at the smaller of 1 second and 10% of the video's total duration (`min(1s, 10% of duration)`), passed as `timestamps` to `.screenshots()`. Rationale: min(1s, 10% of duration) — avoids black opening/fade-in frames in both short and long videos, without requiring a second scene-detection pass.
 
 ---
 
@@ -154,7 +154,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** URL única por vídeo, sem conflito com outros vídeos
+**Capability:** Unique URL per video, with no conflicts with other videos
 
 **Context:** Each video needs a public, collision-free identifier for its watch URL (e.g., `/watch/<id>`). The TypeORM primary key alone is a reasonable candidate only if its format is also fit to be public (opaque, non-enumerable, URL-safe); if not, a separate public-facing identifier is needed.
 
@@ -162,7 +162,7 @@ _Subprojects in scope:_
 
 ### Option A: `nanoid` short opaque ID as a dedicated public column
 - Generate a URL-safe random ID (e.g., 11 characters, `nanoid()`'s default alphabet) at video-draft creation time, stored in a unique-indexed column separate from the internal primary key.
-- **Pros:** Short, URL-friendly (`/watch/V1StGXR8_Z5`), non-sequential and non-enumerable — matches "sem conflito" while also not leaking video count or creation order to visitors (a mild but real product/security property for unlisted videos, `phase-04`'s visibility feature). Collision probability at this project's realistic scale is effectively zero (nanoid's default settings need ~139 years at 1000 IDs/second for a 1% collision chance). Decoupled from the internal primary key, so the DB's PK strategy (UUID, serial, etc.) stays a separate, unconstrained concern.
+- **Pros:** Short, URL-friendly (`/watch/V1StGXR8_Z5`), non-sequential and non-enumerable — matches "with no conflicts" while also not leaking video count or creation order to visitors (a mild but real product/security property for unlisted videos, `phase-04`'s visibility feature). Collision probability at this project's realistic scale is effectively zero (nanoid's default settings need ~139 years at 1000 IDs/second for a 1% collision chance). Decoupled from the internal primary key, so the DB's PK strategy (UUID, serial, etc.) stays a separate, unconstrained concern.
 - **Cons:** One new small dependency (`nanoid`). One extra unique-indexed column plus (in the vanishingly unlikely case of a collision) a retry-on-insert-conflict loop — cheap to implement, worth stating explicitly rather than assuming DB uniqueness is free.
 
 ### Option B: UUID v4 as the primary key, reused as the public identifier
@@ -175,7 +175,7 @@ _Subprojects in scope:_
 - **Pros:** Simplest possible implementation, no extra column or dependency.
 - **Cons:** **Enumerable** — a client can guess `/watch/483`, `/watch/484`, trivially scraping every video including `unlisted` ones (`phase-04`'s visibility feature explicitly relies on unlisted URLs being unguessable). Leaks total video count and upload order. Disqualified outright by the "unlisted" requirement two phases ahead — listed only to rule out.
 
-**Recommendation:** **Option A (`nanoid` short opaque public ID)** — the shortest URLs among the non-enumerable options, decoupled from whatever internal PK strategy the `Video` entity ends up using, and the only option that cleanly satisfies both "sem conflito" now and "unlisted, access only via link" in `phase-04` without revisiting this decision.
+**Recommendation:** **Option A (`nanoid` short opaque public ID)** — the shortest URLs among the non-enumerable options, decoupled from whatever internal PK strategy the `Video` entity ends up using, and the only option that cleanly satisfies both "no conflicts" now and "unlisted, access only via link" in `phase-04` without revisiting this decision.
 
 **Decision:** A (`nanoid` short opaque public ID)
 **Libraries:** nanoid
@@ -186,34 +186,34 @@ _Subprojects in scope:_
 
 **Scope:** Cross-layer
 
-**Capability:** Transversal — covers: "Upload de vídeos com suporte a arquivos de até 10GB sem impacto na performance", "Pré-cadastro automático do vídeo como rascunho ao iniciar o upload"
+**Capability:** Transversal — covers: "Video upload supporting files up to 10GB without performance impact", "Automatic pre-registration of the video as a draft when the upload starts"
 
-**Context:** `docs/project-plan.md` § "Pontos de Atenção" is explicit: uploads up to 10GB must not block the system and must be resumable after a connection failure. Routing a 10GB `multipart/form-data` body through the NestJS API's own memory/disk (the default `@nestjs/platform-express` + Multer path) is precisely what "sem impacto na performance" warns against. This decision is Cross-layer: the handshake (how the upload starts, how progress/resume works) is executed by client code in `next-frontend/` against an endpoint surface in `nestjs-project/`, and both sides must agree on the same protocol. It also settles **when** the video draft row is created (the phase's "pré-cadastro automático... ao iniciar o upload" bullet): whichever option is chosen, draft creation is wired into that protocol's "upload started" hook, not a separate mechanism.
+**Context:** `docs/project-plan.md` § "Points of Attention" is explicit: uploads up to 10GB must not block the system and must be resumable after a connection failure. Routing a 10GB `multipart/form-data` body through the NestJS API's own memory/disk (the default `@nestjs/platform-express` + Multer path) is precisely what "without performance impact" warns against. This decision is Cross-layer: the handshake (how the upload starts, how progress/resume works) is executed by client code in `next-frontend/` against an endpoint surface in `nestjs-project/`, and both sides must agree on the same protocol. It also settles **when** the video draft row is created (the phase's "automatic pre-registration... when the upload starts" bullet): whichever option is chosen, draft creation is wired into that protocol's "upload started" hook, not a separate mechanism.
 
 **Options:**
 
 ### Option A: tus resumable-upload protocol (`@tus/server` + `@tus/s3-store` backend; `tus-js-client` or Uppy on the client)
 - `@tus/server` implements the open tus 1.0 HTTP protocol (chunked `PATCH` requests with an `Upload-Offset`) and mounts as Express middleware inside `nestjs-api` (Nest's default HTTP adapter). `@tus/s3-store` streams each chunk straight to S3-compatible storage via multipart upload — the chunk never fully lands on the API's disk. The server's `onUploadCreate` hook fires when a client opens an upload session (before any bytes arrive) — the draft `Video` row is created there, using metadata the client sends in the `Upload-Metadata` header (title placeholder, owning channel). On the client, `tus-js-client` (or Uppy, which wraps it) tracks a resumable upload URL in `localStorage` and automatically resumes from the last acknowledged offset after a dropped connection — no custom retry logic to write.
-- **Pros:** **Resumability is protocol-native**, not something either side re-implements — directly satisfies the "retomar em caso de falha de conexão" attention point. Chunks stream to S3 without buffering the whole file in the API process — the API's memory footprint stays flat regardless of file size. `onUploadCreate` is the exact mechanism that answers "pré-cadastro automático... ao iniciar o upload": the draft is created the moment the client opens the upload session, before the first byte of video data arrives. Works identically for a 10MB and a 10GB file — no separate code path.
+- **Pros:** **Resumability is protocol-native**, not something either side re-implements — directly satisfies the "resume after a connection failure" attention point. Chunks stream to S3 without buffering the whole file in the API process — the API's memory footprint stays flat regardless of file size. `onUploadCreate` is the exact mechanism that answers "automatic pre-registration... when the upload starts": the draft is created the moment the client opens the upload session, before the first byte of video data arrives. Works identically for a 10MB and a 10GB file — no separate code path.
 - **Cons:** New protocol for both sides to learn (tus is not REST-conventional — it is a set of custom HTTP methods/headers). `@tus/server` is Express middleware, mounted alongside (not through) Nest's normal controller/DTO/pipe pipeline — request validation for this one route follows tus's own hook system (`onUploadCreate`, `onUploadFinish`) instead of `class-validator` DTOs, a deliberate deviation documented here so it isn't mistaken for an oversight later.
 
 ### Option B: Presigned multipart upload — backend issues S3 multipart part-URLs, client (`@aws-sdk/lib-storage`-equivalent logic) uploads chunks directly to storage
 - The API exposes REST endpoints (`POST /videos/uploads` to start, returning a set of presigned `UploadPart` URLs; `POST /videos/uploads/:id/complete` to finalize) built with ordinary NestJS controllers/DTOs. The browser splits the file into parts itself and `PUT`s each part directly to the presigned URL, tracking progress and, on failure, only needing to retry the failed parts it already knows about (since it holds the multipart upload ID and part ETags in memory or `localStorage`).
 - **Pros:** Stays inside NestJS's normal controller/DTO/validation pipeline — no separate middleware mount, consistent with every other endpoint in the codebase. Chunks go straight to storage, same memory-footprint benefit as Option A. Full control over the exact API shape.
-- **Cons:** **Resumability is hand-built, not protocol-provided** — the client must itself persist "which parts succeeded" across a page reload/crash and the backend must expose a way to list already-uploaded parts (S3's `ListParts`) to reconcile after a resume; tus already ships this exact reconciliation logic, tested against real-world network failures. "Pré-cadastro ao iniciar o upload" has no natural hook — it has to be wired manually into the "start multipart upload" endpoint, duplicating logic tus gets for free. More custom code overall for an equivalent (not better) outcome.
+- **Cons:** **Resumability is hand-built, not protocol-provided** — the client must itself persist "which parts succeeded" across a page reload/crash and the backend must expose a way to list already-uploaded parts (S3's `ListParts`) to reconcile after a resume; tus already ships this exact reconciliation logic, tested against real-world network failures. "Pre-registration when the upload starts" has no natural hook — it has to be wired manually into the "start multipart upload" endpoint, duplicating logic tus gets for free. More custom code overall for an equivalent (not better) outcome.
 
 ### Option C: Traditional `multipart/form-data` POST through the NestJS API (Multer, disk storage) — then forward to storage
 - `FileInterceptor` + `MulterModule.register({ dest: ... })` (`nestjs-project/CLAUDE.md`'s only currently-documented file-upload primitive) receives the whole file on a single POST, writes it to the API container's disk, then a separate step uploads it to S3.
 - **Pros:** Zero new dependency — uses NestJS's built-in, already-documented upload mechanism. Simplest to wire for small files.
 - **Cons:** **Directly contradicts "sem impacto na performance"** — the entire file (up to 10GB) passes through the API container's disk and its Express request-handling path before storage even sees a byte, doubling network and disk I/O and holding an HTTP connection open for the whole transfer. **No resumability** — Multer has no concept of resuming a partial `multipart/form-data` body; a dropped connection at 9GB means starting over. Disqualified by the phase's own stated non-functional requirement; listed only to name why it does not compete.
 
-**Recommendation:** **Option A (tus protocol via `@tus/server` + `@tus/s3-store`)** — it is the only option where resumability (an explicit project-plan.md requirement) is a property of the protocol rather than custom code the team must get right for every edge case (partial chunk, expired session, concurrent resume). It also gives the "pré-cadastro automático ao iniciar o upload" bullet a precise, well-documented implementation point (`onUploadCreate`) instead of an ad-hoc endpoint. The cost — a non-REST protocol mounted as middleware — is confined to a single upload route; every other endpoint in the API is unaffected.
+**Recommendation:** **Option A (tus protocol via `@tus/server` + `@tus/s3-store`)** — it is the only option where resumability (an explicit project-plan.md requirement) is a property of the protocol rather than custom code the team must get right for every edge case (partial chunk, expired session, concurrent resume). It also gives the "automatic pre-registration when the upload starts" bullet a precise, well-documented implementation point (`onUploadCreate`) instead of an ad-hoc endpoint. The cost — a non-REST protocol mounted as middleware — is confined to a single upload route; every other endpoint in the API is unaffected.
 
 **Decision:** A (tus protocol — `@tus/server` + `@tus/s3-store`)
 **Libraries:** @tus/server, @tus/s3-store
 
 **Revisions:**
-- 2026-09-08 — Fixa o modelo de ownership do draft criado em `onUploadCreate`: o endpoint de upload exige um usuário autenticado (reutilizando o guard JWT de `phase-02-auth`), e o hook grava `userId`/`channelId` no draft `Video` no mesmo momento em que ele é criado — antes de qualquer byte do arquivo trafegar. Rationale: autenticado, ownership imediato — evita drafts órfãos e mantém o "pré-cadastro automático" já dono do vídeo desde a primeira requisição, sem depender de uma etapa posterior de atribuição na Fase 04.
+- 2026-09-08 — Fixes the ownership model of the draft created in `onUploadCreate`: the upload endpoint requires an authenticated user (reusing the JWT guard from `phase-02-auth`), and the hook records `userId`/`channelId` on the draft `Video` at the same moment it is created — before any byte of the file is transferred. Rationale: authenticated, immediate ownership — avoids orphan drafts and keeps the "automatic pre-registration" already owning the video from the first request, without depending on a later assignment step in Phase 04.
 
 ---
 
@@ -221,7 +221,7 @@ _Subprojects in scope:_
 
 **Scope:** Cross-layer
 
-**Capability:** Transversal — covers: "Reprodução via streaming (sem necessidade de download completo)", "Download do vídeo pelo usuário"
+**Capability:** Transversal — covers: "Streaming playback (without needing a full download)", "Video download by the user"
 
 **Context:** Once a video is processed and stored (TD-01), the browser must be able to (a) play it progressively via HTTP range requests and (b) download it. `next-frontend/CLAUDE.md` already flags this exact gap: "Media streaming will eventually come from Object Storage (S3/MinIO) — TBD," and today's strict-BFF model (`next-frontend-config-base/TD-03`) has the browser talk only to same-origin `/api/...` routes. Routing multi-gigabyte video bytes through the Next.js BFF (and, if proxied further, through the NestJS API) on every playback is the "impact performance" failure mode this phase's upload requirement explicitly warns against, applied now to the read path. This decision is Cross-layer because it determines whether the strict-BFF model needs a deliberate, scoped exception for media bytes specifically — a decision neither subproject can make alone.
 
@@ -235,14 +235,14 @@ _Subprojects in scope:_
 ### Option B: Backend/BFF proxy streaming (NestJS `StreamableFile` piping the S3 object; Next.js Route Handler forwarding it)
 - `GET /videos/:id/stream` on the NestJS API calls `GetObjectCommand`, forwards the incoming `Range` header to S3, and pipes the resulting body into a `StreamableFile` (NestJS's documented mechanism for streaming responses, Range-aware if the handler reads and forwards the header manually). The Next.js Route Handler in turn pipes that response through to the browser, keeping the browser inside the same-origin BFF surface for media too.
 - **Pros:** No new CORS or public-storage-exposure concern — the browser only ever talks to same-origin `/api/...`, fully consistent with the strict-BFF model as originally written, no documented exception needed.
-- **Cons:** **Every byte of every playback/download passes through both the NestJS API and the Next.js BFF process** — for a video platform, this is the exact bandwidth/connection-pool cost the phase's "sem impacto na performance" concern was written for, now applied to reads instead of writes. Range-header forwarding and partial-content (`206`) handling must be implemented and tested by hand at two hops (API → S3, BFF → API) instead of relying on storage's native support. Scaling playback capacity means scaling the API/BFF tier, not just storage — the opposite of what object storage is for.
+- **Cons:** **Every byte of every playback/download passes through both the NestJS API and the Next.js BFF process** — for a video platform, this is the exact bandwidth/connection-pool cost the phase's "without performance impact" concern was written for, now applied to reads instead of writes. Range-header forwarding and partial-content (`206`) handling must be implemented and tested by hand at two hops (API → S3, BFF → API) instead of relying on storage's native support. Scaling playback capacity means scaling the API/BFF tier, not just storage — the opposite of what object storage is for.
 
 ### Option C: CDN-fronted object storage (e.g., CloudFront, or MinIO behind an Nginx/Caddy edge with caching)
 - A CDN sits in front of the storage bucket; the browser fetches video bytes from CDN edge URLs, with the API issuing a signed CDN URL rather than a raw storage presigned URL.
 - **Pros:** Best possible latency/throughput at real production scale; offloads Range-request handling and caching to purpose-built edge infrastructure.
-- **Cons:** Introduces a CDN as new infrastructure this greenfield project has no other need for yet — a genuinely separate, larger decision (which CDN, cache invalidation strategy, signed-URL/cookie scheme) that this phase's scope does not require to satisfy "reprodução via streaming" for an MVP. Reconsider explicitly if/when Phase 07's "ambiente de produção" work identifies real latency or egress-cost pressure; premature here.
+- **Cons:** Introduces a CDN as new infrastructure this greenfield project has no other need for yet — a genuinely separate, larger decision (which CDN, cache invalidation strategy, signed-URL/cookie scheme) that this phase's scope does not require to satisfy "streaming playback" for an MVP. Reconsider explicitly if/when Phase 07's "production environment" work identifies real latency or egress-cost pressure; premature here.
 
-**Recommendation:** **Option A (presigned/direct object-storage URLs)** — it is the only option that keeps video bytes off the API and BFF processes entirely, which is what "sem impacto na performance" demands once applied symmetrically to playback and download, not just upload. The CORS/exposure cost is small and well-understood (the same shape of problem TD-06 already accepts for tus's direct-to-storage chunk uploads); Option C solves a scaling problem this phase does not yet have.
+**Recommendation:** **Option A (presigned/direct object-storage URLs)** — it is the only option that keeps video bytes off the API and BFF processes entirely, which is what "without performance impact" demands once applied symmetrically to playback and download, not just upload. The CORS/exposure cost is small and well-understood (the same shape of problem TD-06 already accepts for tus's direct-to-storage chunk uploads); Option C solves a scaling problem this phase does not yet have.
 
 **Decision:** A (Presigned/direct object-storage URLs)
 **Libraries:** @aws-sdk/s3-request-presigner
@@ -253,7 +253,7 @@ _Subprojects in scope:_
 
 **Scope:** Repo-wide
 
-**Capability:** Transversal — covers: "Serviço de armazenamento de arquivos (vídeos e thumbnails)", "Serviço de processamento em segundo plano (filas)"
+**Capability:** Transversal — covers: "File storage service (videos and thumbnails)", "Background processing service (queues)"
 
 **Context:** This phase introduces at least one new infrastructure service (object storage — MinIO in dev, TD-01) and, depending on TD-02's outcome, possibly a second (Redis, if BullMQ is chosen over pg-boss), plus a second application service (the video worker, TD-03). `nestjs-project/compose.yaml` today defines `nestjs-api`, `db`, and `mailpit`; `next-frontend/compose.yaml` is a fully separate stack (`next-frontend-config-base/TD-03` note). This decision is where the new services are declared and how they're networked to the existing `nestjs-api`/worker services — it does not reopen the separate-FE-stack question, which TD-07's Option A deliberately routes around via a browser-reachable storage endpoint rather than requiring a shared FE/BE network.
 
@@ -284,7 +284,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Upload de vídeos com suporte a arquivos de até 10GB sem impacto na performance", "Processamento automático do vídeo após upload (extração de duração e metadados)"
+**Capability:** Transversal — covers: "Video upload supporting files up to 10GB without performance impact", "Automatic video processing after upload (duration and metadata extraction)"
 
 **Context:** TD-06's tus endpoint accepts an arbitrary byte stream up to 10GB; nothing so far decides what happens when that stream is not actually a video (wrong file selected by the user, a renamed non-video file, or a corrupted upload). Without an explicit strategy, an invalid upload either silently breaks TD-04's `ffprobe`/thumbnail step later in the pipeline, or consumes a full 10GB of bandwidth and object-storage space before anyone notices. This decision settles **when** content is validated and **what is cleaned up** on rejection; it deliberately does not touch the `Video` entity's schema or its draft→published state machine (`phase-04`'s concern, per this document's Notes section) — rejection here happens before a video is ever handed to that later lifecycle.
 
@@ -293,7 +293,7 @@ _Subprojects in scope:_
 ### Option A: Authoritative-only — `ffprobe` check in `onUploadFinish` (post-upload, before completion is acknowledged)
 - `@tus/server`'s `onUploadFinish` hook (fired after the last `PATCH` request completes, before the client receives the "upload complete" response) runs `ffprobe` against the stored object. If `ffprobe` fails or reports no video stream, the hook throws a tus error (`{ status_code: 422, body: '...' }`) and calls `store.remove(upload.id)` to delete the object from S3 — the same reject-and-delete pattern `@tus/server`'s own documented virus-scan example uses for `onUploadFinish`. No pre-upload check runs.
 - **Pros:** Single validation point, reusing TD-04's `fluent-ffmpeg` dependency with zero new library. Trusts nothing client-supplied — only the actual bytes decide the outcome. The client gets a synchronous, request-scoped failure tied to that exact upload attempt, not a deferred/asynchronous "processing failed" state to poll for.
-- **Cons:** A file that is obviously wrong (e.g., a 3GB PDF) still pays the full upload bandwidth and storage-put cost before the rejection fires — this option does nothing for the common "wrong file selected" case, which is exactly the failure mode `10GB sem impacto na performance` cares about avoiding.
+- **Cons:** A file that is obviously wrong (e.g., a 3GB PDF) still pays the full upload bandwidth and storage-put cost before the rejection fires — this option does nothing for the common "wrong file selected" case, which is exactly the failure mode `10GB without performance impact` cares about avoiding.
 
 ### Option B: Declared-metadata pre-check only — `onUploadCreate` (before any bytes transfer)
 - `onUploadCreate` (TD-06's existing hook, also where the draft `Video` row is created) additionally inspects the client-supplied `Upload-Metadata` (e.g., a `filetype`/`filename` key the tus client sets) against an allow-list of video MIME types/extensions, throwing a `{ status_code: 400, ... }` tus error immediately if it doesn't match — before the draft row is created and before any chunk transfers.
@@ -315,15 +315,15 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Pré-cadastro automático do vídeo como rascunho ao iniciar o upload", "Processamento automático do vídeo após upload (extração de duração e metadados)"
+**Capability:** Transversal — covers: "Automatic pre-registration of the video as a draft when the upload starts", "Automatic video processing after upload (duration and metadata extraction)"
 
-**Context:** `docs/project-plan.md`'s persistence expectation for the `Video` entity names a status column explicitly ("status: rascunho → processando → pronto/erro"), and this is distinct from what TD-09 already decides. TD-09's `onUploadFinish` `ffprobe` check is a **pre-acceptance gate**: if it fails, the draft row and the S3 object are both deleted — no `Video` row survives to need a status at all. This TD covers what happens **after** a video passes that gate and enters TD-03's async worker for TD-04's actual metadata/thumbnail extraction: a `Video` row now exists, is user-visible in principle, and the extraction step itself can still fail for reasons `onUploadFinish`'s synchronous check cannot catch (a codec `ffprobe` accepts but `.screenshots()` cannot frame-decode, a transient failure downloading the object from storage into the worker's temp file, a worker crash/OOM mid-job). Nothing decided so far says whether such a failure is retried, nor what state the video is left in. This is also where the row's lifecycle states are named end-to-end, since no other TD in this document defines them (the "Notes for downstream pipeline" section previously deferred the entire `Video` schema, including status, to a future phase — this TD narrows that deferral to only the draft→published *visibility* toggle, which genuinely is `phase-04`'s concern per project-plan.md's Fase 04 scope).
+**Context:** `docs/project-plan.md`'s persistence expectation for the `Video` entity names a status column explicitly ("status: draft → processing → ready/error"), and this is distinct from what TD-09 already decides. TD-09's `onUploadFinish` `ffprobe` check is a **pre-acceptance gate**: if it fails, the draft row and the S3 object are both deleted — no `Video` row survives to need a status at all. This TD covers what happens **after** a video passes that gate and enters TD-03's async worker for TD-04's actual metadata/thumbnail extraction: a `Video` row now exists, is user-visible in principle, and the extraction step itself can still fail for reasons `onUploadFinish`'s synchronous check cannot catch (a codec `ffprobe` accepts but `.screenshots()` cannot frame-decode, a transient failure downloading the object from storage into the worker's temp file, a worker crash/OOM mid-job). Nothing decided so far says whether such a failure is retried, nor what state the video is left in. This is also where the row's lifecycle states are named end-to-end, since no other TD in this document defines them (the "Notes for downstream pipeline" section previously deferred the entire `Video` schema, including status, to a future phase — this TD narrows that deferral to only the draft→published *visibility* toggle, which genuinely is `phase-04`'s concern per project-plan.md's Phase 04 scope).
 
 **Options:**
 
 ### Option A: Bounded automatic retry via pg-boss + persisted `error` terminal state
 - `Video.status` is a TypeORM enum column with exactly the four values the assignment names: `draft` (set at `onUploadCreate`, per TD-06) → `processing` (set when `onUploadFinish` enqueues the pg-boss job, per TD-03/TD-04) → `ready` (set by the worker on successful metadata+thumbnail extraction) | `error` (terminal). The pg-boss job (TD-02) is sent with a small bounded retry policy (e.g. `retryLimit: 3`, `retryBackoff: true` — pg-boss's own exponential-backoff-with-jitter option) instead of relying on the library's low defaults (`retryLimit: 2`, `retryBackoff: false`). Only once pg-boss has exhausted all attempts does a completion listener flip `Video.status` to `error` and persist the last failure's message in a `processingError` column; a transient failure that succeeds on retry never surfaces as an error at all.
-- **Pros:** Distinguishes transient faults (a momentary storage hiccup, a worker restart mid-job) from genuinely broken input (a codec `ffprobe`'s liberal container check accepted but the frame extractor cannot handle) — the former self-heals via retry, the latter reaches a real, user-facing terminal state. Uses `pg-boss`'s built-in retry/backoff (already a TD-02 dependency) instead of hand-rolled retry logic. The four states map 1:1 to project-plan.md's literal "rascunho → processando → pronto/erro" wording, so the entity's `status` column is directly traceable to the requirement. `processingError` gives future phases (04/05) a concrete field to surface "why did this fail" to the user instead of a bare `error` flag.
+- **Pros:** Distinguishes transient faults (a momentary storage hiccup, a worker restart mid-job) from genuinely broken input (a codec `ffprobe`'s liberal container check accepted but the frame extractor cannot handle) — the former self-heals via retry, the latter reaches a real, user-facing terminal state. Uses `pg-boss`'s built-in retry/backoff (already a TD-02 dependency) instead of hand-rolled retry logic. The four states map 1:1 to project-plan.md's literal "draft → processing → ready/error" wording, so the entity's `status` column is directly traceable to the requirement. `processingError` gives future phases (04/05) a concrete field to surface "why did this fail" to the user instead of a bare `error` flag.
 - **Cons:** A genuinely broken file still costs `retryLimit` worth of wasted `ffprobe`/`screenshots()` attempts before reaching the terminal state (bounded and small, not unbounded). Requires a small amount of new code — a job-completion listener that maps pg-boss's exhausted-retry signal to the `Video` row — beyond what TD-02/TD-03 already specify structurally.
 
 ### Option B: Single attempt, no automatic retry — immediate terminal `error` on first failure
@@ -334,9 +334,9 @@ _Subprojects in scope:_
 ### Option C: Unbounded/aggressive retry, no distinct `error` status ever reached under normal operation
 - The worker retries indefinitely (or a very high bound) on failure; `Video.status` only ever holds `draft`, `processing`, or `ready` — a permanently-failing video simply stays `processing` forever, discoverable only by an operator querying pg-boss's own job table directly.
 - **Pros:** No video is ever "given up on" automatically; every failure is theoretically recoverable given enough attempts.
-- **Cons:** **Directly fails to satisfy the assignment's literal requirement** — "pronto/erro" names `erro` as a real, reachable terminal state, and this option never reaches it under normal operation. A user watching a genuinely corrupted upload sees "processando" indefinitely with no resolution, which is worse UX than an honest terminal failure. Rejected outright — it isn't a matter of trade-off, it fails the stated requirement.
+- **Cons:** **Directly fails to satisfy the assignment's literal requirement** — "ready/error" names `error` as a real, reachable terminal state, and this option never reaches it under normal operation. A user watching a genuinely corrupted upload sees "processing" indefinitely with no resolution, which is worse UX than an honest terminal failure. Rejected outright — it isn't a matter of trade-off, it fails the stated requirement.
 
-**Recommendation:** **Option A (bounded retry + persisted `error` terminal state)** — it is the only option that reaches both required terminal states (`pronto` and `erro`) under normal operation while not wasting a whole upload on a failure that a bounded retry would have recovered from for free. `pg-boss`'s `retryLimit`/`retryBackoff` options (TD-02's own dependency) implement the bounded-retry mechanics directly — no new library, no hand-rolled retry/backoff logic to write or test. Option B is rejected because it conflates transient infrastructure faults with genuinely broken uploads at the cost of the full 10GB upload; Option C is rejected because it fails the assignment's literal "pronto/erro" state-machine requirement outright.
+**Recommendation:** **Option A (bounded retry + persisted `error` terminal state)** — it is the only option that reaches both required terminal states (`ready` and `error`) under normal operation while not wasting a whole upload on a failure that a bounded retry would have recovered from for free. `pg-boss`'s `retryLimit`/`retryBackoff` options (TD-02's own dependency) implement the bounded-retry mechanics directly — no new library, no hand-rolled retry/backoff logic to write or test. Option B is rejected because it conflates transient infrastructure faults with genuinely broken uploads at the cost of the full 10GB upload; Option C is rejected because it fails the assignment's literal "ready/error" state-machine requirement outright.
 
 **Decision:** A (Bounded automatic retry via pg-boss + persisted `error` terminal state)
 
@@ -364,8 +364,8 @@ _Subprojects in scope:_
 - **TD-02 → TD-03 dependency.** TD-03's worker registers whichever queue library TD-02 selects (`@Processor()`/`WorkerHost` for BullMQ, or `boss.work()` for pg-boss) — the deployment-model decision (dedicated process vs in-process) holds regardless of which library TD-02 picks.
 - **TD-01 → TD-06, TD-07 dependency.** Both cross-layer TDs assume TD-01's Option A (`@aws-sdk/client-s3`) is chosen, since `@tus/s3-store` (TD-06) and `@aws-sdk/s3-request-presigner` (TD-07) both build on that same client. If TD-01 swings to Option B (`minio` SDK), TD-06 and TD-07 need re-examination for how a second S3-compatible client coexists with `@tus/s3-store`'s AWS-SDK dependency.
 - **TD-02 → TD-08 dependency.** TD-08's Compose file only needs a `redis` service if TD-02 chooses BullMQ (Option A); if pg-boss (Option B) is chosen, TD-08's new services are just `minio` + `video-worker`.
-- **TD-06's `onUploadCreate` hook is where the phase-03 draft `Video` entity is actually created** — no separate TD or endpoint is needed for "pré-cadastro automático ao iniciar o upload"; it is a direct consequence of TD-06's Option A, called out explicitly in TD-06's Context/Recommendation so it is not lost as an implementation afterthought.
-- **This document decides the `Video` entity's `status` lifecycle (TD-10: `draft`/`processing`/`ready`/`error` + `processingError`) but NOT the rest of its schema** — storage/thumbnail key columns (shaped by TD-01/TD-04), the public identifier column (TD-05), and ownership columns (TD-06 Revision) are each fixed by their own TD; remaining columns with no dedicated TD (e.g., title, description placeholders) are `/implement`'s job via the `typeorm` skill. What remains genuinely deferred to `phase-04` is only the **draft → published visibility toggle** (public/unlisted, per project-plan.md's Fase 04 scope) — a separate concern from the processing-status lifecycle this document now owns. Any transcoding/adaptive-bitrate capability stays out of scope per project-plan.md as written (TD-04's Option C notes where to revisit if that changes).
+- **TD-06's `onUploadCreate` hook is where the phase-03 draft `Video` entity is actually created** — no separate TD or endpoint is needed for "automatic pre-registration when the upload starts"; it is a direct consequence of TD-06's Option A, called out explicitly in TD-06's Context/Recommendation so it is not lost as an implementation afterthought.
+- **This document decides the `Video` entity's `status` lifecycle (TD-10: `draft`/`processing`/`ready`/`error` + `processingError`) but NOT the rest of its schema** — storage/thumbnail key columns (shaped by TD-01/TD-04), the public identifier column (TD-05), and ownership columns (TD-06 Revision) are each fixed by their own TD; remaining columns with no dedicated TD (e.g., title, description placeholders) are `/implement`'s job via the `typeorm` skill. What remains genuinely deferred to `phase-04` is only the **draft → published visibility toggle** (public/unlisted, per project-plan.md's Phase 04 scope) — a separate concern from the processing-status lifecycle this document now owns. Any transcoding/adaptive-bitrate capability stays out of scope per project-plan.md as written (TD-04's Option C notes where to revisit if that changes).
 - **TD-06 → TD-09 → TD-10 chain.** TD-09's Option C reorders TD-06's `onUploadCreate` hook: the declared-metadata check must run **before** the draft `Video` row is created, not after — an upload that fails the fast-reject check never gets a draft row at all, and TD-09's authoritative `ffprobe` check in `onUploadFinish` deletes both the S3 object and the draft row on rejection (no status transition needed — the row never persists past that gate). TD-10 governs the **separate, later** failure window: once a video has passed TD-09's gate and entered TD-03's async worker for TD-04's extraction, a failure there does NOT delete the row — it retries per TD-10's policy and, if exhausted, transitions the row to the persisted `error` status instead.
 - **Implementation surface for `/plan-build` if recommendations are accepted:**
   - `nestjs-project/src/storage/` — S3 client provider (TD-01), namespaced `storage.config.ts` following the `registerAs()` convention from `phase-01-configuracao-base/TD-03`.
@@ -388,6 +388,6 @@ Sources consulted during research:
 - [BullMQ — NestJS integration](https://github.com/taskforcesh/bullmq/blob/master/docs/gitbook/guide/nestjs/README.md) — confirmed `@Processor()`/`WorkerHost` and `BullModule.forRoot()` connection shape.
 - [pg-boss](https://github.com/timgit/pg-boss) — confirmed queue creation, `work()`/`send()` API, and retry/backoff/dead-letter support without Redis.
 - [fluent-ffmpeg](https://github.com/fluent-ffmpeg/node-fluent-ffmpeg) — confirmed `ffprobe()` metadata shape and `.screenshots()` thumbnail extraction API.
-- `docs/project-plan.md` § Fase 03, § Pontos de Atenção — source of the 10GB/no-performance-impact/resumability requirements driving TD-06.
+- `docs/project-plan.md` § Phase 03, § Points of Attention — source of the 10GB/no-performance-impact/resumability requirements driving TD-06.
 - `next-frontend/CLAUDE.md` § "Talking to the NestJS API" — source of the strict-BFF model TD-07 carves a scoped exception into, and the existing "Media streaming... TBD" note this document resolves.
 - `docs/decisions/technical-decisions-phase-01-configuracao-base.md`, `technical-decisions-next-frontend-config-base.md` — consumed for existing infra/config conventions (namespaced `registerAs()` config, strict single server-only `API_URL`, separate Compose stacks).
