@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
-**Status:** in_progress
-**SIs:** 6/8 completed
+**Status:** completed
+**SIs:** 8/8 completed
 
 ### SI-03.1 — Storage module (cliente S3-compatible)
 - **Status:** completed
@@ -64,11 +64,20 @@
   - **Débito de lint pré-existente confirmado, fora de escopo desta SI:** `npm run lint` reporta 156 erros / 40 warnings, mas nenhum é novo — todos em arquivos não tocados nesta sessão (`src/channels/channels.service.ts` linhas 12-16, `channels.service.spec.ts`, `domain-exception.filter.spec.ts`, `validation-exception.filter.spec.ts`, `env.validation.integration-spec.ts`, `mail.service.integration-spec.ts`, `users.service.integration-spec.ts`, `test/auth.e2e-spec.ts`) ou seguindo deliberadamente o mesmo padrão já estabelecido em `test/*.e2e-spec.ts` (6 erros `no-unsafe-member-access`/`no-unsafe-assignment` em `test/video-upload.e2e-spec.ts`, idênticos em forma aos já presentes em `auth.e2e-spec.ts`). Como "lint passa" é um critério do Definition of Done, isso precisa de uma decisão explícita do usuário (aceitar a dívida como está, ou abrir uma tarefa dedicada de limpeza) antes da verificação final da fase.
 
 ### SI-03.7 — Endpoints de streaming e download (URLs pré-assinadas)
-- **Status:** pending
-- **Tests:** no tests
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 4 passing
+- **Observations:**
+  - Criado `VideosService` (`src/videos/videos.service.ts`) — não estava explicitamente no plano como artefato, mas é o local correto (per `.claude/rules/nestjs-layer-separation.md`) para a query de leitura owner+ready, já que `VideoStatusService` é escopado só a transições de status (comentário da própria classe). `VideosController` delega a ele antes de chamar `StorageService.getPresignedUrl`.
+  - `:id` do path resolvido como `Video.public_id` (não o `id` uuid interno) — consistente com o propósito de `phase-03-videos/TD-05` (identificador público opaco e não-enumerável para a URL do vídeo); usar o uuid interno exporia sequência/contagem via um vetor diferente do URL de watch.
+  - Adicionada `VideoNotFoundException` (`VIDEO_NOT_FOUND`, 404) em `domain.exception.ts`, cobrindo os três casos indistinguíveis por design (vídeo inexistente, não pertence ao caller, ou `status != ready`) — não há em `## Error Catalog` do plano uma entrada dedicada para esse 404 (só as 3 de upload), então o `errorCode` foi escolhido seguindo a convenção já estabelecida em vez de deixar sem código.
+  - Ambiente local precisou de reset: o container `db` havia sido recriado sem as migrations aplicadas (`refresh_tokens does not exist` no primeiro run do teste) — rodado `docker compose exec nestjs-api npm run migration:run` antes de re-rodar os testes. Fora do escopo desta SI (ambiente, não código), registrado aqui só para histórico.
 
 ### SI-03.8 — Topologia Docker Compose para nova infraestrutura
-- **Status:** pending
-- **Tests:** no tests
-- **Observations:** none
+- **Status:** completed
+- **Tests:** no tests (infra)
+- **Observations:**
+  - Technical action 1 (serviço `minio` em `nestjs-project/compose.yaml`) já estava feito desde a SI-03.1 (ver observação daquela SI) — nada a mudar aqui.
+  - Serviço `video-worker` adicionado ao `compose.yaml`: mesmo `build`/`Dockerfile.dev`/volume bind que `nestjs-api`, mas com `command: npm run worker:start:dev` explícito (em vez do `tail -f /dev/null` ocioso padrão de `nestjs-api`) — diferente do resto do projeto, o worker roda seu processo automaticamente em `docker compose up`, já que seu único propósito é consumir a fila; não há necessidade da flexibilidade de shell interativo que `nestjs-api` mantém para comandos ad-hoc (testes, migrations, lint).
+  - Sem stage/target de Dockerfile (confirmado como não aplicável à convenção do projeto desde a observação da SI-03.4) — a diferenciação é só via `command:`, como o plano já antecipava.
+  - Verificado manualmente: `docker compose up -d` sobe os 5 serviços (`db`, `mailpit`, `minio`, `nestjs-api`, `video-worker`) saudáveis; logs do `video-worker` confirmam bootstrap limpo do Nest e `"listening on queue \"video.uploaded\""`, sem erros de conexão a `minio`/`db` — confirma que ele resolve `http://minio:9000` pelo nome do serviço Compose, nunca `localhost`.
+  - `nestjs-project/CLAUDE.md` ganhou a nova seção `## Services` (entre "Development Environment" e "Commands") documentando `minio` e `video-worker`, incluindo a nota sobre a convenção `command:` acima.

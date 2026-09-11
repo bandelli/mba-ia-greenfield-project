@@ -52,6 +52,19 @@ services:
     volumes:
       - minio-data:/data
 
+  video-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run worker:start:dev
+    volumes:
+      - .:/home/node/app
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
 volumes:
   minio-data:
 

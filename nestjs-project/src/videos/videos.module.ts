@@ -17,7 +17,9 @@ import {
 } from './tus-upload.middleware';
 import { VideoStatusService } from './video-status.service';
 import { VideoUploadService } from './video-upload.service';
+import { VideosController } from './videos.controller';
 import { TUS_UPLOAD_PATH } from './videos.constants';
+import { VideosService } from './videos.service';
 
 @Module({
   imports: [
@@ -28,9 +30,11 @@ import { TUS_UPLOAD_PATH } from './videos.constants';
     ProcessingModule,
     QueueModule,
   ],
+  controllers: [VideosController],
   providers: [
     VideoStatusService,
     VideoUploadService,
+    VideosService,
     TusAuthMiddleware,
     TusServerMiddleware,
   ],

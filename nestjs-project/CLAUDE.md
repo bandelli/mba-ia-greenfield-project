@@ -52,6 +52,11 @@ docker compose logs db
 docker compose down
 ```
 
+## Services
+
+- `minio` — S3-compatible object storage for video files and thumbnails (per `phase-03-videos/TD-01`), port `9000` (API) / `9001` (console). `nestjs-api` and `video-worker` must address it as `http://minio:9000` (the Compose service name) — never `localhost` (see root `CLAUDE.md`'s Docker Networking rule).
+- `video-worker` — dedicated process consuming the `video.uploaded` queue (`pg-boss`, reusing the `db` connection) to extract metadata and generate thumbnails via `ffmpeg`/`ffprobe` (per `phase-03-videos/TD-02`, `TD-04`). Runs as its own Compose service, independent of `nestjs-api`, so a worker crash never takes down the API (per `phase-03-videos/TD-03`). Like `nestjs-api`, it shares the same `Dockerfile.dev` image — the two are differentiated only by the Compose service's `command:` (`npm run worker:start:dev` here vs. the idle default), not by separate Docker build stages/targets.
+
 ## Commands
 
 **Strict rule:** every `npm`, `npx`, `node`, `tsc`, and test command runs **inside the container**, never on the host. Running on the host causes env-var divergence (`DB_HOST` resolves to `localhost` instead of the Compose service), uses a different Node version, and produces results that do not reflect what runs in CI/prod.

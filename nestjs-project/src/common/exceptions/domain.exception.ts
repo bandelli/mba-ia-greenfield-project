@@ -78,3 +78,13 @@ export class UploadContentValidationFailedException extends DomainException {
     );
   }
 }
+
+export class VideoNotFoundException extends DomainException {
+  constructor() {
+    super(
+      'VIDEO_NOT_FOUND',
+      404,
+      'Video not found, not owned by the caller, or not ready',
+    );
+  }
+}
