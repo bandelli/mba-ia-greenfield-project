@@ -1,6 +1,22 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  FileTypeValidator,
+  Get,
+  HttpCode,
+  MaxFileSizeValidator,
+  Param,
+  ParseFilePipe,
+  Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -8,9 +24,81 @@ import {
 } from '@nestjs/swagger';
 import type { JwtPayload } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ThumbnailInvalidFileException } from '../common/exceptions/domain.exception';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { StorageService } from '../storage/storage.service';
+import { UpdateVideoDto } from './dto/update-video.dto';
+import { Video } from './entities/video.entity';
+import { VideoPublicationService } from './video-publication.service';
 import { VideosService } from './videos.service';
+
+const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
+const THUMBNAIL_ACCEPTED_TYPES = /^image\/(jpeg|png|webp)$/;
+
+// Mirrors PATCH /videos/:id and POST /videos/:id/publish's documented
+// Response 200 field list (per phase-04-video-channel-management Tech
+// Specs). Inline, not a DTO class — matches the getStreamUrl/getDownloadUrl
+// convention already in this controller, since the openapi:export script
+// runs under plain ts-node (the @nestjs/swagger CLI plugin's DTO/entity
+// schema inference does not apply there).
+const VIDEO_RESPONSE_SCHEMA = {
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    public_id: { type: 'string' },
+    title: { type: 'string', nullable: true },
+    description: { type: 'string', nullable: true },
+    category: { type: 'string' },
+    visibility: { type: 'string' },
+    thumbnail_key: { type: 'string', nullable: true },
+    status: { type: 'string' },
+    published_at: { type: 'string', format: 'date-time', nullable: true },
+    updated_at: { type: 'string', format: 'date-time' },
+  },
+};
+
+const THUMBNAIL_RESPONSE_SCHEMA = {
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    thumbnail_key: { type: 'string', nullable: true },
+  },
+};
+
+interface VideoResponse {
+  id: string;
+  public_id: string;
+  title: string | null;
+  description: string | null;
+  category: string;
+  visibility: string;
+  thumbnail_key: string | null;
+  status: string;
+  published_at: Date | null;
+  updated_at: Date;
+}
+
+// Projects the ORM entity onto the documented response shape (VIDEO_RESPONSE_SCHEMA
+// above) — the entity also carries internal-only columns (storage_key, user_id,
+// channel_id, metadata, processing_error) that must never leave the API.
+function toVideoResponse(video: Video): VideoResponse {
+  return {
+    id: video.id,
+    public_id: video.public_id,
+    title: video.title,
+    description: video.description,
+    category: video.category,
+    visibility: video.visibility,
+    thumbnail_key: video.thumbnail_key,
+    status: video.status,
+    published_at: video.published_at,
+    updated_at: video.updated_at,
+  };
+}
+
+function toThumbnailResponse(
+  video: Video,
+): Pick<VideoResponse, 'id' | 'thumbnail_key'> {
+  return { id: video.id, thumbnail_key: video.thumbnail_key };
+}
 
 @ApiTags('videos')
 @Controller('videos')
@@ -18,7 +106,166 @@ export class VideosController {
   constructor(
     private readonly videosService: VideosService,
     private readonly storageService: StorageService,
+    private readonly videoPublicationService: VideoPublicationService,
   ) {}
+
+  @Get(':id')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Get a video for editing',
+    description:
+      "Returns the caller's own video with every owner-editable field, for the edit screen's initial load (per phase-04-video-channel-management SI-04.8b).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Video',
+    schema: VIDEO_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or not owned by the caller',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getVideo(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<VideoResponse> {
+    const video = await this.videoPublicationService.getOwnedVideo(
+      id,
+      user.sub,
+    );
+    return toVideoResponse(video);
+  }
+
+  @Patch(':id')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Edit video information',
+    description:
+      "Updates title, description, category, and/or visibility of the caller's own video (per phase-04-video-channel-management/TD-01, TD-02).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Updated video',
+    schema: VIDEO_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or not owned by the caller',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async updateVideo(
+    @Param('id') id: string,
+    @Body() dto: UpdateVideoDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<VideoResponse> {
+    const video = await this.videoPublicationService.updateFields(
+      id,
+      user.sub,
+      dto,
+    );
+    return toVideoResponse(video);
+  }
+
+  @Post(':id/publish')
+  @HttpCode(200)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Publish a video',
+    description:
+      'Applies the given fields and marks the video as published, requiring status "ready" (per phase-04-video-channel-management/TD-02).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Published video',
+    schema: VIDEO_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or not owned by the caller',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error, video not ready, or video has no title',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async publishVideo(
+    @Param('id') id: string,
+    @Body() dto: UpdateVideoDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<VideoResponse> {
+    const video = await this.videoPublicationService.publish(id, user.sub, dto);
+    return toVideoResponse(video);
+  }
+
+  @Patch(':id/thumbnail')
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  @ApiBearerAuth('access-token')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { thumbnail: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOperation({
+    summary: 'Replace a video thumbnail',
+    description:
+      'Overwrites the auto-generated thumbnail with a custom upload (per phase-04-video-channel-management/TD-03).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Updated video',
+    schema: THUMBNAIL_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or not owned by the caller',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Thumbnail file missing, not an accepted image type, or too large',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async replaceThumbnail(
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: THUMBNAIL_ACCEPTED_TYPES,
+            // `file-type` is an ESM-only dependency loaded dynamically by
+            // Nest's magic-number sniffing; under Jest it can fail to load
+            // (see nestjs-project/CLAUDE.md § "ESM-only npm packages under
+            // Jest"). Falling back to the declared mimetype keeps validation
+            // working in that case instead of always rejecting.
+            fallbackToMimetype: true,
+          }),
+          new MaxFileSizeValidator({ maxSize: THUMBNAIL_MAX_BYTES }),
+        ],
+        exceptionFactory: () => new ThumbnailInvalidFileException(),
+      }),
+    )
+    thumbnail: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Pick<VideoResponse, 'id' | 'thumbnail_key'>> {
+    const video = await this.videoPublicationService.replaceThumbnail(
+      id,
+      user.sub,
+      thumbnail.buffer,
+      thumbnail.mimetype,
+    );
+    return toThumbnailResponse(video);
+  }
 
   @Get(':id/stream-url')
   @ApiBearerAuth('access-token')

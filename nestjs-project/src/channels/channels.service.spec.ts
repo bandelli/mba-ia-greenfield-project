@@ -1,4 +1,5 @@
 import { QueryFailedError } from 'typeorm';
+import { ChannelNicknameTakenException } from '../common/exceptions/domain.exception';
 import { ChannelsService } from './channels.service';
 import { Channel } from './entities/channel.entity';
 
@@ -6,6 +7,15 @@ function makeManager(overrides: Record<string, jest.Mock> = {}): any {
   return {
     findOne: jest.fn(),
     create: jest.fn(),
+    save: jest.fn(),
+    ...overrides,
+  };
+}
+
+function makeRepository(overrides: Record<string, jest.Mock> = {}): any {
+  return {
+    findOneByOrFail: jest.fn(),
+    findOne: jest.fn(),
     save: jest.fn(),
     ...overrides,
   };
@@ -30,9 +40,10 @@ function makeUniqueError(): QueryFailedError {
   return err;
 }
 
-function makeDataSource(manager: any): any {
+function makeDataSource(manager: any, repository?: any): any {
   return {
     transaction: jest.fn((cb: (manager: any) => Promise<any>) => cb(manager)),
+    getRepository: jest.fn().mockReturnValue(repository),
   };
 }
 
@@ -130,6 +141,75 @@ describe('ChannelsService', () => {
         service.createChannel('user-id', 'carol@example.com'),
       ).rejects.toThrow('Connection lost');
       expect(manager.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('updateOwnChannel', () => {
+    it('updates fields when no nickname collision', async () => {
+      const channel = makeChannel('dave');
+      const repository = makeRepository({
+        findOneByOrFail: jest.fn().mockResolvedValue(channel),
+        save: jest.fn().mockImplementation((c: Channel) => Promise.resolve(c)),
+      });
+      const service = new ChannelsService(
+        makeDataSource(makeManager(), repository),
+      );
+
+      const result = await service.updateOwnChannel('user-id', {
+        name: 'New Name',
+      });
+
+      expect(repository.findOne).not.toHaveBeenCalled();
+      expect(result.name).toBe('New Name');
+    });
+
+    it('throws ChannelNicknameTakenException when the requested nickname is already used by another channel', async () => {
+      const channel = makeChannel('dave');
+      const other = makeChannel('taken-nick');
+      const repository = makeRepository({
+        findOneByOrFail: jest.fn().mockResolvedValue(channel),
+        findOne: jest.fn().mockResolvedValue(other),
+      });
+      const service = new ChannelsService(
+        makeDataSource(makeManager(), repository),
+      );
+
+      await expect(
+        service.updateOwnChannel('user-id', { nickname: 'taken-nick' }),
+      ).rejects.toThrow(ChannelNicknameTakenException);
+      expect(repository.save).not.toHaveBeenCalled();
+    });
+
+    it('skips the collision pre-check when the nickname is unchanged', async () => {
+      const channel = makeChannel('dave');
+      const repository = makeRepository({
+        findOneByOrFail: jest.fn().mockResolvedValue(channel),
+        save: jest.fn().mockImplementation((c: Channel) => Promise.resolve(c)),
+      });
+      const service = new ChannelsService(
+        makeDataSource(makeManager(), repository),
+      );
+
+      await service.updateOwnChannel('user-id', { nickname: 'dave' });
+
+      expect(repository.findOne).not.toHaveBeenCalled();
+      expect(repository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws ChannelNicknameTakenException on a concurrent unique constraint violation', async () => {
+      const channel = makeChannel('dave');
+      const repository = makeRepository({
+        findOneByOrFail: jest.fn().mockResolvedValue(channel),
+        findOne: jest.fn().mockResolvedValue(null),
+        save: jest.fn().mockRejectedValue(makeUniqueError()),
+      });
+      const service = new ChannelsService(
+        makeDataSource(makeManager(), repository),
+      );
+
+      await expect(
+        service.updateOwnChannel('user-id', { nickname: 'racer' }),
+      ).rejects.toThrow(ChannelNicknameTakenException);
     });
   });
 });

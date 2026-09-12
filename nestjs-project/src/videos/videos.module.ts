@@ -15,6 +15,7 @@ import {
   TusAuthMiddleware,
   TusServerMiddleware,
 } from './tus-upload.middleware';
+import { VideoPublicationService } from './video-publication.service';
 import { VideoStatusService } from './video-status.service';
 import { VideoUploadService } from './video-upload.service';
 import { VideosController } from './videos.controller';
@@ -32,6 +33,7 @@ import { VideosService } from './videos.service';
   ],
   controllers: [VideosController],
   providers: [
+    VideoPublicationService,
     VideoStatusService,
     VideoUploadService,
     VideosService,

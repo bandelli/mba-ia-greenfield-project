@@ -55,3 +55,31 @@ export type RefreshTokenPair =
 // Shared error envelope (all auth 4xx responses)
 export type ApiErrorEnvelope =
   paths["/auth/register"]["post"]["responses"][400]["content"]["application/json"];
+
+// ─── Videos (phase-04-video-channel-management) ───────────────────────────────
+
+export type UpdateVideoDto =
+  paths["/videos/{id}"]["patch"]["requestBody"]["content"]["application/json"];
+
+export type Video =
+  paths["/videos/{id}"]["patch"]["responses"][200]["content"]["application/json"];
+
+export type VideoThumbnailResponse =
+  paths["/videos/{id}/thumbnail"]["patch"]["responses"][200]["content"]["application/json"];
+
+// ─── Channels (phase-04-video-channel-management) ─────────────────────────────
+
+export type UpdateChannelDto =
+  paths["/channels/me"]["patch"]["requestBody"]["content"]["application/json"];
+
+export type Channel =
+  paths["/channels/me"]["get"]["responses"][200]["content"]["application/json"];
+
+export type PublicChannelInfo =
+  paths["/channels/{nickname}"]["get"]["responses"][200]["content"]["application/json"];
+
+export type OwnerVideoListResponse =
+  paths["/channels/me/videos"]["get"]["responses"][200]["content"]["application/json"];
+
+export type PublicVideoListResponse =
+  paths["/channels/{nickname}/videos"]["get"]["responses"][200]["content"]["application/json"];
