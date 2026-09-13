@@ -43,11 +43,11 @@ O projeto é um monorepo baseado em containers Docker. Cada subprojeto sobe sua 
 
 - **Frontend** (Next.js 16, App Router + React Server Components) — interface da plataforma. Segue o **modelo BFF**: o navegador nunca chama a API NestJS diretamente; todo tráfego passa por Route Handlers same-origin em `app/api/**`, que fazem proxy server-side para a API.
 - **API** (NestJS 11) — regras de negócio, autenticação (JWT + refresh token rotation), envio de e-mails e acesso ao banco.
-- **Database** (PostgreSQL 17) — usuários, canais e tokens de autenticação.
+- **Database** (PostgreSQL 17) — usuários, canais, vídeos e tokens de autenticação.
 - **Email Service** (Mailpit) — captura os e-mails transacionais (confirmação de conta e recuperação de senha) em uma UI local.
-- **Video Worker** (FFmpeg) — processamento de vídeos *(planejado — Fase 03)*.
-- **Object Storage** (S3/MinIO) — arquivos de vídeo e thumbnails *(planejado — Fase 03)*.
-- **Message Queue** — fila de processamento de vídeos *(planejado — Fase 03)*.
+- **Video Worker** (FFmpeg) — processo dedicado que consome a fila de processamento, extrai metadados/duração (`ffprobe`) e gera o thumbnail (`ffmpeg`) de cada vídeo enviado.
+- **Object Storage** (MinIO, compatível com S3) — arquivos de vídeo e thumbnails.
+- **Message Queue** (`pg-boss`, sobre o próprio PostgreSQL) — fila do job `video.uploaded` consumido pelo Video Worker.
 
 O diagrama de arquitetura completo (C4) está em `docs/diagrams/software-arch.mermaid`.
 
@@ -78,9 +78,12 @@ Serviços disponíveis:
 | Serviço | URL / Porta |
 |---------|-------------|
 | API NestJS | http://localhost:3000 |
-| PostgreSQL | `localhost:5432` (db/user/senha: `streamtube`) |
+| PostgreSQL | `localhost:5433` (db/user/senha: `streamtube`) |
 | Mailpit (UI de e-mails) | http://localhost:8025 |
+| MinIO (API / Console) | `localhost:9000` / http://localhost:9001 |
 | Swagger (opcional) | http://localhost:3000/api/docs — habilite com `SWAGGER_ENABLED=true` |
+
+O **Video Worker** sobe como serviço separado (`video-worker`) na mesma stack Docker do backend — não precisa de um comando adicional.
 
 ### 2. Frontend (Next.js)
 
@@ -124,7 +127,7 @@ Sufixos: `*.test.ts(x)` (unitário), `*.integration.test.ts(x)` (Route Handlers 
 
 ## ✅ Funcionalidades implementadas
 
-**Fase 01 — Configuração base** e **Fase 02 — Autenticação** estão concluídas (backend + frontend).
+**Fase 01 — Configuração base**, **Fase 02 — Autenticação**, **Fase 03 — Upload e Processamento de Vídeos** e **Fase 04 — Gerenciamento de Vídeos e Canal** estão concluídas (backend + frontend).
 
 ### Autenticação (Fase 02)
 
@@ -151,6 +154,48 @@ Telas e Route Handlers BFF (`next-frontend`):
 
 Segurança: senhas com **Argon2**, **JWT** com `JwtAuthGuard` global (opt-out via `@Public()`), **rotação de refresh token** com detecção de reuso, **rate limiting** (`ThrottlerGuard`) nos endpoints de auth, e sessão no navegador via **iron-session** (cookies HTTP-only).
 
+### Upload e Processamento de Vídeos (Fase 03)
+
+Upload resumível de arquivos grandes (protocolo **tus**), processamento assíncrono em background e entrega via URL assinada.
+
+Endpoints da API (`nestjs-project`):
+
+| Método & Rota | Descrição |
+|---------------|-----------|
+| `POST/PATCH/HEAD /videos/uploads` | Sessão de upload resumível (protocolo tus) — cria o vídeo como rascunho antes do primeiro byte |
+| `GET /videos/:id/stream-url` | URL assinada (curta duração) para streaming do vídeo pronto |
+| `GET /videos/:id/download-url` | URL assinada para download do vídeo pronto |
+
+Pipeline assíncrono: o upload finalizado publica um job `video.uploaded` na fila (`pg-boss`); o **Video Worker**, processo independente, consome o job, extrai metadados/duração via `ffprobe` e gera o thumbnail via `ffmpeg`, atualizando o vídeo para `ready` (ou `error`).
+
+Segurança: cada etapa (criação da sessão, upload dos bytes) exige o dono autenticado; URLs de streaming/download são assinadas e expiram.
+
+### Gerenciamento de Vídeos e Canal (Fase 04)
+
+Edição de informações do vídeo, fluxo de rascunho → publicação, thumbnail customizado, dashboard do canal e página pública. Backend, BFF e as 4 telas do frontend completos.
+
+Telas (`next-frontend`):
+
+- `/dashboard/videos/[id]/edit` — edição de vídeo (título, descrição, categoria, visibilidade, thumbnail).
+- `/dashboard/videos` — dashboard do canal: listagem paginada, filtro por visibilidade, busca e ordenação.
+- `/dashboard/channel` — edição das informações do canal (nickname, nome, descrição).
+- `/channel/[nickname]` — página pública do canal (anônima): informações do canal + grid de vídeos publicados, com ordenação.
+
+Endpoints da API (`nestjs-project`):
+
+| Método & Rota | Descrição |
+|---------------|-----------|
+| `GET /videos/:id` | Dados do próprio vídeo para edição (dono apenas) |
+| `PATCH /videos/:id` | Edita título, descrição, categoria e visibilidade |
+| `POST /videos/:id/publish` | Publica o vídeo (exige `status: ready` e título preenchido) |
+| `PATCH /videos/:id/thumbnail` | Substitui o thumbnail por um upload customizado |
+| `GET /channels/me` / `PATCH /channels/me` | Consulta/edição do próprio canal (nickname, nome, descrição) |
+| `GET /channels/me/videos` | Listagem paginada dos vídeos do próprio canal (todos os status/visibilidades) |
+| `GET /channels/:nickname` | Informações públicas de um canal |
+| `GET /channels/:nickname/videos` | Listagem pública e paginada dos vídeos publicados de um canal |
+
+Route Handlers BFF (`next-frontend`): `app/api/videos/[id]/{,/publish,/thumbnail}` e `app/api/channels/{me,me/videos,[nickname],[nickname]/videos}` — proxy same-origin para os endpoints acima.
+
 ## 🛠️ Estrutura do Projeto
 
 ```
@@ -160,24 +205,35 @@ green-field-ia-project/
 │   ├── phases/                          # Planos e implementação por fase
 │   │   ├── phase-01-configuracao-base/
 │   │   ├── phase-02-auth/               # Auth (backend)
-│   │   └── phase-02-auth-frontend/      # Auth (frontend)
+│   │   ├── phase-02-auth-frontend/      # Auth (frontend)
+│   │   ├── phase-03-videos/             # Upload e processamento de vídeos
+│   │   └── phase-04-video-channel-management/  # Gerenciamento de vídeos e canal
 │   └── diagrams/
 │       └── software-arch.mermaid        # Diagrama de arquitetura (C4)
 ├── nestjs-project/                      # Backend API (NestJS 11)
 │   ├── src/
 │   │   ├── auth/                        # Cadastro, login, JWT, refresh, reset de senha
 │   │   ├── users/                       # Entidade e serviço de usuários
-│   │   ├── channels/                    # Canal 1:1 por usuário (nickname do e-mail)
+│   │   ├── channels/                    # Canal 1:1 por usuário; listagens e edição
+│   │   ├── videos/                      # Upload (tus), edição, publish, thumbnail
+│   │   ├── processing/                  # Extração de metadados/thumbnail (ffmpeg/ffprobe)
+│   │   ├── queue/                       # Fila de jobs (pg-boss)
+│   │   ├── storage/                     # Cliente S3/MinIO
+│   │   ├── worker/                      # Entry point do Video Worker (processo dedicado)
 │   │   ├── mail/                        # Envio de e-mails (templates Handlebars)
 │   │   ├── common/                      # Filtros, pipes e exceptions de domínio
 │   │   ├── config/                      # Configs namespaced (Joi)
 │   │   └── database/                    # data-source, migrations e seeds
 │   ├── test/                            # Testes e2e
-│   ├── compose.yaml                     # Docker Compose (API + PostgreSQL + Mailpit)
+│   ├── compose.yaml                     # Docker Compose (API + PostgreSQL + Mailpit + MinIO)
 │   └── Dockerfile.dev
 ├── next-frontend/                       # Frontend (Next.js 16, App Router)
 │   ├── app/                             # Rotas, layouts, páginas e Route Handlers BFF
-│   ├── components/                      # Componentes de auth, UI (shadcn) e ícones
+│   │   ├── api/videos/, api/channels/   # BFF de vídeo e canal (Fase 04)
+│   │   ├── dashboard/videos/            # Dashboard do canal + edição de vídeo (Fase 04)
+│   │   ├── dashboard/channel/           # Edição de informações do canal (Fase 04)
+│   │   └── channel/[nickname]/          # Página pública do canal (Fase 04)
+│   ├── components/                      # Componentes de auth, video, UI (shadcn) e ícones
 │   ├── lib/                             # env, api (openapi-fetch), auth/session
 │   ├── mocks/                           # MSW (handlers + server)
 │   ├── tests/                           # E2E (Playwright)
@@ -195,8 +251,8 @@ green-field-ia-project/
 |------|-----------|--------|
 | **01** | Configuração Base do Projeto | ✅ Concluída |
 | **02** | Cadastro, Login e Gerenciamento de Conta | ✅ Concluída |
-| **03** | Upload e Processamento de Vídeos | ⏳ Planejada |
-| **04** | Gerenciamento de Vídeos e Canal | ⏳ Planejada |
+| **03** | Upload e Processamento de Vídeos | ✅ Concluída |
+| **04** | Gerenciamento de Vídeos e Canal | ✅ Concluída |
 | **05** | Página de Visualização do Vídeo | ⏳ Planejada |
 | **06** | Interações Sociais (Likes, Comentários, Inscrições) | ⏳ Planejada |
 | **07** | Página Inicial, Busca e Finalização | ⏳ Planejada |

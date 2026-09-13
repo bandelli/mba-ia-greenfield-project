@@ -19,6 +19,26 @@ export enum VideoStatus {
   ERROR = 'error',
 }
 
+// Fixed, platform-defined set — no admin management exists in this project
+// (per phase-04-video-channel-management/TD-01).
+export enum VideoCategory {
+  EDUCATION = 'education',
+  ENTERTAINMENT = 'entertainment',
+  GAMING = 'gaming',
+  MUSIC = 'music',
+  NEWS = 'news',
+  SPORTS = 'sports',
+  TECHNOLOGY = 'technology',
+  OTHER = 'other',
+}
+
+// public: shown to everyone; unlisted: accessible only via direct link
+// (per phase-04-video-channel-management/TD-02).
+export enum VideoVisibility {
+  PUBLIC = 'public',
+  UNLISTED = 'unlisted',
+}
+
 @Entity('videos')
 export class Video {
   @PrimaryGeneratedColumn('uuid')
@@ -73,6 +93,39 @@ export class Video {
   // cleared whenever status is anything else (per phase-03-videos/TD-10).
   @Column({ type: 'text', nullable: true })
   processing_error: string | null;
+
+  // Owner-editable metadata — never set at upload time (per
+  // phase-03-videos/TD-06); filled in later via the edit form
+  // (per phase-04-video-channel-management, "Video information editing").
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  title: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
+  // Owner-editable classification, decoupled from the processing lifecycle
+  // above (per phase-04-video-channel-management/TD-01).
+  @Column({
+    type: 'enum',
+    enum: VideoCategory,
+    enumName: 'videos_category_enum',
+    default: VideoCategory.OTHER,
+  })
+  category: VideoCategory;
+
+  // null while draft; set once on publish and never cleared afterwards.
+  // Deliberately decoupled from `status` — owned by VideoPublicationService,
+  // not VideoStatusService (per phase-04-video-channel-management/TD-02).
+  @Column({ type: 'timestamptz', nullable: true })
+  published_at: Date | null;
+
+  @Column({
+    type: 'enum',
+    enum: VideoVisibility,
+    enumName: 'videos_visibility_enum',
+    default: VideoVisibility.PUBLIC,
+  })
+  visibility: VideoVisibility;
 
   @CreateDateColumn()
   created_at: Date;

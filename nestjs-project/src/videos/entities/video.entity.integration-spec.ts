@@ -7,7 +7,12 @@ import {
   createTestDataSource,
 } from '../../test/create-test-data-source';
 import { User } from '../../users/entities/user.entity';
-import { Video, VideoStatus } from './video.entity';
+import {
+  Video,
+  VideoCategory,
+  VideoStatus,
+  VideoVisibility,
+} from './video.entity';
 
 const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken, Video];
 
@@ -79,6 +84,37 @@ describe('Video entity (integration)', () => {
     );
 
     expect(video.thumbnail_key).toBeNull();
+  });
+
+  it('should default category to other, visibility to public, and published_at to null', async () => {
+    const { user, channel } = await createOwner();
+
+    const video = await videoRepository.save(
+      videoRepository.create({
+        user_id: user.id,
+        channel_id: channel.id,
+        storage_key: 'videos/draft-key.mp4',
+      }),
+    );
+
+    expect(video.category).toBe(VideoCategory.OTHER);
+    expect(video.visibility).toBe(VideoVisibility.PUBLIC);
+    expect(video.published_at).toBeNull();
+  });
+
+  it('should default title and description to null', async () => {
+    const { user, channel } = await createOwner();
+
+    const video = await videoRepository.save(
+      videoRepository.create({
+        user_id: user.id,
+        channel_id: channel.id,
+        storage_key: 'videos/draft-key.mp4',
+      }),
+    );
+
+    expect(video.title).toBeNull();
+    expect(video.description).toBeNull();
   });
 
   it('should auto-generate a unique public_id at insert time', async () => {

@@ -36,6 +36,8 @@ const buttonVariants = cva(
         md: "gap-2 rounded-[var(--radius-4)] px-6 py-2 text-label-lg [&_svg:not([class*='size-'])]:size-6",
         lg: "gap-3 rounded-[var(--radius-full)] px-12 py-1.5 text-label-xl [&_svg:not([class*='size-'])]:size-8",
         icon: "min-w-0 size-9 rounded-[var(--radius-3)]",
+        chip: "min-w-0 h-9 gap-1.5 rounded-[var(--radius-full)] px-4 text-label-md [&_svg:not([class*='size-'])]:size-4",
+        action: "min-w-0 h-9 gap-2 rounded-[var(--radius-2)] px-4 text-label-md [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {

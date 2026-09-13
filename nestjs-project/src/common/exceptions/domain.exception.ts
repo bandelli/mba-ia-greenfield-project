@@ -88,3 +88,49 @@ export class VideoNotFoundException extends DomainException {
     );
   }
 }
+
+export class VideoNotReadyException extends DomainException {
+  constructor() {
+    super(
+      'VIDEO_NOT_READY',
+      400,
+      'Video cannot be published until its status is "ready"',
+    );
+  }
+}
+
+export class VideoMissingTitleException extends DomainException {
+  constructor() {
+    super(
+      'VIDEO_MISSING_TITLE',
+      400,
+      'Video must have a title before it can be published',
+    );
+  }
+}
+
+export class ThumbnailInvalidFileException extends DomainException {
+  constructor() {
+    super(
+      'THUMBNAIL_INVALID_FILE',
+      400,
+      'Thumbnail file is missing, not an accepted image type, or exceeds the size limit',
+    );
+  }
+}
+
+export class ChannelNotFoundException extends DomainException {
+  constructor() {
+    super('CHANNEL_NOT_FOUND', 404, 'Channel not found');
+  }
+}
+
+export class ChannelNicknameTakenException extends DomainException {
+  constructor() {
+    super(
+      'CHANNEL_NICKNAME_TAKEN',
+      409,
+      'This nickname is already in use by another channel',
+    );
+  }
+}
