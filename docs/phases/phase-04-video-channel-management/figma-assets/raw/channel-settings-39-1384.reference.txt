@@ -1,0 +1,139 @@
+RAW get_design_context output — fileKey 40c57EfcNjN6u5St7n5SlG, nodeId 39:1384
+Screen: Edição de informações do canal (Channel Settings) — route /dashboard/channel
+Captured 2026-09-13. REFERENCE ONLY — translate to project conventions when implementing SI-04.10a/10b.
+Remote asset URLs expire ~2026-09-20. Icon SVGs already downloaded to ../icons/:
+  imgFrame  (39:1502, next to "1.2M subscribers")   -> channel-settings-subscribers-icon.svg
+  imgFrame1 (39:1506, next to "342 videos")          -> channel-settings-videos-count-icon.svg
+  imgFrame2 (39:1470, "Basic Information" heading)   -> channel-settings-basicinfo-heading-icon.svg
+  imgFrame3 (39:1476, "About Channel" heading)       -> channel-settings-about-heading-icon.svg
+  imgFrame4 (39:1459, "Last updated" icon)           -> channel-settings-lastupdated-clock-icon.svg
+  imgFrame5–13: shared header/sidebar chrome, same as dashboard-39-652 (hamburger, logo, search,
+    camera, Home/Subscriptions/Your videos/Liked videos nav icons, "Show 12 more" chevron) — reuse
+    the same downloaded icons, do not re-fetch.
+imgImg* are Figma mock content (banner/avatar photos) — ignore for implementation.
+
+const imgImg = "https://www.figma.com/api/mcp/asset/20138bb0-28da-4ae9-830f-badcb919c35d.png";  // avatar (channel + header, reused)
+
+export default function ChannelSettings() {
+  return (
+    <div data-node-id="39:1384" data-name="Channel Settings">
+      {/* body 39:1385, 1440x1364. main 39:1388 at left-256 top-56 (same shell offset as dashboard) */}
+      <div data-node-id="39:1393" className="w-[1024px]"> {/* content column, left-80 top-32 inside main */}
+
+        <p data-node-id="39:1421" className="font-bold text-[30px] text-[#f1f1f1] leading-[36px]">Channel Settings</p>
+
+        {/* ── Card 1: banner + avatar + channel identity summary ── */}
+        <div data-node-id="39:1401" className="bg-[#272727] border border-[#3f3f3f] rounded-[12px] h-[514px] w-[1024px] overflow-clip mt-[68px]">
+          <div data-node-id="39:1422" className="h-[320px] w-full" /> {/* banner placeholder area, no image node captured here — likely same channel banner as public page */}
+          <div data-node-id="39:1423" className="h-[192px]">
+            <div data-node-id="39:1447" className="pl-8 pt-8">
+              {/* avatar: 128px circle, 4px border-[#0f0f0f] (creates the "cutout" ring over the banner) */}
+              <img data-node-id="39:1464" src={imgImg} className="size-[128px] rounded-full border-4 border-[#0f0f0f] object-cover" />
+              <div data-node-id="39:1453" className="pl-[152px] -mt-[104px]">{/* offset to sit beside avatar */}
+                <p data-node-id="39:1466" className="font-bold text-[24px] text-[#f1f1f1]">TechMaster Studio</p>
+                <p data-node-id="39:1467" className="text-[14px] text-[#aaa]">@techmaster2024</p>
+                <div data-node-id="39:1468" className="flex gap-4 text-[12px] text-[#aaa]">
+                  <span data-node-id="39:1484"><Icon src={imgFrame} className="size-[15px]" /> 1.2M subscribers</span>
+                  <span data-node-id="39:1485"><Icon src={imgFrame1} className="size-[13.5px]" /> 342 videos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Card 2: edit form (Basic Information + About Channel) ── */}
+        <div data-node-id="39:1402" className="bg-[#272727] border border-[#3f3f3f] rounded-[12px] h-[638px] w-[1024px] mt-[24px]"> {/* top-606, card1 ends at 68+514=582, so ~24px gap */}
+          <div data-node-id="39:1424" className="p-8">
+
+            {/* Basic Information section */}
+            <div data-node-id="39:1448" className="h-[134px]">
+              <h3 data-node-id="39:1454" className="flex items-center gap-[8px]">
+                <Icon src={imgFrame2} className="size-[20px]" />
+                <span data-node-id="39:1472" className="font-semibold text-[20px] text-[#f1f1f1]">Basic Information</span>
+              </h3>
+              <div data-node-id="39:1455" className="flex gap-6 mt-[24px]"> {/* two fields side by side, each w-[467px] of a 958px row → gap ~24px */}
+
+                {/* Nickname field — floating/inset label pattern (NOT the project's current Input.tsx shape) */}
+                <div data-node-id="39:1473" className="w-[467px] relative">
+                  <label data-node-id="39:1489" className="absolute left-[12px] top-[8px] bg-[#272727] px-1 text-[12px] text-[#aaa]">Nickname</label>
+                  <input data-node-id="39:1486" defaultValue="@techmaster2024"
+                    className="h-[58px] w-full rounded-[8px] border border-[#3f3f3f] bg-[#0f0f0f] pt-[24px] px-[16px] text-[16px] text-[#f1f1f1]" />
+                  <p data-node-id="39:1488" className="text-[12px] text-[#aaa] mt-1">Your unique identifier on StreamTube</p>
+                </div>
+
+                {/* Channel Name field — same floating-label pattern */}
+                <div data-node-id="39:1474" className="w-[467px] relative">
+                  <label data-node-id="39:1493" className="absolute left-[12px] top-[8px] bg-[#272727] px-1 text-[12px] text-[#aaa]">Channel Name</label>
+                  <input data-node-id="39:1490" defaultValue="TechMaster Studio"
+                    className="h-[58px] w-full rounded-[8px] border border-[#3f3f3f] bg-[#0f0f0f] pt-[24px] px-[16px] text-[16px] text-[#f1f1f1]" />
+                  <p data-node-id="39:1492" className="text-[12px] text-[#aaa] mt-1">The name that appears on your channel</p>
+                </div>
+              </div>
+            </div>
+
+            {/* About Channel section — border-t divider at top-[166px] inside the 473px column */}
+            <div data-node-id="39:1449" className="border-t border-[#3f3f3f] pt-6 mt-6">
+              <h3 data-node-id="39:1456" className="flex items-center gap-[8px]">
+                <Icon src={imgFrame3} className="w-[17.5px] h-[20px]" />
+                <span data-node-id="39:1478" className="font-semibold text-[20px] text-[#f1f1f1]">About Channel</span>
+              </h3>
+              <div data-node-id="39:1457" className="mt-[24px] relative">
+                <label data-node-id="39:1481" className="absolute left-[12px] top-[8px] bg-[#272727] px-1 text-[12px] text-[#aaa]">Description</label>
+                <textarea data-node-id="39:1479" rows={4}
+                  className="h-[200px] w-full rounded-[8px] border border-[#3f3f3f] bg-[#0f0f0f] pt-[50px] px-[16px] text-[16px] text-[#f1f1f1]"
+                  defaultValue={`Welcome to TechMaster Studio! 🚀 Here you'll find the best tech reviews, programming tutorials, and reviews of the latest gadgets on the market. 📧 Business contact: business@techmaster.com 🌐 Website: www.techmaster.com New videos every Tuesday and Thursday at 6 PM! #Tech #Programming #Reviews #Gadgets`} />
+                <div data-node-id="39:1480" className="flex justify-between text-[12px] text-[#aaa] mt-1">
+                  <span data-node-id="39:1498">Describe your channel in up to 5000 characters</span>
+                  <span data-node-id="39:1499">342 / 5000</span> {/* live character counter */}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* footer: last-updated timestamp + Cancel/Save actions, border-t divider */}
+          <div data-node-id="39:1425" className="border-t border-[#3f3f3f] px-8 py-[24px] flex items-center justify-between">
+            <div data-node-id="39:1450" className="flex items-center gap-2 text-[12px] text-[#aaa]">
+              <Icon src={imgFrame4} className="size-[12px]" />
+              <span data-node-id="39:1461">Last updated: January 15, 2024</span>
+            </div>
+            <div data-node-id="39:1451" className="flex gap-3">
+              <button data-node-id="39:1462" className="h-[42px] rounded-[8px] border border-[#3f3f3f] px-6 text-white text-[14px] font-medium">Cancel</button>
+              <button data-node-id="39:1463" className="h-[42px] rounded-[8px] bg-[red] px-6 text-white text-[14px] font-semibold">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* header (39:1387) + aside/sidebar (42:515): IDENTICAL shell markup to dashboard-39-652's
+          header(39:655)/aside(42:458) — same node structure, same classes, same icon roles.
+          Reuse whatever shared layout/header/sidebar component gets built for the dashboard screen. */}
+    </div>
+  );
+}
+
+// KEY DRIFT-RELEVANT OBSERVATIONS vs current next-frontend components:
+// 1. Card containers use rounded-[12px] (--radius-3) with bg-[#272727] + border-[#3f3f3f] — this
+//    matches the project's existing "card" pattern IF one exists; verify against globals.css tokens
+//    (--card, --border) before hand-picking a bg-[#272727] literal.
+// 2. Nickname/Channel Name/Description fields use a FLOATING INSET LABEL pattern (label positioned
+//    absolutely inside the top-left of the input, small caption size, bg matching the card so it
+//    "cuts into" the border) — this is NOT how next-frontend/components/ui/input.tsx or the
+//    video-edit-form.tsx fields work today (those use a separate <Label> above the field, per the
+//    existing auth forms convention, TD-04). This is a deliberate Figma pattern difference for this
+//    screen — flag to the user at SI-04.10a whether to (a) match Figma exactly (new floating-label
+//    variant) or (b) keep the established separate-label convention from login/signup/video-edit-form
+//    for consistency. Do not decide silently — this affects multiple fields across the screen.
+// 3. Height 58px / rounded-[8px] for text inputs here differs from the video-edit-form Title input
+//    (h-9/36px, rounded-[var(--radius-1)]=4px) AND from the dashboard SearchVideosInput (h-[38px],
+//    rounded-full) audited in SI-04.9.0. Three different input shapes now observed across Phase 04
+//    screens (rectangular-small, rectangular-tall-with-floating-label, pill) — this looks like
+//    genuine Figma design inconsistency across screens rather than a single missing DS variant.
+//    Recommend surfacing this to the user before SI-04.10a: which shape should the reused
+//    `components/ui/input.tsx` primitive standardize on (if any), vs. treating each as a
+//    screen-specific exception.
+// 4. "Save Changes" button: bg-[red] rounded-[8px] h-[42px] — same rounded-[8px] (not pill) pattern
+//    as the dashboard's Upload video / pagination number buttons. Reinforces that the CORRECT
+//    button.tsx finding from SI-04.9.0 is: chips (Filter/Public/Date) need a NEW small pill size,
+//    while CTA/action buttons across the phase consistently want rounded-[8px] (~--radius-2), which
+//    NO existing `button.tsx` size currently provides (sizes are radius-3/4/full only, see
+//    frontend-drift-report.md correction).

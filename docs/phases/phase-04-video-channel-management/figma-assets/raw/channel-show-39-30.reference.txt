@@ -1,0 +1,124 @@
+RAW get_design_context output — fileKey 40c57EfcNjN6u5St7n5SlG, nodeId 39:30
+Screen: Página pública do canal (Channel show) — public channel page (no route documented yet in the
+plan beyond "Public channel page" — confirm exact path, e.g. /channel/[nickname] or /c/[nickname],
+at SI-04.11b time from the API Contracts / routing convention already used for other public routes).
+Captured 2026-09-13. REFERENCE ONLY — translate to project conventions when implementing SI-04.11a/11b.
+Remote asset URLs expire ~2026-09-20. Icon SVGs already downloaded to ../icons/:
+  imgFrame (39:178, small icon inside the bell/notification button next to Subscribe)
+    -> channel-show-notification-bell-icon.svg
+  Frame1–5, Frame6–9: shared header/sidebar chrome, same as dashboard-39-652 and channel-settings —
+    reuse the same downloaded icons (hamburger, logo, search, Home/Subscriptions/Your videos/Liked
+    videos nav icons, "Show 12 more" chevron). Do not re-fetch.
+imgImg* (banner photo, avatar photo, 6 video thumbnails) are Figma mock content — ignore for
+implementation; real data comes from GET /channels/:nickname + GET /channels/:nickname/videos.
+
+export default function ChannelShow() {
+  return (
+    <div data-node-id="39:30" data-name="Channel show">
+      {/* body 39:31, 1440x1240. main 39:34 at left-256 top-56, size 1184x1184 (no scroll shell like
+          dashboard/settings — this page's content height (1240) is close to viewport, only slightly
+          taller) */}
+
+      {/* ── Banner ── */}
+      <div data-node-id="39:39" className="h-[320px] w-[1184px] bg-[#272727] overflow-clip">
+        <img data-node-id="39:48" className="size-full object-cover" /> {/* full-bleed banner image */}
+      </div>
+
+      {/* ── Identity row: avatar overlapping banner, name/handle/subscriber-count/description, actions ── */}
+      <div data-node-id="39:40" className="h-[207px] relative">
+        {/* avatar: 128px circle, 4px border-[#0f0f0f], positioned top-[-40px] (overlaps banner bottom
+            edge by 40px + half its own height sits below the banner boundary) left-[32px] */}
+        <img data-node-id="39:66" className="absolute left-[32px] top-[-40px] size-[128px] rounded-full border-4 border-[#0f0f0f] object-cover" />
+
+        <div data-node-id="39:49" className="pl-[152px] pt-[24px]"> {/* text column starts after avatar */}
+          <div data-node-id="39:65" className="flex justify-between">
+            <div data-node-id="39:96" className="w-[672px]">
+              <h1 data-node-id="39:129" className="font-bold text-[36px] text-[#f1f1f1] leading-[40px]">Tech Mastery Plus</h1>
+              <div data-node-id="39:130" className="flex gap-1 text-[16px] text-[#aaa] font-medium mt-[4px]">
+                <span data-node-id="39:150">@TechMasteryPlus</span>
+                <span data-node-id="39:151">•</span>
+                <span data-node-id="39:152">2.4M subscribers</span>
+                <span data-node-id="39:153">•</span>
+                <span data-node-id="39:154">1.2K videos</span>
+              </div>
+              <p data-node-id="39:132" className="text-[14px] text-[#aaa] mt-[8px] truncate">
+                Your ultimate guide to mastering modern web development, software engineering, and tech careers.
+              </p>
+            </div>
+
+            {/* action cluster: Subscribe (pill, red) + notification-bell icon button (pill, muted) */}
+            <div data-node-id="39:97" className="flex gap-2">
+              <button data-node-id="39:133" className="h-[44px] rounded-full bg-[red] px-[24px] text-white text-[16px] font-semibold">Subscribe</button>
+              <button data-node-id="39:134" className="h-[48px] w-[35.75px] rounded-full bg-[#272727]">
+                <Icon src={imgFrame} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* tabs: Videos (active, underlined) / About — border-b divider under the whole tab row */}
+        <div data-node-id="39:50" className="border-b border-[#3f3f3f] mt-[24px]">
+          <button data-node-id="39:67" className="border-b-2 border-[#f1f1f1] pb-[10px] text-[#f1f1f1] text-[16px] font-semibold">Videos</button>
+          <button data-node-id="39:68" className="pb-[11px] text-[#aaa] text-[16px] font-medium ml-[32px]">About</button>
+        </div>
+      </div>
+
+      {/* ── Videos tab content: sort chips + video grid (4 columns) ── */}
+      {/* this section starts at top-[527px] in the original frame, i.e. directly after the banner
+          (320px) + identity block (207px) — no extra gap */}
+      <div data-node-id="39:41" className="px-[32px] pt-[24px]">
+        <div data-node-id="39:51" className="flex gap-2 h-[32px]">
+          <button data-node-id="39:69" className="rounded-[8px] bg-[#f1f1f1] px-3 text-[#0f0f0f] text-[14px] font-semibold">Latest</button>
+          <button data-node-id="39:70" className="rounded-[8px] bg-[#272727] px-3 text-[#f1f1f1] text-[14px] font-semibold">Popular</button>
+          <button data-node-id="39:71" className="rounded-[8px] bg-[#272727] px-3 text-[#f1f1f1] text-[14px] font-semibold">Oldest</button>
+        </div>
+
+        {/* video grid: 4 columns, 262px card width, ~24px gutter, cards wrap in rows of 4 */}
+        <div data-node-id="39:52" className="grid grid-cols-4 gap-[24px] mt-[40px]">
+          {/* one card shown fully below; the other 4 repeat the identical shape with different
+              thumbnail/title/duration/views/age content — no structural variance observed */}
+          <div data-node-id="39:72" className="w-[262px]">
+            <div data-node-id="39:103" className="relative rounded-[12px] overflow-clip h-[147.375px] bg-[#272727]">
+              <img data-node-id="39:135" className="size-full object-cover" />
+              <span data-node-id="39:157" className="absolute right-[8px] bottom-[8px] rounded-[4px] bg-[rgba(0,0,0,0.8)] text-white text-[12px] font-bold px-[6px]">14:20</span>
+            </div>
+            <div data-node-id="39:104" className="mt-[12px]">
+              <h3 data-node-id="39:158" className="font-bold text-[16px] text-[#f1f1f1] leading-[24px] line-clamp-2">React 19 Complete Crash Course - Everything New</h3>
+              <div data-node-id="39:160" className="text-[14px] text-[#aaa] mt-1 flex gap-1">
+                <span data-node-id="39:180">124K views</span><span data-node-id="39:181" className="text-[10px]">•</span><span data-node-id="39:182">2 days ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* header (39:33) + aside/sidebar (42:287): IDENTICAL shell markup to dashboard-39-652 and
+          channel-settings-39-1384 — reuse the same shared layout/header/sidebar component. */}
+    </div>
+  );
+}
+
+// KEY OBSERVATIONS vs current next-frontend / other Phase 04 screens:
+// 1. Subscribe button: h-[44px] rounded-full bg-[red] — matches the "pill, red" shape family seen on
+//    the dashboard's Upload video button's COLOR but NOT its radius (Upload video is rounded-[8px],
+//    Subscribe is rounded-full). Two different CTA shapes across the phase's screens using the same
+//    red brand color. Current button.tsx sizes: sm=radius-3(12px), md=radius-4(16px), lg=radius-full.
+//    Subscribe (h-44, rounded-full, px-24) is closer to size="lg" in shape, but lg's padding
+//    (px-12=48px each side) and icon-size assumptions don't match this button (no icon, px-24 total
+//    horizontal ≈ px-3 each side by Tailwind's px-N convention... clarify exact Tailwind px scale
+//    match at SI-04.11a rather than assuming lg fits — verify h-44/pad against size="lg"'s actual
+//    computed box before reusing it as-is).
+// 2. Latest/Popular/Oldest sort chips: rounded-[8px] (NOT pill) bg-[#f1f1f1] (active/white) or
+//    bg-[#272727] (inactive) — a THIRD distinct chip shape in this phase (dashboard's Filter/Public/
+//    Date chips are rounded-full/pill; these are rounded-[8px]/square-ish). Also introduces an
+//    "active" filled-white state not present in the dashboard chips. This likely needs its own
+//    button.tsx variant/size combo too — flag alongside the dashboard chip finding at SI-04.11a,
+//    don't assume the same fix covers both.
+// 3. Video grid cards use rounded-[12px] (--radius-3) thumbnails — consistent with the
+//    channel-settings card radius, different from the dashboard row thumbnails' rounded-[8px].
+// 4. No icon-button.tsx / input.tsx / brand-logo.tsx reuse marked for this screen per the plan's UI
+//    Contract — Reused DS components list is empty for this screen (confirmed in
+//    frontend-drift-report.md's SI-04.11.0 section, still valid: "every component is new"). The
+//    notification-bell icon button (39:134) and header/sidebar icon buttons are new components on
+//    this screen per the inventory, not flagged as reusing icon-button.tsx — verify this is still
+//    intentional at SI-04.11a since visually it's the same pill-icon-button shape used elsewhere.

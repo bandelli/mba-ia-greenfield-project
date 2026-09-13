@@ -127,7 +127,7 @@ Sufixos: `*.test.ts(x)` (unitário), `*.integration.test.ts(x)` (Route Handlers 
 
 ## ✅ Funcionalidades implementadas
 
-**Fase 01 — Configuração base**, **Fase 02 — Autenticação** e **Fase 03 — Upload e Processamento de Vídeos** estão concluídas (backend + frontend). **Fase 04 — Gerenciamento de Vídeos e Canal** está em andamento (backend + BFF completos; telas do frontend em progresso).
+**Fase 01 — Configuração base**, **Fase 02 — Autenticação**, **Fase 03 — Upload e Processamento de Vídeos** e **Fase 04 — Gerenciamento de Vídeos e Canal** estão concluídas (backend + frontend).
 
 ### Autenticação (Fase 02)
 
@@ -170,9 +170,16 @@ Pipeline assíncrono: o upload finalizado publica um job `video.uploaded` na fil
 
 Segurança: cada etapa (criação da sessão, upload dos bytes) exige o dono autenticado; URLs de streaming/download são assinadas e expiram.
 
-### Gerenciamento de Vídeos e Canal (Fase 04 — em andamento)
+### Gerenciamento de Vídeos e Canal (Fase 04)
 
-Edição de informações do vídeo, fluxo de rascunho → publicação, thumbnail customizado, dashboard do canal e página pública. Backend e camada BFF completos; telas do frontend em progresso (drift audits parcialmente bloqueados por rate limit do Figma MCP).
+Edição de informações do vídeo, fluxo de rascunho → publicação, thumbnail customizado, dashboard do canal e página pública. Backend, BFF e as 4 telas do frontend completos.
+
+Telas (`next-frontend`):
+
+- `/dashboard/videos/[id]/edit` — edição de vídeo (título, descrição, categoria, visibilidade, thumbnail).
+- `/dashboard/videos` — dashboard do canal: listagem paginada, filtro por visibilidade, busca e ordenação.
+- `/dashboard/channel` — edição das informações do canal (nickname, nome, descrição).
+- `/channel/[nickname]` — página pública do canal (anônima): informações do canal + grid de vídeos publicados, com ordenação.
 
 Endpoints da API (`nestjs-project`):
 
@@ -223,7 +230,9 @@ green-field-ia-project/
 ├── next-frontend/                       # Frontend (Next.js 16, App Router)
 │   ├── app/                             # Rotas, layouts, páginas e Route Handlers BFF
 │   │   ├── api/videos/, api/channels/   # BFF de vídeo e canal (Fase 04)
-│   │   └── dashboard/videos/[id]/edit/  # Tela de edição de vídeo (Fase 04)
+│   │   ├── dashboard/videos/            # Dashboard do canal + edição de vídeo (Fase 04)
+│   │   ├── dashboard/channel/           # Edição de informações do canal (Fase 04)
+│   │   └── channel/[nickname]/          # Página pública do canal (Fase 04)
 │   ├── components/                      # Componentes de auth, video, UI (shadcn) e ícones
 │   ├── lib/                             # env, api (openapi-fetch), auth/session
 │   ├── mocks/                           # MSW (handlers + server)
@@ -243,7 +252,7 @@ green-field-ia-project/
 | **01** | Configuração Base do Projeto | ✅ Concluída |
 | **02** | Cadastro, Login e Gerenciamento de Conta | ✅ Concluída |
 | **03** | Upload e Processamento de Vídeos | ✅ Concluída |
-| **04** | Gerenciamento de Vídeos e Canal | 🔄 Em andamento |
+| **04** | Gerenciamento de Vídeos e Canal | ✅ Concluída |
 | **05** | Página de Visualização do Vídeo | ⏳ Planejada |
 | **06** | Interações Sociais (Likes, Comentários, Inscrições) | ⏳ Planejada |
 | **07** | Página Inicial, Busca e Finalização | ⏳ Planejada |

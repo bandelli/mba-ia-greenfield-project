@@ -1,0 +1,249 @@
+// RAW get_design_context output — fileKey 40c57EfcNjN6u5St7n5SlG, nodeId 39:652
+// Screen: Dashboard de gerenciamento de vídeos do canal (My videos list) — route /dashboard/videos
+// Captured 2026-09-13. This is REFERENCE ONLY (per figma-design-to-code skill rules) — translate to
+// project conventions (tokens, cn(), Input/Button/IconButton primitives, custom icon components) when
+// implementing SI-04.9a/9b. Remote asset PNG/SVG URLs below expire ~7 days from capture (~2026-09-20);
+// the icon SVGs actually needed for this project have already been downloaded to ../icons/*.svg —
+// prefer those over re-fetching these URLs. Sample video thumbnails (imgImg*) are Figma mock content,
+// not real assets — ignore for implementation (real thumbnails come from the backend).
+
+const imgImg = "https://www.figma.com/api/mcp/asset/9a7319ae-3664-4cc9-be1b-1b83e739e543.png";
+const imgImg1 = "https://www.figma.com/api/mcp/asset/86f5521d-dd85-4254-8ac7-f81accf4ec6d.png";
+const imgImg2 = "https://www.figma.com/api/mcp/asset/53aa4fa4-92fa-49e1-8bd5-0886677761e0.png";
+const imgImg3 = "https://www.figma.com/api/mcp/asset/0aa94b3e-9840-4a2e-a437-0ccfba760bcc.png";
+const imgImg4 = "https://www.figma.com/api/mcp/asset/f3dff6f6-02f2-46c0-aa1c-e5d6b98a005b.png";
+const imgImg5 = "https://www.figma.com/api/mcp/asset/00083f46-6b2d-44a5-9b2f-c46c95ed75e6.png";
+const imgImg6 = "https://www.figma.com/api/mcp/asset/d33bb06c-829a-4ff0-aedc-bf85eb03647f.png";
+const imgImg7 = "https://www.figma.com/api/mcp/asset/7c903fdd-d389-4d53-887e-94d1a8b14449.png";
+const imgImg8 = "https://www.figma.com/api/mcp/asset/2d8f49e7-5ea3-43e4-bf6d-8fe0679d0e69.png";
+// SVG icon asset URLs below map to downloaded files in ../icons/ as follows:
+//   imgFrame  (39:783/790 area, upload "+")        -> upload-button-plus-icon.svg
+//   imgFrame1 (39:762, Filter chip funnel)          -> dashboard-filter-icon.svg
+//   imgFrame2 (39:769, search input icon)           -> dashboard-search-input-icon.svg
+//   imgFrame3 (39:739, sort icon)                   -> dashboard-sort-icon.svg
+//   imgFrame4 (eye/views icon, repeats per row)      -> video-stat-eye-icon.svg
+//   imgFrame5 (thumbs-up/likes icon, repeats)        -> video-stat-thumbsup-icon.svg
+//   imgFrame6 (comment icon, repeats)                -> video-stat-comment-icon.svg
+//   imgFrame7 (39:784, pagination prev arrow)        -> pagination-prev-arrow.svg
+//   imgFrame8 (39:791, pagination next arrow)        -> pagination-next-arrow.svg
+//   imgFrame9 (39:677, header hamburger)             -> sidebar-toggle-hamburger.svg
+//   imgFrame10 (39:680, StreamTube logo mark)        -> (reuse existing streamtube-icon.tsx)
+//   imgFrame11 (39:712, header search icon)          -> header-search-icon.svg
+//   imgFrame12 (39:686, header camera/create icon)   -> header-create-camera-icon.svg (compare vs existing camera-icon.tsx before reuse)
+//   imgFrame13 (42:463, Home nav icon)                -> nav-home-icon.svg
+//   imgFrame14 (42:469, Subscriptions nav icon)       -> nav-subscriptions-icon.svg
+//   imgFrame15 (42:477, Your videos nav icon)         -> nav-your-videos-icon.svg
+//   imgFrame16 (42:483, Liked videos nav icon)        -> nav-liked-videos-icon.svg
+//   imgFrame17 (42:511, "Show 12 more" chevron)       -> (compare vs existing chevron-down-icon.tsx before reuse)
+//   VideoRowMenuButton (node 39:884, kebab "..."): no image asset was returned by get_design_context
+//     (rendered as an empty positioned div, not an <img>) — the 3-dot icon is a trivial custom SVG,
+//     build it by hand (3 evenly spaced small circles in a 4x16 bounding box) rather than trying to
+//     re-fetch an asset for it.
+
+export default function MyVideosList() {
+  return (
+    <div className="bg-white border-2 border-[#ced4da] border-solid content-stretch flex flex-col items-start overflow-clip relative rounded-[8px] size-full" data-node-id="39:652" data-name="My videos list">
+      <div className="bg-[#0f0f0f] border-0 border-[#e5e7eb] border-solid h-[1473px] overflow-clip relative shrink-0 w-[1440px]" data-node-id="39:653" data-name="body">
+        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1473px] left-0 top-0 w-[1440px]" data-node-id="39:654" data-name="div">
+          <div className="absolute bg-[#0f0f0f] border-0 border-[#e5e7eb] border-solid h-[1417px] left-[256px] top-[56px] w-[1184px]" data-node-id="39:656" data-name="main">
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1385px] left-0 top-0 w-[1184px]" data-node-id="39:661" data-name="div">
+              <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-b border-solid h-[101px] left-0 top-0 w-[1184px]" data-node-id="39:668" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[60px] left-[32px] top-[24px] w-[1120px]" data-node-id="39:689" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[60px] left-0 top-0 w-[241.703px]" data-node-id="39:714" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 top-0 w-[241.703px]" data-node-id="39:727" data-name="h1">
+                      <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[36px] left-0 not-italic text-[#f1f1f1] text-[30px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:728">
+                        Channel content
+                      </p>
+                    </div>
+                    <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[20px] left-0 not-italic text-[#aaa] text-[14px] top-[41px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:729">
+                      Manage your videos and content
+                    </p>
+                  </div>
+                  <div className="absolute bg-[red] border-0 border-[#e5e7eb] border-solid h-[40px] left-[963px] rounded-[8px] top-[11px] w-[157.344px]" data-node-id="210:11" data-name="button">
+                    <div className="absolute h-[14px] left-[24px] top-[13px] w-[12.25px]" data-node-id="210:12" data-name="svg">
+                      <div className="absolute h-[14px] left-0 top-0 w-[12.25px]" data-node-id="210:13" data-name="Frame">
+                        <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame} />
+                      </div>
+                    </div>
+                    <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[92.25px] not-italic text-[14px] text-center text-white top-[11px] tracking-[-0.5px] whitespace-nowrap" data-node-id="210:15">
+                      Upload video
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-b border-solid h-[71px] left-0 top-[101px] w-[1184px]" data-node-id="39:669" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[38px] left-[32px] top-[16px] w-[1120px]" data-node-id="39:690" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 top-px w-[236.297px]" data-node-id="39:716" data-name="div">
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 rounded-[9999px] top-0 w-[85.141px]" data-node-id="39:734" data-name="button">
+                      <div className="absolute content-stretch flex items-center justify-center left-[16px] size-[12px] top-[12px]" data-node-id="39:761" data-name="svg">
+                        <div className="relative shrink-0 size-[12px]" data-node-id="39:762" data-name="Frame">
+                          <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame1} />
+                        </div>
+                      </div>
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[17px] left-[56.07px] not-italic text-[#f1f1f1] text-[14px] text-center top-[9px] tracking-[-0.5px] w-[48.141px]" data-node-id="39:764">
+                        Filter
+                      </p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-[93.14px] rounded-[9999px] top-0 w-[72.578px]" data-node-id="39:735" data-name="button">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[17px] left-[36.29px] not-italic text-[#f1f1f1] text-[14px] text-center top-[9px] tracking-[-0.5px] w-[80.578px]" data-node-id="39:765">
+                        Public
+                      </p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-[173.72px] rounded-[9999px] top-0 w-[62.578px]" data-node-id="39:736" data-name="button">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[17px] left-[31.29px] not-italic text-[#f1f1f1] text-[14px] text-center top-[9px] tracking-[-0.5px] w-[70.578px]" data-node-id="39:766">
+                        Date
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[38px] left-[864px] top-0 w-[256px]" data-node-id="39:717" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[38px] left-0 top-0 w-[256px]" data-node-id="39:737" data-name="div">
+                      <div className="absolute bg-[#0f0f0f] border border-[#3f3f3f] border-solid h-[38px] left-0 rounded-[9999px] top-0 w-[256px]" data-node-id="39:767" data-name="input">
+                        <div className="-translate-y-1/2 [word-break:break-word] absolute flex flex-col font-['Inter:Regular'] font-normal h-[38px] justify-center leading-[0] left-[15px] not-italic text-[14px] text-[rgba(241,241,241,0.5)] top-[18px] tracking-[-0.5px] w-[224px]" data-node-id="39:793">
+                          <p className="leading-[20px]">Search your videos</p>
+                        </div>
+                      </div>
+                      <div className="absolute content-stretch flex items-center justify-center left-[226px] size-[14px] top-[12px]" data-node-id="39:768" data-name="svg">
+                        <div className="relative shrink-0 size-[14px]" data-node-id="39:769" data-name="Frame">
+                          <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame2} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1213px] left-0 top-[172px] w-[1184px]" data-node-id="39:670" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[32px] top-[24px] w-[1120px]" data-node-id="39:691" data-name="div">
+                  <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[20px] left-0 not-italic text-[#aaa] text-[14px] top-px tracking-[-0.5px] whitespace-nowrap" data-node-id="39:718">
+                    24 videos
+                  </p>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[1000.38px] top-0 w-[119.625px]" data-node-id="39:719" data-name="button">
+                    <div className="absolute content-stretch flex h-[14px] items-center justify-center left-0 top-[3px] w-[15.75px]" data-node-id="39:738" data-name="svg">
+                      <div className="h-[14px] relative shrink-0 w-[15.75px]" data-node-id="39:739" data-name="Frame">
+                        <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame3} />
+                      </div>
+                    </div>
+                    <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[17px] left-[75.25px] not-italic text-[#aaa] text-[14px] text-center top-px tracking-[-0.5px] whitespace-nowrap" data-node-id="39:741">
+                      Sort by: Latest
+                    </p>
+                  </div>
+                </div>
+                <!-- VIDEO ROW STRUCTURE (repeats 6× visible in this page of 24; identical shape per row) -->
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1061px] left-[32px] top-[60px] w-[1120px]" data-node-id="39:692" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-b border-solid h-[177px] left-0 rounded-[8px] top-0 w-[1120px]" data-node-id="39:720" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[144px] left-[16px] top-[16px] w-[256px]" data-node-id="39:742" data-name="div">
+                      <div className="absolute bg-black border-0 border-[#e5e7eb] border-solid h-[144px] left-0 overflow-clip rounded-[8px] top-0 w-[256px]" data-node-id="39:771" data-name="thumb">
+                        <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 size-[256px] top-0" data-node-id="39:794" data-name="img">
+                          <img alt="" className="absolute left-0 max-w-none size-full top-[-21.59%]" src={imgImg} />
+                        </div>
+                        <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-[204.36px] not-italic text-[12px] text-white top-[118px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:795">
+                          10:30
+                        </p>
+                      </div>
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[144px] left-[288px] top-[16px] w-[816px]" data-node-id="39:743" data-name="video info">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[100px] left-0 top-0 w-[816px]" data-node-id="39:772" data-name="div">
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-0 top-0 w-[816px]" data-node-id="39:796" data-name="div">
+                          <p className="[word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[24px] left-0 not-italic text-[#f1f1f1] text-[16px] top-[2px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:830">
+                            My Awesome Tech Review 2024 - Best Gadgets of the Year
+                          </p>
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-[796px] top-0 w-[20px]" data-node-id="39:831" data-name="div">
+                            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-0 rounded-[9999px] top-0 w-[20px]" data-node-id="39:884" data-name="button">
+                              <div className="absolute content-stretch flex h-[16px] items-center justify-center left-[8px] top-[12px] w-[4px]" data-node-id="39:962" data-name="svg">
+                                <div className="bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[16px] relative shrink-0 w-[4px]" data-node-id="39:963" data-name="Frame" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-0 overflow-clip top-[48px] w-[816px]" data-node-id="39:797" data-name="p">
+                          <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[20px] left-0 not-italic text-[#aaa] text-[14px] top-px tracking-[-0.5px] whitespace-nowrap" data-node-id="39:798">In this video, we dive deep into the latest tech trends of 2024. Don't forget to like and subscribe!</p>
+                        </div>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-0 top-[80px] w-[816px]" data-node-id="39:799" data-name="div">
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[16px] left-0 top-[2px] w-[83.297px]" data-node-id="39:832" data-name="span">
+                            <div className="absolute content-stretch flex h-[12px] items-center justify-center left-0 top-[2px] w-[13.5px]" data-node-id="39:885" data-name="svg">
+                              <div className="h-[12px] relative shrink-0 w-[13.5px]" data-node-id="39:886" data-name="Frame">
+                                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame4} />
+                              </div>
+                            </div>
+                            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[15px] left-[19.5px] not-italic text-[#aaa] text-[12px] top-0 tracking-[-0.5px] w-[78.797px]" data-node-id="39:888">
+                              124K views
+                            </p>
+                          </div>
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[16px] left-[99.3px] top-[2px] w-[43.641px]" data-node-id="39:833" data-name="span">
+                            <div className="absolute content-stretch flex items-center justify-center left-0 size-[12px] top-[2px]" data-node-id="39:889" data-name="svg">
+                              <div className="relative shrink-0 size-[12px]" data-node-id="39:890" data-name="Frame">
+                                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame5} />
+                              </div>
+                            </div>
+                            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[15px] left-[18px] not-italic text-[#aaa] text-[12px] top-0 tracking-[-0.5px] w-[40.641px]" data-node-id="39:892">
+                              5.2K
+                            </p>
+                          </div>
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[16px] left-[158.94px] top-[2px] w-[40.484px]" data-node-id="39:834" data-name="span">
+                            <div className="absolute content-stretch flex items-center justify-center left-0 size-[12px] top-[2px]" data-node-id="39:893" data-name="svg">
+                              <div className="relative shrink-0 size-[12px]" data-node-id="39:894" data-name="Frame">
+                                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame6} />
+                              </div>
+                            </div>
+                            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[15px] left-[18px] not-italic text-[#aaa] text-[12px] top-0 tracking-[-0.5px] w-[37.484px]" data-node-id="39:896">
+                              432
+                            </p>
+                          </div>
+                          <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[215.42px] not-italic text-[#aaa] text-[12px] top-[2px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:835">•</p>
+                          <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[238.17px] not-italic text-[#aaa] text-[12px] top-[2px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:836">2 days ago</p>
+                          <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[316.53px] not-italic text-[#aaa] text-[12px] top-[2px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:837">•</p>
+                          <p className="[word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[16px] left-[339.28px] not-italic text-[#4caf50] text-[10px] top-[4px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:838">
+                            Public
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- rows 2-6 repeat the exact same structure with different text/thumbnail/stats content;
+                       row 4 ("How I Built My First App...") uses text-[#3ea6ff] "Unlisted" instead of
+                       text-[#4caf50] "Public" for the status badge — this is the ONLY structural variant
+                       observed among the 6 sample rows. Full per-row markup omitted here (identical shape) —
+                       see docs/phases/phase-04-video-channel-management/frontend-drift-report.md for the
+                       corrected component-level drift findings (button.tsx, input.tsx radius). -->
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-[32px] top-[1153px] w-[1120px]" data-node-id="39:693" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-[397.5px] top-0 w-[324.984px]" data-node-id="39:726" data-name="div">
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 opacity-50 rounded-[8px] top-0 w-[40.75px]" data-node-id="39:754" data-name="button">
+                      <div className="absolute content-stretch flex h-[14px] items-center justify-center left-[16px] top-[10.75px] w-[8.75px]" data-node-id="39:783" data-name="svg">
+                        <div className="h-[14px] relative shrink-0 w-[8.75px]" data-node-id="39:784" data-name="Frame">
+                          <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame7} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute bg-[red] border-0 border-[#e5e7eb] border-solid h-[36px] left-[48.75px] rounded-[8px] top-0 w-[37.922px]" data-node-id="39:755" data-name="button">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[18.96px] not-italic text-[14px] text-center text-white top-[9px] tracking-[-0.5px] w-[45.922px]" data-node-id="39:786">1</p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-[94.67px] rounded-[8px] top-0 w-[40.547px]" data-node-id="39:756" data-name="button">
+                      <p data-node-id="39:787">2</p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-[143.22px] rounded-[8px] top-0 w-[40.656px]" data-node-id="39:757" data-name="button">
+                      <p data-node-id="39:788">3</p>
+                    </div>
+                    <p data-node-id="39:758">...</p>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-[229.7px] rounded-[8px] top-0 w-[46.531px]" data-node-id="39:759" data-name="button">
+                      <p data-node-id="39:789">10</p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[36px] left-[284.23px] rounded-[8px] top-0 w-[40.75px]" data-node-id="39:760" data-name="button">
+                      <div data-node-id="39:790"><img alt="" src={imgFrame8} /></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- header (39:655) and aside/sidebar (42:458) — same shell markup as tela-de-edicao-de-video /
+             channel-settings / channel-show, see those raw files. header: hamburger(39:663)+logo(39:664)
+             + search bar(39:665, input 607px + submit button 65px, both rounded-full halves)
+             + camera icon button(39:666, 50px pill)+avatar(39:667, 32px circle).
+             sidebar: Home(42:460)/Subscriptions(42:466) menu group, hr, Your videos(42:474)/Liked videos
+             (42:480, active/highlighted bg-[#272727]) menu group, hr, "Subscriptions" h3 + 6
+             SubscriptionListItem rows (24px avatar + name) + "Show 12 more" (chevron + muted text). -->
+      </div>
+    </div>
+  );
+}

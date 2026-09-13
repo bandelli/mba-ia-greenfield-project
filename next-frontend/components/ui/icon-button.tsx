@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
@@ -37,17 +38,21 @@ const iconButtonVariants = cva(
 type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> &
   VariantProps<typeof iconButtonVariants> & {
     "aria-label": string
+    asChild?: boolean
   }
 
 function IconButton({
   className,
   variant,
   size,
+  asChild = false,
   ...props
 }: IconButtonProps) {
+  const Comp = asChild ? Slot.Root : "button"
+
   return (
-    <button
-      type="button"
+    <Comp
+      type={asChild ? undefined : "button"}
       data-slot="icon-button"
       data-variant={variant ?? "ghost"}
       data-size={size ?? "md"}

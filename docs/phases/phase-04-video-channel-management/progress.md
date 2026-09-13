@@ -1,7 +1,38 @@
 # phase-04-video-channel-management — Progress
 
-**Status:** in_progress
-**SIs:** 12/19 completed (+ SI-04.9.0 paused, blocked on Figma MCP rate limit)
+**Status:** completed
+**SIs:** 19/19 completed
+
+### Cross-cutting: revisão final da fase antes do commit (após SI-04.11b, 2026-09-13)
+
+A pedido do usuário ("faça a revisão, leia o que é pedido e veja se está tudo ok"), rodei duas passadas de verificação sobre todo o trabalho das SIs 04.9–04.11 antes de fechar a fase:
+
+**1. Cruzamento manual contra os "Rendered states" do UI Contract.** Reli as 4 seções `Rendered states` do plano (`tela-de-edição-de-vídeo`, dashboard, Channel Settings, página pública) e percebi que **nenhuma das 4 telas tinha `loading.tsx`** — incluindo a tela de edição de vídeo, da SI-04.8 (sessão anterior). O `AC`/deliverable de cada tela explicitamente pede "renderiza loading, empty, success e error states", e o UI Contract de cada uma descreve um skeleton específico ("skeleton rows", "skeleton form", "skeleton banner + video grid"). Corrigido para as 3 telas desta leva de SIs (04.9/04.10/04.11) — a de vídeo (SI-04.8) é gap pré-existente, fora do escopo desta sessão, sinalizado ao usuário em vez de corrigido silenciosamente.
+  - Adicionado o primitivo shadcn `skeleton.tsx` (via `npx shadcn@latest add skeleton`; corrigido o import quebrado `from "cn"` → `@/lib/utils`, mesmo problema já visto em outros scaffolds desta fase; removida a dependência `cn` não utilizada do `package.json`).
+  - Criados `app/dashboard/videos/loading.tsx`, `app/dashboard/channel/loading.tsx`, `app/channel/[nickname]/loading.tsx`, cada um espelhando a estrutura real da tela correspondente.
+  - **Efeito colateral real descoberto e confirmado (dev E build de produção, não só dev):** adicionar `loading.tsx` à página pública do canal faz o Next.js (App Router, streaming/Suspense) sempre responder HTTP 200 para um nickname inexistente, mesmo chamando `notFound()` — o shell inicial já comita o status 200 antes do erro ser descoberto durante o streaming. O conteúdo "not found" renderiza certo pro usuário; só o status de transporte HTTP fica errado (relevante para SEO/crawlers, já que essa é a única tela anônima da fase). Perguntei ao usuário se mantinha o `loading.tsx` (cumprindo o requisito de skeleton) ou removia só dessa tela (mantendo o 404 real) — optou por manter o skeleton. Documentado no próprio teste e2e (`channel-public-page.e2e-spec.ts`), que passou a checar o conteúdo renderizado em vez do status HTTP bruto.
+  - Também rodei o gate de Definition of Done que faltava: `npm run build` (produção) do `next-frontend` — nunca tinha sido testado fora do dev server nesta fase. Passou limpo, confirmado com as 19 rotas esperadas.
+
+**2. `/code-review high`** sobre o diff completo da fase (rodado em background). 9 achados reais confirmados, todos corrigidos:
+  - `page.tsx` do dashboard e da página pública: `Number(params.page) || 1` deixava passar `page` negativo/fracionado sem validação (`-1 || 1` é `-1` em JS, já que `-1` é truthy) — extraído `resolvePageParam()` compartilhado em `lib/utils.ts`, usado nos dois.
+  - `formatRelativeTime`: bug de arredondamento em fronteira de unidade — "59m59s atrás" virava "60 minutes ago" em vez de "1 hour ago" (mesmo problema em "6d23h58m" → "7 days ago" em vez de bater a semana). Reescrito para, após arredondar, verificar se o valor "estourou" pra próxima unidade maior e subir de unidade nesse caso. Confirmado com 16 testes novos em `lib/__tests__/utils.test.ts` (arquivo que não existia — a função nunca tinha teste).
+  - `channel-settings-form.tsx`: a confirmação "Channel updated" ficava visível mesmo depois do usuário editar o formulário de novo sem re-submeter (RHF's `isSubmitSuccessful` não reseta em mudança de campo, só em novo submit). Corrigido chamando `reset(values, {keepIsSubmitSuccessful: true})` no sucesso do submit (rebaseline do `isDirty` sem esconder a confirmação) e gating a mensagem com `isSubmitSuccessful && !isDirty`. Teste de regressão adicionado.
+  - `video-dashboard-list.tsx` e `channel-public-page.tsx`: estado vazio usava `videos.length === 0` em vez de `total === 0` — uma página fora do intervalo (`?page=99` com resultado vazio mas canal com vídeos de verdade) mostrava incorretamente "nenhum vídeo enviado ainda" / "sem vídeos públicos". Corrigido nos dois + testes de regressão.
+  - `video-dashboard-list.tsx`: o campo de busca usava `defaultValue` (não controlado) sem re-sincronizar quando a URL muda externamente (voltar/avançar do browser não remonta o componente) — ficava mostrando texto de busca obsoleto. Corrigido com `key={searchParams.get("search") ?? ""}` forçando remount quando o parâmetro muda; teste de regressão adicionado.
+  - `thumbs-up-icon.tsx`: criado na SI-04.9a mas nunca usado de verdade — o contador de "likes" renderizava só um `•` sem ícone. Corrigido para usar o ícone, como já era feito para views/comments na mesma linha.
+  - `mocks/handlers/channels.ts`: tentei tipar os envelopes de erro (409/404) via `HttpResponse.json<ApiErrorEnvelope>` per a convenção documentada do projeto — quebrou `tsc --noEmit` (MSW infere um único tipo de corpo de resposta por handler; misturar dois genéricos explícitos no mesmo resolver colide). Revertido para o mesmo padrão já usado em `videos.ts` (branch de erro sem generic explícito) — documentado no código por quê, já que a convenção escrita não é 100% alcançável na prática com múltiplos branches de resposta no mesmo handler.
+
+Suite final após todas as correções: Vitest 135/135 (frontend, +20 desde o fechamento inicial da fase), Playwright 30/30, `tsc --noEmit`/lint limpos nos dois subprojetos, `npm run build` (produção) confirmado.
+
+### Cross-cutting: Figma reference pre-fetch (after SI-04.9.0, 2026-09-13)
+
+Usuário comprou créditos no Figma, liberando o rate limit do MCP (Starter plan). A pedido do usuário ("colete tudo o que precisa para completar o desafio... para que não tenhamos mais necessidade do Figma durante o desenvolvimento"), rodei `get_design_context` nos 3 nodes das telas restantes da fase (dashboard `39:652`, Channel Settings `39:1384`, Página pública do canal `39:30`) e baixei os 22 ícones SVG novos identificados neles — tudo salvo em `figma-assets/` (`raw/*.reference.txt` + `icons/*.svg`), indexado por `figma-reference.md` (sibling deste arquivo).
+
+Isso corrigiu um achado da SI-04.9.0: o `UploadVideoButton` tinha sido classificado (via screenshot) como já alinhado com `variant="destructive" size="lg"` (`rounded-full`) — o node real é `rounded-[8px]`, que é drift também. `frontend-drift-report.md` foi atualizado com a correção e uma segunda bullet `auto-Edit` (`+size 'action'`).
+
+`figma-reference.md` também registra achados cross-screen que não cabem no drift-report formal (Channel Settings e Página pública têm Reused DS list vazia): 3 formatos de input diferentes na fase (incluindo um padrão de label flutuante em Channel Settings, diferente da convenção estabelecida TD-04), 3 formatos de chip diferentes, e o botão Subscribe da página pública — todos marcados para decisão do usuário na respectiva SI de visual shell, não resolvidos silenciosamente aqui.
+
+Nenhum arquivo em `next-frontend` foi alterado (só documentação em `docs/`).
 
 ### Cross-cutting: code review pass (after SI-04.11.0)
 
@@ -101,24 +132,49 @@ Rodei `/code-review` sobre todo o trabalho da fase (SIs 04.1–04.11.0) a pedido
   - Suite completa confirmada verde após os fixes: 97/97 Vitest (frontend) + 6/6 Playwright + tsc/lint limpos; backend 206/206 unit/integration + 80/80 e2e (após a adição do GET).
 
 ### SI-04.9.0 — Drift audit: Dashboard de gerenciamento de vídeos do canal
-- **Status:** paused (bloqueado por rate limit do Figma MCP)
-- **Tests:** —
+- **Status:** completed
+- **Tests:** no tests (audit-only)
 - **Observations:**
-  - O Figma MCP (plano Starter) atingiu o limite de chamadas de ferramenta no meio do audit ("You've reached the Figma MCP tool call limit on the Starter plan. Upgrade your plan for more tool calls."). Confirmado não-transiente: uma segunda tentativa imediata retornou o mesmo erro.
-  - Progresso parcial: já obtido contexto Figma suficiente para auditar `components/ui/button.tsx` (chips Filter/Public/Date — node `39:716` — e botão Upload video — node `210:11`) e `components/auth/brand-logo.tsx` (reaproveitando o contexto do header já buscado durante a SI-04.8a, mesmo design compartilhado). Ainda faltam `components/ui/input.tsx` (SearchVideosInput, node `39:737`) e `components/ui/icon-button.tsx` (VideoRowMenuButton, node `39:884`) — precisam de uma nova chamada `get_design_context` que não pôde ser feita.
-  - Nenhum arquivo em `next-frontend` foi alterado (confirmado via `git status`) — consistente com a invariante de audit-SI ("no code edits"). `frontend-drift-report.md` não foi tocado nesta SI; a seção `## Screen: dashboard-de-gerenciamento-de-videos-do-canal` ainda não existe.
-  - Usuário optou por pausar a fase aqui até o limite do Figma resetar ou o plano ser atualizado, em vez de fechar a SI parcialmente ou classificar sem dados completos do Figma.
-  - Ao retomar: refazer as chamadas `get_design_context` para os nodes `39:737` e `39:884` (fileKey `40c57EfcNjN6u5St7n5SlG`), então completar o algoritmo de audit (sub-passos 4–5 do `/implement` SKILL.md) para os 4 componentes e escrever a seção completa em `frontend-drift-report.md`.
+  - Retomada após pausa por rate limit do Figma MCP (Starter): uma nova chamada `get_design_context` (node `39:767`) confirmou o limite ainda batido (mesmo erro não-transiente da sessão anterior). `whoami` funciona porque é isento de rate limit — não é sinal de reset.
+  - Usuário optou por contornar sem esperar o reset: capturou e colou manualmente 4 screenshots do Figma desktop (SearchVideosInput com dimensões 256×38; header com Upload video + camera icon button; tela completa do dashboard 2×, incluindo os chips Filter/Public/Date). Audit concluído com base nesses screenshots em vez de `get_design_context` para os 2 componentes que faltavam — ver nota "Audit method note" no próprio `frontend-drift-report.md`.
+  - Achados: `input.tsx` (SearchVideosInput) e `button.tsx` (chips Filter/Public/Date) classificados `drift relevante` — ambos demandam um shape `rounded-full` compacto que não existe hoje (Input não tem variantes; Button só tem `rounded-full` no size `lg`, com padding incompatível com chip). Decisão `auto-Edit` aditiva (nova variante/size) em vez de retune da base, já que `Input` é reaproveitado verbatim por `login-form.tsx`/`signup-form.tsx`/`forgot-password-form.tsx`/`video-edit-form.tsx` — mudar o valor base quebraria essas telas. `UploadVideoButton` (dentro do mesmo `button.tsx`) já bate com `variant="destructive" size="lg"` existente — nenhuma edição necessária para esse call site.
+  - `icon-button.tsx` classificado `alinhado` — mas com ressalva: `VideoRowMenuButton` (node `39:884`, o menu de "⋮" por linha de vídeo) não apareceu visualmente em nenhum dos 3 screenshots do dashboard (linha completa e zoom), incluindo o já documentado na SI-04.8.0. Classificado `alinhado` por falta de evidência contrária, não por confirmação — recomendado re-check via `get_design_context` antes/durante SI-04.9b.
+  - `brand-logo.tsx` classificado `alinhado` por raciocínio (mesmo header já validado visualmente na SI-04.8a), sem novo screenshot dedicado.
+  - Sem calls do Figma MCP bem-sucedidas nesta SI (apenas a tentativa que confirmou o rate limit ainda ativo) — `skillNames`/gates do `figma-design-to-code` não se aplicam a este fluxo manual.
+  - `frontend-drift-report.md` atualizado (append da seção `## Screen: dashboard-de-gerenciamento-de-videos-do-canal`). Nenhum arquivo em `next-frontend` alterado (audit-only, confirmado por escopo — nenhum comando de edição rodou sobre o subprojeto).
 
 ### SI-04.9a — Dashboard de gerenciamento de vídeos do canal (visual shell)
-- **Status:** pending
-- **Tests:** —
-- **Observations:** none
+- **Status:** completed
+- **Tests:** _(empty — shell smoke-gated by build AC, per SI's Tests section)_
+- **Observations:**
+  - Aplicadas as Decisions do `frontend-drift-report.md` (SI-04.9.0, já corrigido com dados reais do `get_design_context`): `button.tsx` ganhou os sizes `chip` (`rounded-full`, compacto — Filter/Public/Date) e `action` (`rounded-[var(--radius-2)]`, 8px — Upload video/paginação); `input.tsx` foi convertido para `cva` com uma variante `shape` (`default` mantém `rounded-[var(--radius-1)]` — zero mudança visual para login/signup/forgot-password/video-edit-form — e `pill` novo para o `SearchVideosInput`). `icon-button.tsx`/`brand-logo.tsx` ficaram como estavam (`skip`, já alinhados).
+  - Descoberto durante a implementação (não estava no audit): os botões de seta da paginação (prev/next) usam `icon-button.tsx`, mas nenhuma das 3 variantes existentes (`default`/`outline`/`ghost`) reproduz o preenchimento sólido `bg-[#272727]` do Figma para esse caso — usei `variant="outline"` como aproximação em vez de adicionar uma 4ª variante, para não expandir o escopo desta SI além do que o audit já havia mapeado. Documentado aqui para revisão futura, não decidido silenciosamente.
+  - Criados 10 ícones novos em `components/icons/`: `filter-icon`, `sort-icon`, `thumbs-up-icon`, `comment-icon`, `chevron-left-icon`, `chevron-right-icon`, `search-icon`, `plus-icon` (todos com o path SVG exato baixado do Figma) e `more-vertical-icon` (sem asset do Figma para o kebab menu do vídeo — 3 círculos desenhados à mão, documentado no próprio arquivo).
+  - Gap real, não resolvido aqui: o botão "Upload video" aponta para `/dashboard/videos/upload`, que **não existe** — a Fase 03 (upload/processamento) nunca teve nenhuma SI de frontend (só backend), então não há para onde navegar ainda. Mantido como link per o inventário ("button press itself is just a route trigger"), mas vai dar 404 até essa página ser construída em algum momento futuro (fora do escopo desta fase/SI).
+  - Gap real, não resolvido aqui: o badge de duração no thumbnail (visível no Figma) não foi renderizado — `GET /channels/me/videos` (§API Contracts) não retorna nenhum campo de duração no `items[]`, só a listagem pública (`GET /channels/:nickname/videos`) tem `duration_seconds`. Documentado no código (`ChannelVideoListItem`) para a SI-04.9b não inventar o campo.
+  - Badge de visibilidade: "Unlisted" usa `text-link` (`#3ea6ff` no dark mode bate exatamente com o Figma); "Public" usa `text-success-text` (token semântico mais próximo disponível — o verde do Figma, `#4caf50`, não tem correspondência exata em nenhum token atual, mas é a mesma família semântica).
+  - Thumbnail renderizado como placeholder (`bg-muted`) — `thumbnail_key` (retornado pela API) é uma chave de storage bruta, sem nenhum esquema de resolução para URL pública ainda implementado no frontend; resolução real fica para a SI-04.9b ou uma fase futura de object storage.
+  - Paginação numerada simplificada (primeiros 3 + último, sem janela ao redor da página atual) — documentado no código; suficiente para o visual shell, sem view do Figma com `page` no meio de um range grande para validar contra.
+  - Nenhuma chrome de header/sidebar construída — confirmado que é convenção já estabelecida pela SI-04.8a/8b (a tela de edição de vídeo também não renderiza header/sidebar); esse shell fica para a Fase 07 (`docs/figma-reference/phase-07-home-search-wrapup/`).
+  - Verificado visualmente via browser (dev server temporário) contra o screenshot do Figma — fidelidade alta; console sem erros.
+  - `tsc --noEmit`, lint e suite completa do Vitest (97/97) confirmados verdes após as mudanças.
 
 ### SI-04.9b — Dashboard de gerenciamento de vídeos do canal (lógica & wiring)
-- **Status:** pending
-- **Tests:** —
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 15 passing (8 unit `video-dashboard-list.test.tsx` + 7 e2e `video-dashboard.e2e-spec.ts`, per Test Specs `next-frontend/specs/video-dashboard.plan.md`)
+- **Observations:**
+  - Preflight: a Test Spec (`video-dashboard.plan.md`) era ~7h mais antiga que o plano da fase (fora da janela de 10min do preflight, tecnicamente "stale"). Conteúdo revisado e considerado coerente com o escopo da SI; usuário confirmou prosseguir com a spec existente em vez de re-rodar `/plan-test-specs`.
+  - `page.tsx`: guard de auth (`redirect("/login")` se não logado) + fetch via `upstream.GET("/channels/me/videos")` **diretamente** (não via BFF `/api/channels/me/videos`), lendo `searchParams` (`page`/`visibility`/`sort`/`search`) — mesmo padrão RSC-direto-ao-upstream já estabelecido na SI-04.8b, per `next-frontend/CLAUDE.md`. Único erro documentado (`401 UNAUTHORIZED`) mapeado para redirect a `/login`.
+  - Achado real, descoberto durante a escrita do e2e: como o RSC busca via `upstream` direto (não `fetch("/api/...")`), o browser **nunca** faz uma requisição visível para `/api/channels/me/videos` — só para a própria rota da página. Os testes e2e de filtro/busca/ordenação (que originalmente esperavam por `page.waitForRequest` nesse endpoint) tiveram que ser reescritos para observar a mudança da própria URL (`page.waitForURL`/`toHaveURL`) em vez de uma requisição de rede, que não existe nesse desenho.
+  - `video-dashboard-list.tsx` virou Client Component (`"use client"`) para poder ler/escrever `searchParams` via `useRouter`/`useSearchParams` (filtros, busca, ordenação, paginação) — os dados em si continuam vindo só do RSC via props, sem cache client-side (per TD-06).
+  - `icon-button.tsx` ganhou suporte a `asChild` (mesmo padrão de `button.tsx`, via `Slot.Root`) — necessário para o `VideoRowMenuButton` navegar como link.
+  - Simplificação deliberada do `VideoRowMenuButton`: como a Fase 04 não tem capacidade de excluir/despublicar vídeo (só editar), o botão de kebab virou um link direto para `/dashboard/videos/{id}/edit` em vez de abrir um menu dropdown com uma única opção — evita instalar um novo primitivo shadcn (`dropdown-menu`) só para um item. Documentado; se uma fase futura adicionar mais ações (excluir, despublicar), aí sim vale a pena um menu de verdade.
+  - Chip "Date": a API só tem `sort=latest|oldest`, sem parâmetro próprio de filtro por data — implementado como atalho que alterna o mesmo `sort` do dropdown "Sort by". Assunção documentada no código, não inventada silenciosamente.
+  - Botão "Filter": mantido decorativo (sem `onClick`) — o Figma mostra como disclosure trigger de um painel cujo conteúdo nunca foi capturado (nenhum estado expandido no design).
+  - Adicionado `formatRelativeTime` a `lib/utils.ts` (usa `Intl.RelativeTimeFormat` nativo, sem nova dependência) para exibir `published_at` como "2 days ago" etc., batendo com o Figma.
+  - `mocks/handlers/channels.ts`: `GET /channels/me/videos` deixou de retornar sempre `items: []` — agora retorna 2 vídeos fixture por padrão, com um trigger reservado (`search=no-videos-match-this-search`) para simular lista vazia (usado no cenário 1.7). Confirmado que o teste de integração existente do BFF (`route.integration.test.ts`) não dependia do fixture antigo (usa `server.use()` próprio).
+  - Verificação visual manual no browser não completou (a automação de clique/digitação do Chrome não conseguiu preencher o form de login neste ambiente — parece um hiccup da ferramenta, não um bug do app); a suíte Playwright real (22/22, incluindo os 7 cenários desta SI) já prova o fluxo autenticado ponta a ponta em um browser de verdade, então não foi bloqueante.
+  - Suite completa confirmada verde: Vitest 105/105 (frontend), Playwright 22/22 (todos os specs e2e, não só os novos), `tsc --noEmit` e lint limpos.
 
 ### SI-04.10.0 — Drift audit: Edição de informações do canal
 - **Status:** completed
@@ -128,14 +184,30 @@ Rodei `/code-review` sobre todo o trabalho da fase (SIs 04.1–04.11.0) a pedido
   - Adicionada a seção `## Screen: edicao-de-informacoes-do-canal` a `frontend-drift-report.md` (append — arquivo já existia desde a SI-04.8.0; frontmatter preservado).
 
 ### SI-04.10a — Edição de informações do canal (visual shell)
-- **Status:** pending
-- **Tests:** —
-- **Observations:** none
+- **Status:** completed
+- **Tests:** _(empty — shell smoke-gated by build AC, per SI's Tests section)_
+- **Observations:**
+  - Decisão do usuário (Reused DS list era vazia, sem drift decisions a aplicar): campos do formulário (Nickname, Channel Name, Description) usam o padrão já estabelecido de `<Label>` separado acima do campo (TD-04, mesmo de login/signup/video-edit-form), **não** o padrão de label flutuante que o Figma mostra para esta tela especificamente — decisão explícita para manter um único padrão de formulário no projeto, documentada no `figma-reference.md` como pendente e resolvida aqui.
+  - Criados 5 ícones novos em `components/icons/`: `subscribers-icon`, `video-count-icon`, `info-icon`, `align-left-icon` (heading "About Channel"), `clock-icon` — todos com o path SVG exato baixado do Figma na pré-coleta.
+  - Cards do formulário reaproveitam o token `bg-popover` (não um `bg-[#272727]` literal) — mesmo padrão já usado pelo painel lateral da tela de edição de vídeo; confirmado que `--popover` no dark mode (`#282828`) bate quase exatamente com o valor do Figma.
+  - **Bug real encontrado e corrigido durante a verificação visual no browser:** `channel.subscriberCount.toLocaleString()`/`.videoCount.toLocaleString()` e `Intl.DateTimeFormat("en-US", {dateStyle: "long"})` sem locale/timezone fixos causavam erro de hidratação real (Next.js overlay: "Hydration failed because the server rendered text didn't match the client... Date formatting in a user's locale which doesn't match the server"). Corrigido fixando `"en-US"` explícito em todo `toLocaleString()` (incluindo os já existentes em `video-dashboard-list.tsx`, que tinham o mesmo padrão de risco ainda que não tivessem manifestado erro visível) e adicionando `timeZone: "UTC"` ao `Intl.DateTimeFormat` — esse segundo fix também corrigiu um bug de exibição visível (a data aparecia um dia a menos, ex. "January 14" em vez de "January 15", por causa do fuso local do navegador).
+  - Verificado visualmente via browser (dev server temporário) contra o Figma — fidelidade alta; sem erros de console/hidratação após os fixes.
+  - `tsc --noEmit`, lint e suite completa confirmados verdes: Vitest 105/105, Playwright 22/22.
 
 ### SI-04.10b — Edição de informações do canal (lógica & wiring)
-- **Status:** pending
-- **Tests:** —
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 10 passing (6 unit `channel-settings-form.test.tsx` + 4 e2e `channel-settings.e2e-spec.ts`, per Test Specs `next-frontend/specs/channel-settings.plan.md`)
+- **Observations:**
+  - Mesma situação de "Test Spec ~7h mais antiga que o plano" já vista na SI-04.9b — seguido direto sem re-perguntar, já que o usuário tinha indicado essa preferência para o mesmo padrão de defasagem.
+  - `page.tsx`: guard de auth + fetch via `upstream.GET("/channels/me")` direto (RSC), mesmo padrão das SIs anteriores. Único erro documentado (`401`) mapeado para redirect a `/login`.
+  - `ChannelSettingsFormProps` mudou de dados 100% placeholder (SI-04.10a) para o formato real de `Channel` (`GET /channels/me`) + `avatarUrl`/`subscriberCount`/`videoCount` agora **opcionais**, porque o `Channel` do backend não tem nenhum desses três campos (sem upload de avatar nesta fase; assinantes é Fase 06; contagem de vídeos vive em outro endpoint). A linha de estatísticas e o avatar só renderizam quando o valor é passado — nada de número fabricado. `page.tsx` real não passa nenhum dos três.
+  - `react-hook-form` + Zod com `mode: "onChange"` (não o padrão `onSubmit`) — necessário porque o cenário 1.4 do spec exige que o botão "Save Changes" fique desabilitado assim que o nickname digitado é inválido, não só depois de tentar submeter.
+  - Erros mapeados: `CHANNEL_NICKNAME_TAKEN` → erro inline no campo Nickname ("This nickname is already taken"); qualquer outro erro (ex. `VALIDATION_ERROR`) → banner genérico `data-slot="form-error"`, mesmo padrão do `video-edit-form.tsx`.
+  - Confirmação de sucesso ("Channel updated") é inline (`role="status"`, ícone de check), não um toast — como o spec pedia explicitamente "confirmação inline".
+  - `UpdateChannelDto` (gerado do OpenAPI) é `Record<string, never>` — mesma limitação do `ts-node`/plugin do swagger já documentada para `UpdateVideoDto` desde a SI-04.6. Contornado com uma interface local `ChannelUpdatePayload`, mesmo padrão do `video-edit-form.tsx`.
+  - `mocks/handlers/channels.ts`: `PATCH /channels/me` ganhou um trigger reservado (`nickname: "taken_nickname"` → 409 `CHANNEL_NICKNAME_TAKEN`) e passou a devolver `updated_at` atualizado no sucesso.
+  - **Nota operacional (não é bug de código):** os 4 cenários e2e novos falharam repetidamente por timeout numa primeira rodada — investigado e isolado a um dev server "zumbi" na sessão do Docker (múltiplos restarts anteriores via `docker compose exec -d` sem matar o processo anterior, já que o container não tem `pkill`). Um `docker compose down && up` limpo resolveu; suite completa (Playwright 26/26, incluindo os 4 novos) confirmada verde depois. Não é um achado sobre o código do app.
+  - Suite completa confirmada verde: Vitest 111/111 (frontend), Playwright 26/26, `tsc --noEmit` e lint limpos.
 
 ### SI-04.11.0 — Drift audit: Página pública do canal
 - **Status:** completed
@@ -145,11 +217,35 @@ Rodei `/code-review` sobre todo o trabalho da fase (SIs 04.1–04.11.0) a pedido
   - Adicionada a seção `## Screen: pagina-publica-do-canal` a `frontend-drift-report.md` (append; frontmatter preservado).
 
 ### SI-04.11a — Página pública do canal (visual shell)
-- **Status:** pending
-- **Tests:** —
-- **Observations:** none
+- **Status:** completed
+- **Tests:** _(empty — shell smoke-gated by build AC, per SI's Tests section)_
+- **Observations:**
+  - Sem drift decisions a aplicar (Reused DS list vazia). Criados `app/channel/[nickname]/page.tsx` + `components/channel/channel-public-page.tsx` + 1 ícone novo (`bell-icon.tsx`).
+  - Chips de ordenação (Latest/Popular/Oldest) e a "action" size de `button.tsx` (já criada na SI-04.9a) se encaixaram perfeitamente sem nenhuma mudança de DS: o token `--primary` no dark mode é branco (`#ffffff`) com foreground escuro — bate exatamente com o chip ativo do Figma (`bg-[#f1f1f1]`, texto escuro), então `variant="default"` (ativo) / `variant="secondary"` (inativo) + `size="action"` resolveu sem criar nada novo. Confirma a suspeita registrada no `figma-reference.md` (Fase 07) de que esse padrão de chip se repete em várias telas.
+  - Botão de notificação (sino) usa `variant="outline"` no `icon-button.tsx` — mesma aproximação pragmática já usada nas setas de paginação (SI-04.9b): nenhuma variante atual reproduz o preenchimento sólido `bg-[#272727]` do Figma para um ícone isolado, e não expandi o variant set de novo por esse único caso.
+  - `PublicChannelInfo` (contrato de `GET /channels/:nickname`) não tem contagem de assinantes — mesmo gap já documentado para `Channel` (SI-04.10). `subscriberCount` é prop opcional, só renderiza quando fornecida.
+  - Aba "About" renderizada de forma inerte (sem `onClick`, sem navegação) — o conteúdo de "sobre o canal" não tem nenhuma capability nesta fase (a edição de descrição do canal já vive na tela de Channel Settings, owner-only); confirmado meses atrás no `figma-reference.md`/`project-plan.md` que a aba "About" está fora do escopo da Fase 04.
+  - Botão "Subscribe" e o de notificação ficam sem `onClick` — funcionalidade de inscrição é Fase 06 (Social Interactions), não desta fase; renderizados só por fidelidade visual.
+  - Adicionado `formatDuration` a `lib/utils.ts` (mm:ss / h:mm:ss) para o badge de duração — esta tela tem `duration_seconds` de verdade na API (diferente do dashboard do dono, SI-04.9, que não tem esse campo).
+  - Verificado visualmente via browser (dev server temporário) contra o Figma — fidelidade alta; sem erros de console, sem hidratação.
+  - **Nota operacional (não é bug):** mesma flakiness de dev server já vista na SI-04.10b (Turbopack compilando várias rotas a frio sob carga concorrente do Playwright derruba algumas specs por timeout) — resolvido com restart limpo do container + "aquecer" cada rota via `curl` antes de rodar a suíte completa. Suite (Playwright 26/26) confirmada verde depois.
+  - `tsc --noEmit`, lint e suite completa do Vitest (111/111, inalterada — SI sem testes próprios) confirmados verdes.
 
 ### SI-04.11b — Página pública do canal (lógica & wiring)
-- **Status:** pending
-- **Tests:** —
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 8 passing (4 unit `channel-public-page.test.tsx` + 4 e2e `channel-public-page.e2e-spec.ts`, per Test Specs `next-frontend/specs/channel-public-page.plan.md`)
+- **Observations:**
+  - Mesma situação de "Test Spec ~7h mais antiga que o plano" já vista nas SIs 04.9b/04.10b — seguido direto, mesma preferência já indicada pelo usuário.
+  - `page.tsx`: sem guard de auth (tela anônima) — busca `GET /channels/{nickname}` + `GET /channels/{nickname}/videos` em paralelo via `Promise.all` + `upstream.GET` direto (RSC), lendo `sort`/`page` de `searchParams`. Erro em qualquer um dos dois (ambos só documentam `404 CHANNEL_NOT_FOUND`, chaveados pelo mesmo nickname) → `notFound()` do Next.js.
+  - `channel-public-page.tsx` ganhou a mesma interatividade de ordenação da SI-04.9b (`useRouter`/`useSearchParams`, `router.push` com o novo `sort`) — "Latest" (default) remove o param da URL em vez de escrevê-lo explicitamente, mesmo padrão usado pelo dashboard.
+  - `mocks/handlers/channels.ts`: `GET /channels/:nickname` e `.../videos` passaram a aceitar 2 triggers reservados — `nickname-does-not-exist` (404 nos dois) e `channel-with-no-public-videos` (canal resolve normalmente, lista vazia) — e a listagem de vídeos públicos ganhou fixtures reais com `duration_seconds` (campo que a listagem do dono, SI-04.9, não tem).
+  - **Bug real no meu próprio teste, não no app:** o e2e `1.1` inicialmente esperava o nome "Tech Mastery Plus" (herdado do dado placeholder do visual shell, SI-04.11a) — a fixture real do MSW sempre devolve `name: "Alice"` (só `nickname` ecoa o parâmetro da rota). Corrigido no teste, não no app; pego na primeira rodada da suíte completa, não passou despercebido.
+  - Verificado visualmente via browser (dev server temporário): página 404 e estado vazio ("This channel has no public videos yet") renderizam corretamente contra os triggers reservados; sem erros de console.
+  - Mesma nota operacional das duas SIs anteriores: restart limpo do container + "aquecer" rotas via `curl` antes da suíte completa, para evitar timeout de compilação a frio do Turbopack sob carga concorrente do Playwright.
+  - Suite completa confirmada verde: Vitest 115/115 (frontend), Playwright 30/30 (todos os specs e2e da fase), `tsc --noEmit` e lint limpos.
+
+## Fase 04 — concluída (19/19 SIs)
+
+Todas as 4 telas do frontend (dashboard, edição de vídeo, configurações do canal, página pública do canal) e o backend/BFF completos. Suite final da fase: Vitest 115/115, Playwright 30/30, `tsc --noEmit` e lint limpos nos dois subprojetos, `npm run build` (produção) do `next-frontend` concluído com sucesso — todas as rotas (`/dashboard/videos`, `/dashboard/videos/[id]/edit`, `/dashboard/channel`, `/channel/[nickname]` + as 8 rotas de BFF) presentes no output.
+
+Suite backend não foi re-rodada nesta rodada de SIs (04.9–04.11): nenhum arquivo do `nestjs-project` foi tocado, só `next-frontend`.
