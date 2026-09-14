@@ -9,6 +9,7 @@ import {
   ParseFilePipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,19 +19,26 @@ import {
   ApiBody,
   ApiConsumes,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
 import type { JwtPayload } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { ThumbnailInvalidFileException } from '../common/exceptions/domain.exception';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { StorageService } from '../storage/storage.service';
+import { FindSuggestedVideosQueryDto } from './dto/find-suggested-videos-query.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { Video } from './entities/video.entity';
 import { VideoPublicationService } from './video-publication.service';
-import { VideosService } from './videos.service';
+import {
+  PublicVideoDetail,
+  SuggestedVideoItem,
+  VideosService,
+} from './videos.service';
 
 const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
 const THUMBNAIL_ACCEPTED_TYPES = /^image\/(jpeg|png|webp)$/;
@@ -60,6 +68,60 @@ const THUMBNAIL_RESPONSE_SCHEMA = {
   properties: {
     id: { type: 'string', format: 'uuid' },
     thumbnail_key: { type: 'string', nullable: true },
+  },
+};
+
+// Mirrors GET /videos/public/:publicId's documented Response 200 field list
+// (per phase-05-video-watch-page Tech Specs § API Contracts). Inline, not a
+// DTO class — matches the convention above.
+const PUBLIC_VIDEO_RESPONSE_SCHEMA = {
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    public_id: { type: 'string' },
+    title: { type: 'string', nullable: true },
+    description: { type: 'string', nullable: true },
+    category: { type: 'string' },
+    visibility: { type: 'string' },
+    duration_seconds: { type: 'number', nullable: true },
+    thumbnail_key: { type: 'string', nullable: true },
+    views: { type: 'number' },
+    published_at: { type: 'string', format: 'date-time', nullable: true },
+    channel: {
+      type: 'object',
+      properties: {
+        nickname: { type: 'string' },
+        name: { type: 'string' },
+      },
+    },
+  },
+};
+
+// Mirrors GET /videos/public/:publicId/suggested's documented Response 200
+// field list (per phase-05-video-watch-page Tech Specs § API Contracts).
+const SUGGESTED_VIDEOS_RESPONSE_SCHEMA = {
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          public_id: { type: 'string' },
+          title: { type: 'string', nullable: true },
+          thumbnail_key: { type: 'string', nullable: true },
+          duration_seconds: { type: 'number', nullable: true },
+          views: { type: 'number' },
+          published_at: { type: 'string', format: 'date-time', nullable: true },
+          channel: {
+            type: 'object',
+            properties: {
+              nickname: { type: 'string' },
+              name: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
   },
 };
 
@@ -108,6 +170,113 @@ export class VideosController {
     private readonly storageService: StorageService,
     private readonly videoPublicationService: VideoPublicationService,
   ) {}
+
+  @Get('public/:publicId')
+  @Public()
+  @ApiOperation({
+    summary: 'Get public video metadata',
+    description:
+      'Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Public video metadata',
+    schema: PUBLIC_VIDEO_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getPublicVideo(
+    @Param('publicId') publicId: string,
+  ): Promise<PublicVideoDetail> {
+    return this.videosService.findPublicVideo(publicId);
+  }
+
+  @Get('public/:publicId/stream-url')
+  @Public()
+  @ApiOperation({
+    summary: 'Get a public streaming URL',
+    description:
+      'Returns a short-lived presigned object-storage URL to stream a published (public or unlisted) video, accessible anonymously (per phase-05-video-watch-page/TD-01, phase-03-videos/TD-07).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned streaming URL',
+    schema: { properties: { url: { type: 'string' } } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getPublicStreamUrl(
+    @Param('publicId') publicId: string,
+  ): Promise<{ url: string }> {
+    const video = await this.videosService.findPublicReadyVideo(publicId);
+    const url = await this.storageService.getPresignedUrl(video.storage_key);
+    return { url };
+  }
+
+  @Get('public/:publicId/download-url')
+  @Public()
+  @ApiOperation({
+    summary: 'Get a public download URL',
+    description:
+      'Returns a short-lived presigned object-storage URL to download a published (public or unlisted) video, accessible anonymously (per phase-05-video-watch-page/TD-01, phase-03-videos/TD-07).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned download URL',
+    schema: { properties: { url: { type: 'string' } } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getPublicDownloadUrl(
+    @Param('publicId') publicId: string,
+  ): Promise<{ url: string }> {
+    const video = await this.videosService.findPublicReadyVideo(publicId);
+    const url = await this.storageService.getPresignedUrl(video.storage_key);
+    return { url };
+  }
+
+  @Get('public/:publicId/suggested')
+  @Public()
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max items to return (default 12, max 12)',
+  })
+  @ApiOperation({
+    summary: 'Get suggested videos',
+    description:
+      "Returns up to `limit` ready+public videos from the anchor video's category, most recent first, excluding the anchor itself (per phase-05-video-watch-page/TD-03).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Suggested videos',
+    schema: SUGGESTED_VIDEOS_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Anchor video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getSuggestedVideos(
+    @Param('publicId') publicId: string,
+    @Query() query: FindSuggestedVideosQueryDto,
+  ): Promise<{ items: SuggestedVideoItem[] }> {
+    const items = await this.videosService.findSuggestedVideos(
+      publicId,
+      query.limit,
+    );
+    return { items };
+  }
 
   @Get(':id')
   @ApiBearerAuth('access-token')

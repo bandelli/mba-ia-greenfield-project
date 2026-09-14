@@ -83,3 +83,17 @@ export type OwnerVideoListResponse =
 
 export type PublicVideoListResponse =
   paths["/channels/{nickname}/videos"]["get"]["responses"][200]["content"]["application/json"];
+
+// ─── Video watch page (phase-05-video-watch-page) ─────────────────────────────
+
+export type PublicVideoDetail =
+  paths["/videos/public/{publicId}"]["get"]["responses"][200]["content"]["application/json"];
+
+export type VideoStreamUrlResponse =
+  paths["/videos/public/{publicId}/stream-url"]["get"]["responses"][200]["content"]["application/json"];
+
+export type VideoDownloadUrlResponse =
+  paths["/videos/public/{publicId}/download-url"]["get"]["responses"][200]["content"]["application/json"];
+
+export type SuggestedVideosResponse =
+  paths["/videos/public/{publicId}/suggested"]["get"]["responses"][200]["content"]["application/json"];

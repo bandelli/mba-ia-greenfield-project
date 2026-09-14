@@ -20,11 +20,13 @@ const iconButtonVariants = cva(
         default: "bg-primary text-primary-foreground",
         outline: "border-foreground bg-transparent text-foreground hover:bg-muted/40",
         ghost: "bg-transparent text-foreground hover:bg-muted",
+        secondary: "bg-secondary text-secondary-foreground",
       },
       size: {
         sm: "size-8 rounded-[var(--radius-2)] [&_svg:not([class*='size-'])]:size-4",
         md: "size-9 rounded-[var(--radius-3)] [&_svg:not([class*='size-'])]:size-5",
         lg: "size-10 rounded-[var(--radius-3)] [&_svg:not([class*='size-'])]:size-6",
+        xl: "size-11 rounded-[var(--radius-full)] [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

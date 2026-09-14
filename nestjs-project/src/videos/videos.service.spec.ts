@@ -1,0 +1,177 @@
+import { In, IsNull, Not } from 'typeorm';
+import { VideoNotFoundException } from '../common/exceptions/domain.exception';
+import {
+  Video,
+  VideoCategory,
+  VideoStatus,
+  VideoVisibility,
+} from './entities/video.entity';
+import { VideosService } from './videos.service';
+
+function makeVideo(overrides: Partial<Video> = {}): Video {
+  const v = new Video();
+  v.id = 'uuid';
+  v.public_id = 'pub123';
+  v.user_id = 'owner-id';
+  v.channel_id = 'channel-id';
+  v.storage_key = 'videos/key.mp4';
+  v.status = VideoStatus.READY;
+  v.title = 'Existing title';
+  v.description = null;
+  v.category = VideoCategory.OTHER;
+  v.visibility = VideoVisibility.PUBLIC;
+  v.duration_seconds = 120;
+  v.thumbnail_key = 'thumbnails/key.png';
+  v.views = 5;
+  v.published_at = null;
+  v.channel = { nickname: 'someone', name: 'Someone' } as Video['channel'];
+  return Object.assign(v, overrides);
+}
+
+function makeRepository(overrides: Record<string, jest.Mock> = {}): any {
+  return {
+    findOne: jest.fn(),
+    increment: jest.fn(),
+    find: jest.fn(),
+    ...overrides,
+  };
+}
+
+describe('VideosService', () => {
+  describe('findPublicVideo', () => {
+    it('returns metadata and increments views for a ready+public video', async () => {
+      const video = makeVideo({ visibility: VideoVisibility.PUBLIC });
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(video),
+        increment: jest.fn().mockResolvedValue(undefined),
+      });
+      const service = new VideosService(repository);
+
+      const result = await service.findPublicVideo('pub123');
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: {
+          public_id: 'pub123',
+          status: VideoStatus.READY,
+          visibility: In([VideoVisibility.PUBLIC, VideoVisibility.UNLISTED]),
+        },
+        relations: ['channel'],
+      });
+      expect(repository.increment).toHaveBeenCalledWith(
+        { id: 'uuid' },
+        'views',
+        1,
+      );
+      expect(result).toEqual({
+        id: 'uuid',
+        public_id: 'pub123',
+        title: 'Existing title',
+        description: null,
+        category: VideoCategory.OTHER,
+        visibility: VideoVisibility.PUBLIC,
+        duration_seconds: 120,
+        thumbnail_key: 'thumbnails/key.png',
+        views: 6,
+        published_at: null,
+        channel: { nickname: 'someone', name: 'Someone' },
+      });
+    });
+
+    it('returns metadata for a ready+unlisted video (direct-link access)', async () => {
+      const video = makeVideo({ visibility: VideoVisibility.UNLISTED });
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(video),
+        increment: jest.fn().mockResolvedValue(undefined),
+      });
+      const service = new VideosService(repository);
+
+      const result = await service.findPublicVideo('pub123');
+
+      expect(result.visibility).toBe(VideoVisibility.UNLISTED);
+    });
+
+    it('throws VideoNotFoundException when no video matches (draft/processing/error status, private visibility, or unknown public_id)', async () => {
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      const service = new VideosService(repository);
+
+      await expect(service.findPublicVideo('does-not-exist')).rejects.toThrow(
+        VideoNotFoundException,
+      );
+      expect(repository.increment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findSuggestedVideos', () => {
+    it('queries same-category, ready+public videos excluding the anchor, ordered by published_at DESC, defaulting the limit to 12', async () => {
+      const anchor = makeVideo({
+        id: 'anchor-uuid',
+        category: VideoCategory.MUSIC,
+      });
+      const suggestion = makeVideo({
+        id: 'suggestion-uuid',
+        public_id: 'pub456',
+      });
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(anchor),
+        find: jest.fn().mockResolvedValue([suggestion]),
+      });
+      const service = new VideosService(repository);
+
+      const result = await service.findSuggestedVideos('pub123');
+
+      expect(repository.find).toHaveBeenCalledWith({
+        where: {
+          category: VideoCategory.MUSIC,
+          status: VideoStatus.READY,
+          visibility: VideoVisibility.PUBLIC,
+          published_at: Not(IsNull()),
+          id: Not('anchor-uuid'),
+        },
+        relations: ['channel'],
+        order: { published_at: 'DESC' },
+        take: 12,
+      });
+      expect(result).toEqual([
+        {
+          id: 'suggestion-uuid',
+          public_id: 'pub456',
+          title: 'Existing title',
+          thumbnail_key: 'thumbnails/key.png',
+          duration_seconds: 120,
+          views: 5,
+          published_at: null,
+          channel: { nickname: 'someone', name: 'Someone' },
+        },
+      ]);
+    });
+
+    it('caps the take to an explicit limit', async () => {
+      const anchor = makeVideo({ id: 'anchor-uuid' });
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(anchor),
+        find: jest.fn().mockResolvedValue([]),
+      });
+      const service = new VideosService(repository);
+
+      await service.findSuggestedVideos('pub123', 5);
+
+      expect(repository.find).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 5 }),
+      );
+    });
+
+    it('throws VideoNotFoundException when the anchor video is not found, without querying suggestions', async () => {
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      const service = new VideosService(repository);
+
+      await expect(
+        service.findSuggestedVideos('does-not-exist'),
+      ).rejects.toThrow(VideoNotFoundException);
+      expect(repository.find).not.toHaveBeenCalled();
+    });
+  });
+});
