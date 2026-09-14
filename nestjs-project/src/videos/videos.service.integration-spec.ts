@@ -68,6 +68,7 @@ describe('VideosService (integration)', () => {
         visibility: VideoVisibility.PUBLIC,
         title: `Video ${n}`,
         views: 5,
+        published_at: new Date(),
         ...overrides,
       }),
     );
@@ -111,8 +112,29 @@ describe('VideosService (integration)', () => {
       expect(reloaded.views).toBe(6);
     });
 
+    it('returns the true post-increment views count under concurrent calls', async () => {
+      const video = await createVideo({ views: 5 });
+
+      const [first, second] = await Promise.all([
+        service.findPublicVideo(video.public_id),
+        service.findPublicVideo(video.public_id),
+      ]);
+
+      expect([first.views, second.views].sort()).toEqual([6, 7]);
+      const reloaded = await videoRepository.findOneByOrFail({ id: video.id });
+      expect(reloaded.views).toBe(7);
+    });
+
     it('throws VideoNotFoundException for a draft video', async () => {
       const video = await createVideo({ status: VideoStatus.DRAFT });
+
+      await expect(service.findPublicVideo(video.public_id)).rejects.toThrow(
+        VideoNotFoundException,
+      );
+    });
+
+    it('throws VideoNotFoundException for a ready+public video that has not been published yet', async () => {
+      const video = await createVideo({ published_at: null });
 
       await expect(service.findPublicVideo(video.public_id)).rejects.toThrow(
         VideoNotFoundException,

@@ -23,16 +23,29 @@ function makeVideo(overrides: Partial<Video> = {}): Video {
   v.duration_seconds = 120;
   v.thumbnail_key = 'thumbnails/key.png';
   v.views = 5;
-  v.published_at = null;
+  v.published_at = new Date('2026-09-12T00:00:00.000Z');
   v.channel = { nickname: 'someone', name: 'Someone' } as Video['channel'];
   return Object.assign(v, overrides);
+}
+
+// Mocks the createQueryBuilder().update(...).set(...).where(...).returning(...)
+// .execute() chain used by findPublicVideo's atomic UPDATE...RETURNING.
+function makeQueryBuilder(returningViews: number): any {
+  const qb: any = {
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    returning: jest.fn().mockReturnThis(),
+    execute: jest.fn().mockResolvedValue({ raw: [{ views: returningViews }] }),
+  };
+  return qb;
 }
 
 function makeRepository(overrides: Record<string, jest.Mock> = {}): any {
   return {
     findOne: jest.fn(),
-    increment: jest.fn(),
     find: jest.fn(),
+    createQueryBuilder: jest.fn(),
     ...overrides,
   };
 }
@@ -41,9 +54,10 @@ describe('VideosService', () => {
   describe('findPublicVideo', () => {
     it('returns metadata and increments views for a ready+public video', async () => {
       const video = makeVideo({ visibility: VideoVisibility.PUBLIC });
+      const queryBuilder = makeQueryBuilder(6);
       const repository = makeRepository({
         findOne: jest.fn().mockResolvedValue(video),
-        increment: jest.fn().mockResolvedValue(undefined),
+        createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
       });
       const service = new VideosService(repository);
 
@@ -54,14 +68,15 @@ describe('VideosService', () => {
           public_id: 'pub123',
           status: VideoStatus.READY,
           visibility: In([VideoVisibility.PUBLIC, VideoVisibility.UNLISTED]),
+          published_at: Not(IsNull()),
         },
         relations: ['channel'],
       });
-      expect(repository.increment).toHaveBeenCalledWith(
-        { id: 'uuid' },
-        'views',
-        1,
-      );
+      expect(queryBuilder.update).toHaveBeenCalledWith(Video);
+      expect(queryBuilder.where).toHaveBeenCalledWith('id = :id', {
+        id: 'uuid',
+      });
+      expect(queryBuilder.returning).toHaveBeenCalledWith(['views']);
       expect(result).toEqual({
         id: 'uuid',
         public_id: 'pub123',
@@ -72,7 +87,7 @@ describe('VideosService', () => {
         duration_seconds: 120,
         thumbnail_key: 'thumbnails/key.png',
         views: 6,
-        published_at: null,
+        published_at: video.published_at,
         channel: { nickname: 'someone', name: 'Someone' },
       });
     });
@@ -81,7 +96,7 @@ describe('VideosService', () => {
       const video = makeVideo({ visibility: VideoVisibility.UNLISTED });
       const repository = makeRepository({
         findOne: jest.fn().mockResolvedValue(video),
-        increment: jest.fn().mockResolvedValue(undefined),
+        createQueryBuilder: jest.fn().mockReturnValue(makeQueryBuilder(6)),
       });
       const service = new VideosService(repository);
 
@@ -90,7 +105,7 @@ describe('VideosService', () => {
       expect(result.visibility).toBe(VideoVisibility.UNLISTED);
     });
 
-    it('throws VideoNotFoundException when no video matches (draft/processing/error status, private visibility, or unknown public_id)', async () => {
+    it('throws VideoNotFoundException when no video matches (draft/processing/error status, private visibility, unpublished, or unknown public_id)', async () => {
       const repository = makeRepository({
         findOne: jest.fn().mockResolvedValue(null),
       });
@@ -99,7 +114,7 @@ describe('VideosService', () => {
       await expect(service.findPublicVideo('does-not-exist')).rejects.toThrow(
         VideoNotFoundException,
       );
-      expect(repository.increment).not.toHaveBeenCalled();
+      expect(repository.createQueryBuilder).not.toHaveBeenCalled();
     });
   });
 
@@ -141,7 +156,7 @@ describe('VideosService', () => {
           thumbnail_key: 'thumbnails/key.png',
           duration_seconds: 120,
           views: 5,
-          published_at: null,
+          published_at: suggestion.published_at,
           channel: { nickname: 'someone', name: 'Someone' },
         },
       ]);

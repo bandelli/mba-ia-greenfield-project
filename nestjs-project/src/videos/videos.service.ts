@@ -59,9 +59,12 @@ export class VideosService {
     return video;
   }
 
-  // Anonymous, `ready`+(`public`|`unlisted`) lookup keyed by the public
-  // identifier (per phase-05-video-watch-page/TD-01) — a draft/processing/
-  // error video, a genuinely private video, or an unknown public_id are all
+  // Anonymous, `ready`+(`public`|`unlisted`)+published lookup keyed by the
+  // public identifier (per phase-05-video-watch-page/TD-01) — a draft/
+  // processing/error video, a genuinely private video, a ready-but-not-yet-
+  // published video (owner hasn't clicked "Publish" — `published_at` still
+  // null, same gate `findSuggestedVideos` and `channels.service.ts`'s public
+  // listing already enforce), or an unknown public_id are all
   // indistinguishable 404s, same non-disclosure principle as the owner-only
   // lookup above. Shared by the metadata, stream-url, and download-url public
   // endpoints; does NOT increment `views` — per phase-05-video-watch-page/TD-02
@@ -74,6 +77,7 @@ export class VideosService {
         public_id: publicId,
         status: VideoStatus.READY,
         visibility: In([VideoVisibility.PUBLIC, VideoVisibility.UNLISTED]),
+        published_at: Not(IsNull()),
       },
       relations: ['channel'],
     });
@@ -84,11 +88,22 @@ export class VideosService {
   }
 
   // Anonymous public metadata lookup — every successful call atomically
-  // increments `views` (per phase-05-video-watch-page/TD-02).
+  // increments `views` (per phase-05-video-watch-page/TD-02). Uses a single
+  // atomic UPDATE...RETURNING so the count in the response is the real
+  // post-increment value even under concurrent requests for the same video
+  // (repository.increment() + reading the pre-increment entity's `views + 1`
+  // would under-report whichever request's read lost the race).
   async findPublicVideo(publicId: string): Promise<PublicVideoDetail> {
     const video = await this.findPublicReadyVideo(publicId);
 
-    await this.videoRepository.increment({ id: video.id }, 'views', 1);
+    const updateResult = await this.videoRepository
+      .createQueryBuilder()
+      .update(Video)
+      .set({ views: () => 'views + 1' })
+      .where('id = :id', { id: video.id })
+      .returning(['views'])
+      .execute();
+    const [{ views }] = updateResult.raw as { views: number }[];
 
     return {
       id: video.id,
@@ -99,7 +114,7 @@ export class VideosService {
       visibility: video.visibility,
       duration_seconds: video.duration_seconds,
       thumbnail_key: video.thumbnail_key,
-      views: video.views + 1,
+      views,
       published_at: video.published_at,
       channel: {
         nickname: video.channel.nickname,

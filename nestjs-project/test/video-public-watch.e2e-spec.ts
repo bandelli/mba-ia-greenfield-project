@@ -86,6 +86,7 @@ describe('Public video watch endpoint (e2e)', () => {
         visibility: VideoVisibility.PUBLIC,
         title: `Video ${n}`,
         views: 0,
+        published_at: new Date(),
         ...overrides,
       }),
     );
@@ -125,6 +126,17 @@ describe('Public video watch endpoint (e2e)', () => {
 
   it('retorna 404 VIDEO_NOT_FOUND para um vídeo draft', async () => {
     const video = await createVideo({ status: VideoStatus.DRAFT });
+
+    const res = await request(app.getHttpServer()).get(
+      `/videos/public/${video.public_id}`,
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('VIDEO_NOT_FOUND');
+  });
+
+  it('retorna 404 VIDEO_NOT_FOUND para um vídeo ready+public ainda não publicado', async () => {
+    const video = await createVideo({ published_at: null });
 
     const res = await request(app.getHttpServer()).get(
       `/videos/public/${video.public_id}`,

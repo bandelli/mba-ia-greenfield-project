@@ -50,7 +50,7 @@ Deliver the watch page — a functional video player with play/pause, volume, an
 
 **Technical actions:**
 
-1. Criar `findPublicVideo(publicId)` em `VideosService` — busca por `public_id`, valida `status: ready` E (`visibility: public` OU `visibility: unlisted`), lança `VIDEO_NOT_FOUND` caso contrário (per `phase-05-video-watch-page/TD-01`)
+1. Criar `findPublicVideo(publicId)` em `VideosService` — busca por `public_id`, valida `status: ready` E (`visibility: public` OU `visibility: unlisted`) E `published_at` não nulo, lança `VIDEO_NOT_FOUND` caso contrário (per `phase-05-video-watch-page/TD-01`)
 2. Incrementar `views` atomicamente (`UPDATE videos SET views = views + 1 WHERE id = :id`) a cada chamada bem-sucedida (per `phase-05-video-watch-page/TD-02`)
 3. Adicionar `GET /videos/public/:publicId` em `VideosController`, marcado `@Public()`, retornando os campos definidos em `### API Contracts`
 
@@ -292,7 +292,7 @@ _(per `phase-05-video-watch-page/TD-02` — plain atomic counter, no dedup table
 - channel: { nickname: string, name: string }
 
 **Error responses:**
-- 404 VIDEO_NOT_FOUND: when `public_id` does not resolve to an existing video, or the video is not `status: ready` and (`visibility: public` or `visibility: unlisted`)
+- 404 VIDEO_NOT_FOUND: when `public_id` does not resolve to an existing video, or the video is not `status: ready` and (`visibility: public` or `visibility: unlisted`) and published (`published_at` not null)
 
 _Side effect: a successful 200 response atomically increments `views` by 1 (per `phase-05-video-watch-page/TD-02`)._
 
@@ -409,7 +409,7 @@ _All four endpoints are `@Public()` (per `phase-05-video-watch-page/TD-01`) — 
 
 | errorCode | HTTP | Trigger |
 |-----------|------|---------|
-| VIDEO_NOT_FOUND | 404 | `GET /videos/public/:publicId` (or its `/stream-url`, `/download-url`, `/suggested` siblings) when `public_id` does not exist, or the video is not `status: ready` and (`visibility: public` or `visibility: unlisted`) — draft/processing/error videos and genuinely private lookups return the same 404, never revealing which condition failed |
+| VIDEO_NOT_FOUND | 404 | `GET /videos/public/:publicId` (or its `/stream-url`, `/download-url`, `/suggested` siblings) when `public_id` does not exist, or the video is not `status: ready` and (`visibility: public` or `visibility: unlisted`) and published (`published_at` not null) — draft/processing/error videos, ready-but-not-yet-published videos, and genuinely private lookups return the same 404, never revealing which condition failed |
 
 _Error response shape inherited from `phase-02-auth/TD-07`: `{ statusCode, error, message }`, `error` carrying the code above._
 
