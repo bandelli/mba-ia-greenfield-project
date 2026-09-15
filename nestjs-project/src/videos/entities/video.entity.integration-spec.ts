@@ -102,6 +102,20 @@ describe('Video entity (integration)', () => {
     expect(video.published_at).toBeNull();
   });
 
+  it('should default views to 0', async () => {
+    const { user, channel } = await createOwner();
+
+    const video = await videoRepository.save(
+      videoRepository.create({
+        user_id: user.id,
+        channel_id: channel.id,
+        storage_key: 'videos/draft-key.mp4',
+      }),
+    );
+
+    expect(video.views).toBe(0);
+  });
+
   it('should default title and description to null', async () => {
     const { user, channel } = await createOwner();
 

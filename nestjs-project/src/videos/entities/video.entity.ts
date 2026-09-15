@@ -127,6 +127,9 @@ export class Video {
   })
   visibility: VideoVisibility;
 
+  @Column({ type: 'int', default: 0 })
+  views: number;
+
   @CreateDateColumn()
   created_at: Date;
 

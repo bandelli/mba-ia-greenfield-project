@@ -30,6 +30,9 @@ const buttonVariants = cva(
           "bg-destructive text-destructive-foreground focus-visible:ring-destructive/40 focus-visible:border-destructive",
         link:
           "min-w-0 bg-transparent text-link underline-offset-4 hover:underline hover:opacity-100",
+        red: "bg-red-600 text-destructive-foreground",
+        fill: "bg-secondary text-secondary-foreground",
+        quiet: "bg-transparent text-foreground font-weight-700",
       },
       size: {
         sm: "gap-2 rounded-[var(--radius-3)] px-4 py-2 text-label-md [&_svg:not([class*='size-'])]:size-5",
@@ -37,6 +40,7 @@ const buttonVariants = cva(
         lg: "gap-3 rounded-[var(--radius-full)] px-12 py-1.5 text-label-xl [&_svg:not([class*='size-'])]:size-8",
         icon: "min-w-0 size-9 rounded-[var(--radius-3)]",
         chip: "min-w-0 h-9 gap-1.5 rounded-[var(--radius-full)] px-4 text-label-md [&_svg:not([class*='size-'])]:size-4",
+        "chip-lg": "min-w-0 h-11 gap-1.5 rounded-[var(--radius-full)] px-4 text-label-md [&_svg:not([class*='size-'])]:size-4",
         action: "min-w-0 h-9 gap-2 rounded-[var(--radius-2)] px-4 text-label-md [&_svg:not([class*='size-'])]:size-4",
       },
     },
