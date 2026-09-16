@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Put,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -9,6 +17,8 @@ import {
 } from '@nestjs/swagger';
 import type { JwtPayload } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUserOptional } from '../auth/decorators/current-user-optional.decorator';
+import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { VideoVisibility } from '../videos/entities/video.entity';
@@ -21,8 +31,13 @@ import {
 } from './channels.service';
 import { FindOwnerVideosQueryDto } from './dto/find-owner-videos-query.dto';
 import { FindPublicVideosQueryDto } from './dto/find-public-videos-query.dto';
+import { SetSubscriptionDto } from './dto/set-subscription.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { Channel } from './entities/channel.entity';
+import {
+  SubscriptionResult,
+  SubscriptionService,
+} from './subscription.service';
 
 // Inline schemas, not DTO classes — the openapi:export script runs under
 // plain ts-node, so the @nestjs/swagger CLI plugin's entity/DTO schema
@@ -46,6 +61,8 @@ const PUBLIC_CHANNEL_RESPONSE_SCHEMA = {
     nickname: { type: 'string' },
     description: { type: 'string', nullable: true },
     created_at: { type: 'string', format: 'date-time' },
+    subscribersCount: { type: 'number' },
+    isSubscribed: { type: 'boolean' },
   },
 };
 
@@ -113,10 +130,20 @@ function toChannelResponse(channel: Channel): ChannelResponse {
   };
 }
 
+const SUBSCRIPTION_RESPONSE_SCHEMA = {
+  properties: {
+    subscribed: { type: 'boolean' },
+    subscribersCount: { type: 'number' },
+  },
+};
+
 @ApiTags('channels')
 @Controller('channels')
 export class ChannelsController {
-  constructor(private readonly channelsService: ChannelsService) {}
+  constructor(
+    private readonly channelsService: ChannelsService,
+    private readonly subscriptionService: SubscriptionService,
+  ) {}
 
   @Get('me')
   @ApiBearerAuth('access-token')
@@ -203,10 +230,11 @@ export class ChannelsController {
   }
 
   @Get(':nickname')
-  @Public()
+  @OptionalAuth()
   @ApiOperation({
     summary: 'Get public channel info',
-    description: "Returns a channel's public-facing fields (no user_id/email).",
+    description:
+      "Returns a channel's public-facing fields (no user_id/email). `isSubscribed` is `false` unless the caller is authenticated (per social-interactions/TD-01).",
   })
   @ApiResponse({
     status: 200,
@@ -220,8 +248,9 @@ export class ChannelsController {
   })
   async getByNickname(
     @Param('nickname') nickname: string,
+    @CurrentUserOptional() user: JwtPayload | undefined,
   ): Promise<PublicChannelInfo> {
-    return this.channelsService.findPublicChannelInfo(nickname);
+    return this.channelsService.findPublicChannelInfo(nickname, user?.sub);
   }
 
   @Get(':nickname/videos')
@@ -253,5 +282,49 @@ export class ChannelsController {
     @Query() query: FindPublicVideosQueryDto,
   ): Promise<PaginatedResult<PublicVideoListItem>> {
     return this.channelsService.findPublicVideos(nickname, query);
+  }
+
+  @Put(':nickname/subscription')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Set the caller subscription to a channel',
+    description:
+      "Sets the caller's follow state on a channel to the given value — idempotent, repeating the same request has no further effect (per social-interactions/TD-02, TD-03).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current subscription state and updated subscriber count',
+    schema: SUBSCRIPTION_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid access token',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No channel with this nickname',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Caller is the owner of this channel',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async setSubscription(
+    @Param('nickname') nickname: string,
+    @Body() dto: SetSubscriptionDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<SubscriptionResult> {
+    return this.subscriptionService.setSubscription(
+      user.sub,
+      nickname,
+      dto.subscribed,
+    );
   }
 }

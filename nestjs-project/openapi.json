@@ -439,6 +439,89 @@
         ]
       }
     },
+    "/users/me/subscriptions": {
+      "get": {
+        "description": "Paginated listing of the caller's followed channels (per social-interactions/TD-05).",
+        "operationId": "UsersController_getMySubscriptions",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Pagination offset (default 0)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max channels to return (default 20, max 50)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated followed channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "nickname": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "avatarUrl": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List channels the caller follows",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/channels/me": {
       "get": {
         "description": "Returns the caller's own channel.",
@@ -724,7 +807,7 @@
     },
     "/channels/{nickname}": {
       "get": {
-        "description": "Returns a channel's public-facing fields (no user_id/email).",
+        "description": "Returns a channel's public-facing fields (no user_id/email). `isSubscribed` is `false` unless the caller is authenticated (per social-interactions/TD-01).",
         "operationId": "ChannelsController_getByNickname",
         "parameters": [
           {
@@ -760,6 +843,12 @@
                     "created_at": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "subscribersCount": {
+                      "type": "number"
+                    },
+                    "isSubscribed": {
+                      "type": "boolean"
                     }
                   }
                 }
@@ -899,9 +988,103 @@
         ]
       }
     },
+    "/channels/{nickname}/subscription": {
+      "put": {
+        "description": "Sets the caller's follow state on a channel to the given value — idempotent, repeating the same request has no further effect (per social-interactions/TD-02, TD-03).",
+        "operationId": "ChannelsController_setSubscription",
+        "parameters": [
+          {
+            "name": "nickname",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSubscriptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current subscription state and updated subscriber count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "subscribed": {
+                      "type": "boolean"
+                    },
+                    "subscribersCount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No channel with this nickname",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Caller is the owner of this channel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Set the caller subscription to a channel",
+        "tags": [
+          "channels"
+        ]
+      }
+    },
     "/videos/public/{publicId}": {
       "get": {
-        "description": "Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02).",
+        "description": "Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02). `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-01).",
         "operationId": "VideosController_getPublicVideo",
         "parameters": [
           {
@@ -952,6 +1135,20 @@
                     "views": {
                       "type": "number"
                     },
+                    "likesCount": {
+                      "type": "number"
+                    },
+                    "dislikesCount": {
+                      "type": "number"
+                    },
+                    "currentUserReaction": {
+                      "type": "string",
+                      "enum": [
+                        "like",
+                        "dislike"
+                      ],
+                      "nullable": true
+                    },
                     "published_at": {
                       "type": "string",
                       "format": "date-time",
@@ -965,6 +1162,9 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "subscribersCount": {
+                          "type": "number"
                         }
                       }
                     }
@@ -1175,6 +1375,535 @@
           }
         },
         "summary": "Get suggested videos",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
+    "/videos/{publicId}/reaction": {
+      "put": {
+        "description": "Sets the caller's like/dislike state on a published video to the given value, or clears it when `type` is `null` — idempotent, repeating the same request has no further effect (per social-interactions/TD-01, TD-02, TD-03).",
+        "operationId": "VideosController_setVideoReaction",
+        "parameters": [
+          {
+            "name": "publicId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current reaction and updated counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "like",
+                        "dislike"
+                      ],
+                      "nullable": true
+                    },
+                    "likesCount": {
+                      "type": "number"
+                    },
+                    "dislikesCount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token presented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video not found, not ready, or not public/unlisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Set the caller reaction to a video",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
+    "/videos/{publicId}/comments": {
+      "get": {
+        "description": "Returns paginated top-level comments with embedded replies (depth 1) for a published video, readable anonymously; `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-04).",
+        "operationId": "VideosController_getComments",
+        "parameters": [
+          {
+            "name": "publicId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Pagination offset over top-level comments (default 0)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max top-level comments to return (default 20, max 50)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "body": {
+                            "type": "string"
+                          },
+                          "author": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "nickname": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "likesCount": {
+                            "type": "number"
+                          },
+                          "dislikesCount": {
+                            "type": "number"
+                          },
+                          "currentUserReaction": {
+                            "type": "string",
+                            "enum": [
+                              "like",
+                              "dislike"
+                            ],
+                            "nullable": true
+                          },
+                          "replies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "body": {
+                                  "type": "string"
+                                },
+                                "author": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "nickname": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "likesCount": {
+                                  "type": "number"
+                                },
+                                "dislikesCount": {
+                                  "type": "number"
+                                },
+                                "currentUserReaction": {
+                                  "type": "string",
+                                  "enum": [
+                                    "like",
+                                    "dislike"
+                                  ],
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video not found, not ready, or not public/unlisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List comments for a video",
+        "tags": [
+          "videos"
+        ]
+      },
+      "post": {
+        "description": "Creates a top-level comment on a published video and increments its comment count (per social-interactions/TD-04).",
+        "operationId": "VideosController_createComment",
+        "parameters": [
+          {
+            "name": "publicId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "body": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "nickname": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "likesCount": {
+                      "type": "number"
+                    },
+                    "dislikesCount": {
+                      "type": "number"
+                    },
+                    "currentUserReaction": {
+                      "type": "string",
+                      "enum": [
+                        "like",
+                        "dislike"
+                      ],
+                      "nullable": true
+                    },
+                    "replies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "body": {
+                            "type": "string"
+                          },
+                          "author": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "nickname": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "likesCount": {
+                            "type": "number"
+                          },
+                          "dislikesCount": {
+                            "type": "number"
+                          },
+                          "currentUserReaction": {
+                            "type": "string",
+                            "enum": [
+                              "like",
+                              "dislike"
+                            ],
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token presented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video not found, not ready, or not public/unlisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Post a top-level comment on a video",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
+    "/videos/{publicId}/comments/{commentId}/replies": {
+      "post": {
+        "description": "Creates a reply to a top-level comment, capped at a single level of depth — replying to a reply is rejected (per social-interactions/TD-04).",
+        "operationId": "VideosController_createReply",
+        "parameters": [
+          {
+            "name": "publicId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "body": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "nickname": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "likesCount": {
+                      "type": "number"
+                    },
+                    "dislikesCount": {
+                      "type": "number"
+                    },
+                    "currentUserReaction": {
+                      "type": "string",
+                      "enum": [
+                        "like",
+                        "dislike"
+                      ],
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error, or target comment is itself a reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token presented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video or target comment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Reply to a top-level comment on a video",
         "tags": [
           "videos"
         ]
@@ -1656,6 +2385,98 @@
           "videos"
         ]
       }
+    },
+    "/comments/{commentId}/reaction": {
+      "put": {
+        "description": "Sets the caller's like/dislike state on a comment to the given value, or clears it when `type` is `null` — same idempotent contract as the video reaction endpoint (per social-interactions/TD-01, TD-02, TD-03).",
+        "operationId": "CommentsController_setCommentReaction",
+        "parameters": [
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current reaction and updated counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "like",
+                        "dislike"
+                      ],
+                      "nullable": true
+                    },
+                    "likesCount": {
+                      "type": "number"
+                    },
+                    "dislikesCount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token presented",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Comment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Set the caller reaction to a comment",
+        "tags": [
+          "comments"
+        ]
+      }
     }
   },
   "info": {
@@ -1700,6 +2521,18 @@
         "properties": {}
       },
       "UpdateChannelDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SetSubscriptionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SetReactionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateCommentDto": {
         "type": "object",
         "properties": {}
       },

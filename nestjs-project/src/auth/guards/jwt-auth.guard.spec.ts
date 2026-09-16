@@ -88,4 +88,44 @@ describe('JwtAuthGuard', () => {
     });
     await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
   });
+
+  describe('@OptionalAuth() routes', () => {
+    it('lets an anonymous request through with no request.user', async () => {
+      mockReflector.getAllAndOverride
+        .mockReturnValueOnce(false) // isPublic
+        .mockReturnValueOnce(true); // isOptionalAuth
+      const request: Record<string, unknown> = { headers: {} };
+      const ctx = makeContext(request);
+
+      await expect(guard.canActivate(ctx)).resolves.toBe(true);
+      expect(request.user).toBeUndefined();
+    });
+
+    it('lets a request with a malformed token through with no request.user', async () => {
+      mockReflector.getAllAndOverride
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true);
+      const request: Record<string, unknown> = {
+        headers: { authorization: 'Bearer not-a-valid-jwt' },
+      };
+      const ctx = makeContext(request);
+
+      await expect(guard.canActivate(ctx)).resolves.toBe(true);
+      expect(request.user).toBeUndefined();
+    });
+
+    it('attaches the payload when a valid token is presented', async () => {
+      mockReflector.getAllAndOverride
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true);
+      const token = jwtService.sign({ sub: 'user-1', email: 'a@example.com' });
+      const request: Record<string, unknown> = {
+        headers: { authorization: `Bearer ${token}` },
+      };
+      const ctx = makeContext(request);
+
+      await expect(guard.canActivate(ctx)).resolves.toBe(true);
+      expect((request.user as Record<string, unknown>)?.sub).toBe('user-1');
+    });
+  });
 });

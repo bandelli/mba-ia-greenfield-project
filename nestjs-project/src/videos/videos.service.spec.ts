@@ -6,6 +6,7 @@ import {
   VideoStatus,
   VideoVisibility,
 } from './entities/video.entity';
+import { ReactionType } from './entities/video-reaction.entity';
 import { VideosService } from './videos.service';
 
 function makeVideo(overrides: Partial<Video> = {}): Video {
@@ -23,9 +24,24 @@ function makeVideo(overrides: Partial<Video> = {}): Video {
   v.duration_seconds = 120;
   v.thumbnail_key = 'thumbnails/key.png';
   v.views = 5;
+  v.likes_count = 10;
+  v.dislikes_count = 2;
   v.published_at = new Date('2026-09-12T00:00:00.000Z');
-  v.channel = { nickname: 'someone', name: 'Someone' } as Video['channel'];
+  v.channel = {
+    nickname: 'someone',
+    name: 'Someone',
+    subscribers_count: 3,
+  } as Video['channel'];
   return Object.assign(v, overrides);
+}
+
+function makeReactionRepository(
+  overrides: Record<string, jest.Mock> = {},
+): any {
+  return {
+    findOne: jest.fn().mockResolvedValue(null),
+    ...overrides,
+  };
 }
 
 // Mocks the createQueryBuilder().update(...).set(...).where(...).returning(...)
@@ -59,7 +75,8 @@ describe('VideosService', () => {
         findOne: jest.fn().mockResolvedValue(video),
         createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
       });
-      const service = new VideosService(repository);
+      const reactionRepository = makeReactionRepository();
+      const service = new VideosService(repository, reactionRepository);
 
       const result = await service.findPublicVideo('pub123');
 
@@ -77,6 +94,7 @@ describe('VideosService', () => {
         id: 'uuid',
       });
       expect(queryBuilder.returning).toHaveBeenCalledWith(['views']);
+      expect(reactionRepository.findOne).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: 'uuid',
         public_id: 'pub123',
@@ -87,8 +105,11 @@ describe('VideosService', () => {
         duration_seconds: 120,
         thumbnail_key: 'thumbnails/key.png',
         views: 6,
+        likesCount: 10,
+        dislikesCount: 2,
+        currentUserReaction: null,
         published_at: video.published_at,
-        channel: { nickname: 'someone', name: 'Someone' },
+        channel: { nickname: 'someone', name: 'Someone', subscribersCount: 3 },
       });
     });
 
@@ -98,18 +119,37 @@ describe('VideosService', () => {
         findOne: jest.fn().mockResolvedValue(video),
         createQueryBuilder: jest.fn().mockReturnValue(makeQueryBuilder(6)),
       });
-      const service = new VideosService(repository);
+      const service = new VideosService(repository, makeReactionRepository());
 
       const result = await service.findPublicVideo('pub123');
 
       expect(result.visibility).toBe(VideoVisibility.UNLISTED);
     });
 
+    it('includes the real currentUserReaction when authenticated and a reaction exists', async () => {
+      const video = makeVideo();
+      const repository = makeRepository({
+        findOne: jest.fn().mockResolvedValue(video),
+        createQueryBuilder: jest.fn().mockReturnValue(makeQueryBuilder(6)),
+      });
+      const reactionRepository = makeReactionRepository({
+        findOne: jest.fn().mockResolvedValue({ type: ReactionType.DISLIKE }),
+      });
+      const service = new VideosService(repository, reactionRepository);
+
+      const result = await service.findPublicVideo('pub123', 'user-id');
+
+      expect(reactionRepository.findOne).toHaveBeenCalledWith({
+        where: { user_id: 'user-id', video_id: 'uuid' },
+      });
+      expect(result.currentUserReaction).toBe(ReactionType.DISLIKE);
+    });
+
     it('throws VideoNotFoundException when no video matches (draft/processing/error status, private visibility, unpublished, or unknown public_id)', async () => {
       const repository = makeRepository({
         findOne: jest.fn().mockResolvedValue(null),
       });
-      const service = new VideosService(repository);
+      const service = new VideosService(repository, makeReactionRepository());
 
       await expect(service.findPublicVideo('does-not-exist')).rejects.toThrow(
         VideoNotFoundException,
@@ -132,7 +172,7 @@ describe('VideosService', () => {
         findOne: jest.fn().mockResolvedValue(anchor),
         find: jest.fn().mockResolvedValue([suggestion]),
       });
-      const service = new VideosService(repository);
+      const service = new VideosService(repository, makeReactionRepository());
 
       const result = await service.findSuggestedVideos('pub123');
 
@@ -168,7 +208,7 @@ describe('VideosService', () => {
         findOne: jest.fn().mockResolvedValue(anchor),
         find: jest.fn().mockResolvedValue([]),
       });
-      const service = new VideosService(repository);
+      const service = new VideosService(repository, makeReactionRepository());
 
       await service.findSuggestedVideos('pub123', 5);
 
@@ -181,7 +221,7 @@ describe('VideosService', () => {
       const repository = makeRepository({
         findOne: jest.fn().mockResolvedValue(null),
       });
-      const service = new VideosService(repository);
+      const service = new VideosService(repository, makeReactionRepository());
 
       await expect(
         service.findSuggestedVideos('does-not-exist'),

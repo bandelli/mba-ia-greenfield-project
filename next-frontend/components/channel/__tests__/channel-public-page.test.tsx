@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { http, HttpResponse } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const push = vi.fn()
+import { server } from "@/mocks/server"
+
+const { push, refresh } = vi.hoisted(() => ({
+  push: vi.fn(),
+  refresh: vi.fn(),
+}))
 let currentSearchParams = new URLSearchParams()
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, refresh }),
   useSearchParams: () => currentSearchParams,
 }))
 
@@ -45,6 +51,7 @@ const videos: PublicChannelVideoItem[] = [
 
 beforeEach(() => {
   push.mockClear()
+  refresh.mockClear()
   currentSearchParams = new URLSearchParams()
 })
 
@@ -100,5 +107,88 @@ describe("<ChannelPublicPage />", () => {
     await user.click(screen.getByRole("button", { name: "Latest" }))
 
     expect(push).toHaveBeenCalledWith("?")
+  })
+
+  it("applies the optimistic subscribed state immediately, before the fetch resolves", async () => {
+    server.use(
+      http.put("/api/channels/techmasteryplus/subscription", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30))
+        return HttpResponse.json({ subscribed: true, subscribersCount: 4201 })
+      })
+    )
+
+    const user = userEvent.setup()
+    render(
+      <ChannelPublicPage
+        channel={channel}
+        videos={videos}
+        total={2}
+        sort="latest"
+        subscriberCount={4200}
+        isSubscribed={false}
+      />
+    )
+
+    await user.click(screen.getByRole("button", { name: "Subscribe" }))
+
+    // Optimistic UI applied immediately, while the fetch above is still in
+    // flight (it won't resolve for another 30ms).
+    expect(screen.getByRole("button", { name: "Subscribed" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    )
+    expect(screen.getByText("4,201 subscribers")).toBeInTheDocument()
+
+    await waitFor(() => expect(refresh).toHaveBeenCalledOnce())
+  })
+
+  it("reverts the optimistic state when the request fails", async () => {
+    server.use(
+      http.put("/api/channels/techmasteryplus/subscription", () =>
+        HttpResponse.json(
+          { statusCode: 500, error: "INTERNAL", message: "fail" },
+          { status: 500 }
+        )
+      )
+    )
+
+    const user = userEvent.setup()
+    render(
+      <ChannelPublicPage
+        channel={channel}
+        videos={videos}
+        total={2}
+        sort="latest"
+        subscriberCount={4200}
+        isSubscribed={false}
+      />
+    )
+
+    await user.click(screen.getByRole("button", { name: "Subscribe" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Subscribe" })).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      )
+    })
+    expect(screen.getByText("4,200 subscribers")).toBeInTheDocument()
+    expect(refresh).not.toHaveBeenCalled()
+  })
+
+  it("does not render the SubscribeButton when viewing one's own channel", () => {
+    render(
+      <ChannelPublicPage
+        channel={channel}
+        videos={videos}
+        total={2}
+        sort="latest"
+        isOwnChannel
+      />
+    )
+
+    expect(
+      screen.queryByRole("button", { name: /^Subscribe/ })
+    ).not.toBeInTheDocument()
   })
 })

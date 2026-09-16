@@ -1,0 +1,313 @@
+PHASE 06 — SOCIAL INTERACTIONS — CONSOLIDATED FIGMA REFERENCE
+================================================================
+Purpose: every raw Figma code excerpt needed to implement this phase's UI,
+in one file, so /plan-build and /implement never need to call the Figma
+MCP again for phase-06 work (the account's seat is rate-limited and has
+already blocked this session once).
+
+File key: 40c57EfcNjN6u5St7n5SlG  (FC-Tube-sem-padrão)
+
+Live-validated in this session (2026-09-14) via mcp__figma__get_metadata on
+the file root (page 0:1): the file has exactly 13 top-level frames. None is
+named "Comments", "Likes", "Subscriptions", or any equivalent dedicated
+screen — confirming docs/figma-reference/phase-06-social-interactions/figma-reference.md's
+earlier finding. Full frame list for reference:
+
+  39:1877  User login
+  39:1594  Upload video
+  39:1642  Upload video processing
+  39:1384  Channel Settings
+  39:1513  Account User Menu
+  39:1294  Left Menu               <- sidebar chrome kit (see SECTION 3 below)
+  39:1224  Create user account
+  39:980   Reset password
+  39:1013  Video show              <- SECTIONS 1 and 2 below
+  39:652   My videos list
+  39:379   Home (Catalog Show)     <- source of SECTION 3's code (shares the same sidebar as "Left Menu")
+  39:30    Channel show            <- SECTION 4 below
+  39:29    Edit/Publish Video
+  210:49   button
+
+Every excerpt below is copied verbatim (byte-for-byte) from a raw
+get_design_context dump already cached in this repo from an earlier
+session — no new Figma MCP calls were made to build the excerpts
+themselves (only get_metadata, to validate the frame list above). Each
+section names its source file for provenance.
+
+================================================================
+SECTION 1 — Video Watch Page: Like/Dislike + Subscribe + Subscriber Count
+================================================================
+Source: docs/figma-reference/phase-05-video-watch-page/figma-assets/raw/video-show-39-1013.RAW.txt
+Frame: "Video show" (39:1013), lines 64-125 of that file.
+Screen in this phase's inventory: Video Watch Page (/watch/[publicId])
+Covers inventory rows: SubscriberCount (39:1141), SubscribeButton (39:1094),
+LikeDislikeButton (39:1095, composite split-pill).
+
+                        1.2M subscribers
+                    </p>
+                  </div>
+                  <div className="absolute bg-[red] border-0 border-[#e5e7eb] border-solid h-[36px] left-[252.23px] rounded-[9999px] top-[6px] w-[99.672px]" data-node-id="39:1094" data-name="button">
+                    <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[17px] left-[49.84px] not-italic text-[14px] text-center text-white top-[9px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1142">
+                      Subscribe
+                    </p>
+                  </div>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[553.69px] top-[2px] w-[414.313px]" data-node-id="39:1067" data-name="div">
+                  <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[44px] left-0 overflow-clip rounded-[9999px] top-0 w-[136.672px]" data-node-id="39:1095" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-r border-solid h-[44px] left-0 top-0 w-[86.672px]" data-node-id="39:1143" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[16px] top-[8px] w-[18px]" data-node-id="39:1181" data-name="i">
+                        <!-- icon: thumbs-up, already extracted at
+                             docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/video-like-thumbsup-icon.svg -->
+                      </div>
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[59.34px] not-italic text-[#f1f1f1] text-[14px] text-center top-[13px] tracking-[-0.5px] w-[42.672px]" data-node-id="39:1182">{` 24K`}</p>
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[86.67px] top-0 w-[50px]" data-node-id="39:1144" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[21px] left-[16px] top-[11px] w-[18px]" data-node-id="39:1183" data-name="i">
+                        <!-- icon: thumbs-down, already extracted at
+                             docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/video-dislike-thumbsdown-icon.svg -->
+                      </div>
+                    </div>
+                  </div>
+                  <!-- ShareButton (39:1096) and DownloadButton (39:1097) sit here — NOT phase-06
+                       scope (phase-05-video-watch-page/TD-01, already wired); see that phase's own
+                       raw file if ever needed again. -->
+                </div>
+
+STRUCTURE NOTES (not literal Figma text — derived while reading the code above):
+- LikeDislikeButton (39:1095) is a single rounded-full pill split into two
+  segments by a right border on the first segment: left segment (39:1143) =
+  thumbs-up + count ("24K"), right segment (39:1144) = thumbs-down only, no
+  visible count. This matches the already-built
+  next-frontend/components/video/like-dislike-button.tsx shell exactly.
+- SubscribeButton (39:1094) is a solid red rounded-full pill, "Subscribe"
+  label only — no icon.
+- SubscriberCount (39:1141, "1.2M subscribers") is a plain text node sitting
+  just above/left of SubscribeButton in the channel identity row (not part
+  of the button itself).
+
+================================================================
+SECTION 2 — Video Watch Page: Comments Section (full stub tree)
+================================================================
+Source: docs/figma-reference/phase-05-video-watch-page/figma-assets/raw/video-show-39-1013.RAW.txt
+Frame: "Video show" (39:1013), lines 162-238 of that file.
+Screen in this phase's inventory: Video Watch Page (/watch/[publicId])
+Covers inventory rows: CommentCount (39:1103), CommentSortControl (39:1104),
+CommentForm (39:1073), CommentList/CommentItem (39:1074),
+CommentLikeDislikeButton + ReplyAction (sub-nodes of 39:1074).
+Superseded stub file: next-frontend/components/video/comments-section-stub.tsx
+(mixes all of the below into one hardcoded function — see this phase's
+screen-inventory Observations for why it is decomposed, not reused in place).
+
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[214.25px] left-0 top-[634.75px] w-[968px]" data-node-id="39:1044" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 top-0 w-[968px]" data-node-id="39:1072" data-name="div">
+                    <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[28px] left-0 not-italic text-[#f1f1f1] text-[20px] top-[6px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1103">
+                      4,256 Comments
+                    </p>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-[192.61px] rounded-[8px] top-0 w-[105.578px]" data-node-id="39:1104" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[12px] top-[6px] w-[18px]" data-node-id="39:1150" data-name="i">
+                        <!-- icon: sort, already extracted at
+                             docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/comments-sort-icon.svg -->
+                      </div>
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[20px] left-[69.29px] not-italic text-[#f1f1f1] text-[16px] text-center top-[8px] tracking-[-0.5px] w-[70.578px]" data-node-id="39:1151">{` Sort by`}</p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-0 overflow-clip top-[60px] w-[968px]" data-node-id="39:1073" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 rounded-[9999px] size-[40px] top-0" data-node-id="39:1105" data-name="img">
+                      <!-- current-user avatar placeholder (40px circle) -->
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-[56px] top-0 w-[912px]" data-node-id="39:1106" data-name="div">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-b border-solid h-[33px] left-0 top-0 w-[912px]" data-node-id="39:1152" data-name="input">
+                        <div className="-translate-y-1/2 [word-break:break-word] absolute flex flex-col font-['Inter:Medium'] font-medium h-[33px] justify-center leading-[0] left-0 not-italic text-[16px] text-[rgba(241,241,241,0.5)] top-[16.5px] tracking-[-0.5px] w-[912px]" data-node-id="39:1196">
+                          <p className="leading-[24px]">Add a comment...</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[82.25px] left-0 overflow-clip top-[132px] w-[968px]" data-node-id="39:1074" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 rounded-[9999px] size-[40px] top-0" data-node-id="39:1107" data-name="img">
+                      <!-- comment author avatar placeholder (40px circle) -->
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[82.25px] left-[56px] top-0 w-[884.5px]" data-node-id="39:1108" data-name="div">
+                      <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[19.5px] left-0 not-italic top-0 tracking-[-0.5px] w-[884.5px] whitespace-nowrap" data-node-id="39:1153" data-name="div">
+                        <p className="absolute font-['Inter:Bold'] font-bold leading-[20px] left-0 text-[#f1f1f1] text-[13px] top-px" data-node-id="39:1197">
+                          @DevStudent99
+                        </p>
+                        <p className="absolute font-['Inter:Medium'] font-medium leading-[16px] left-[112.95px] text-[#aaa] text-[12px] top-[1.75px]" data-node-id="39:1198">
+                          2 weeks ago
+                        </p>
+                      </div>
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[22.75px] left-0 top-[23.5px] w-[884.5px]" data-node-id="39:1154" data-name="p">
+                        <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[23px] left-0 not-italic text-[#f1f1f1] text-[14px] top-[2px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1155">
+                          This is exactly what I needed for my final year project. The explanation on Redux state management was incredibly clear. Thank you!
+                        </p>
+                      </div>
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-0 top-[54.25px] w-[884.5px]" data-node-id="39:1156" data-name="div">
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-0 top-[2px] w-[42.016px]" data-node-id="39:1199" data-name="button">
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-0 top-0 w-[16px]" data-node-id="39:1214" data-name="i">
+                            <!-- icon: comment thumbs-up, already extracted at
+                                 docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/comment-like-icon.svg -->
+                          </div>
+                          <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[31.01px] not-italic text-[#aaa] text-[12px] text-center top-[4px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1215">
+                            245
+                          </p>
+                        </div>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[58.02px] top-[2px] w-[16px]" data-node-id="39:1200" data-name="button">
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-0 top-[2px] w-[16px]" data-node-id="39:1216" data-name="i">
+                            <!-- icon: comment thumbs-down, already extracted at
+                                 docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/comment-dislike-icon.svg -->
+                          </div>
+                        </div>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[90.02px] rounded-[9999px] top-0 w-[57.063px]" data-node-id="39:1201" data-name="button">
+                          <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[28.53px] not-italic text-[#aaa] text-[12px] text-center top-[6px] tracking-[-0.5px] w-[65.063px]" data-node-id="39:1217">
+                            Reply
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+STRUCTURE NOTES:
+- Comment count (39:1103) + Sort trigger (39:1104) share a header row.
+- Comment composer (39:1073) is a single-line input, no submit button drawn
+  separately in Figma — Enter-to-submit or an inferred submit affordance is
+  an implementation decision (no design reference).
+- One example CommentItem (39:1074) is shown: avatar + author + relative
+  time + text + action row (like count "245", dislike icon, "Reply" text
+  button — no reply count/expanded thread anywhere).
+- REPLIES ARE NOT IN THE FIGMA SOURCE AT ALL. No node in this file, or in
+  any other frame, shows an expanded/nested reply. `ReplyAction`'s open
+  state and `ReplyItem`'s rendering (per this phase's screen-inventory) are
+  fully inferred from `social-interactions/TD-04`'s decided single-level
+  model — there is nothing to re-fetch from Figma for them; a future visual
+  QA pass is a design decision, not a missed extraction.
+
+================================================================
+SECTION 3 — Followed Channels Page: row-style reference (no dedicated page exists)
+================================================================
+Source: docs/figma-reference/phase-07-home-search-wrapup/figma-assets/raw/home-catalog-show-39-379.RAW.txt
+Frame: "Home (Catalog Show)" (39:379), lines 553-618 of that file — the
+persistent left sidebar's "Subscriptions" list section (node 42:202).
+Identical markup also exists, undecorated, in the standalone "Left Menu"
+kit frame (39:1294 -> 39:1307), confirmed via get_metadata in this session.
+Screen in this phase's inventory: Followed Channels Page (/subscriptions) — NEW route, no Figma frame of its own.
+
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[340px] left-0 top-[298px] w-[279px]" data-node-id="42:202" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-[17px] top-[8px] w-[279px]" data-node-id="42:203" data-name="h3">
+                  <p className="[word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[24px] left-0 not-italic text-[#f1f1f1] text-[16px] top-[10px] tracking-[-0.5px] whitespace-nowrap" data-node-id="42:204">
+                    Subscriptions
+                  </p>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-[4px] rounded-[8px] top-[48px] w-[271px]" data-node-id="42:205" data-name="div">
+                  <div className="absolute border-0 border-[#e5e7eb] border-solid left-[24px] rounded-[9999px] size-[24px] top-[8px]" data-node-id="42:206" data-name="img">
+                    <!-- channel avatar, 24px circle -->
+                  </div>
+                  <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[20px] left-[64px] not-italic text-[#f1f1f1] text-[14px] top-[11px] tracking-[-0.5px] whitespace-nowrap" data-node-id="42:207">
+                    Tech Reviews
+                  </p>
+                </div>
+                <!-- 5 more identical rows repeat here (nodes 42:208, 42:211, 42:214,
+                     42:217, 42:220): "Gaming Central", "Design Daily", "Music Zone",
+                     "Fitness Pro", "Cooking Master" — same 40px-tall row, 24px avatar
+                     at left:24/top:8, name at left:64/top:11. No structural variance. -->
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[4px] rounded-[8px] top-[288px] w-[271px]" data-node-id="42:223" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[24px] top-[8px] w-[24px]" data-node-id="42:224" data-name="i">
+                    <!-- icon: chevron-down / expand, not yet extracted anywhere in this
+                         project (this exact "Show N more" affordance has no icon file
+                         under any phase's figma-assets/icons/ — extract at implementation
+                         time if the design is followed literally, or use a text-only
+                         "Show more" like phase-05's DescriptionExpandToggle instead). -->
+                  </div>
+                  <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[20px] left-[64px] not-italic text-[#aaa] text-[14px] top-[13px] tracking-[-0.5px] whitespace-nowrap" data-node-id="42:228">
+                    Show 12 more
+                  </p>
+                </div>
+              </div>
+
+STRUCTURE NOTES:
+- This is sidebar CHROME, not a content page — per this phase's
+  `social-interactions/TD-05` (Option A), the Followed Channels Page is a
+  dedicated `/subscriptions` route, NOT this persistent sidebar (that shell
+  belongs to Phase 07). Reuse is visual-style-only: 24px circular avatar +
+  14px medium-weight name, in a 40px-tall row, 8px border-radius on hover
+  state (implied by the other sidebar rows' `rounded-[8px]` background).
+  On the dedicated page, this row style can be scaled up (larger avatar,
+  more metadata) since there is no sidebar-width (279px) constraint.
+- The "Left Menu" frame's own `main` content area (node 39:1298) is EMPTY
+  in the Figma source (confirmed via get_metadata in this session) — it was
+  never a real page design, only a component-kit frame for the sidebar.
+- No icon asset exists yet for "Show N more" — extract at implementation
+  time if replicated literally, or reuse the text-only "Show more" pattern
+  already used by `DescriptionExpandToggle` in `phase-05-video-watch-page`
+  (no icon needed there either).
+
+================================================================
+SECTION 4 — Channel Public Page: Subscribe + Notification Bell + Subscriber Stats
+================================================================
+Source: docs/phases/phase-04-video-channel-management/figma-assets/raw/channel-show-39-30.reference.txt
+Frame: "Channel show" (39:30), lines 33-57 of that file.
+Screen in this phase's inventory: Channel Public Page (/channel/[nickname])
+Covers inventory rows: SubscribeButton (39:133), NotificationBellButton
+(39:134, stays out of scope — see Open Questions), subscriber count text
+(part of node 39:130, ChannelProfileHeader).
+
+        <div data-node-id="39:49" className="pl-[152px] pt-[24px]"> {/* text column starts after avatar */}
+          <div data-node-id="39:65" className="flex justify-between">
+            <div data-node-id="39:96" className="w-[672px]">
+              <h1 data-node-id="39:129" className="font-bold text-[36px] text-[#f1f1f1] leading-[40px]">Tech Mastery Plus</h1>
+              <div data-node-id="39:130" className="flex gap-1 text-[16px] text-[#aaa] font-medium mt-[4px]">
+                <span data-node-id="39:150">@TechMasteryPlus</span>
+                <span data-node-id="39:151">•</span>
+                <span data-node-id="39:152">2.4M subscribers</span>
+                <span data-node-id="39:153">•</span>
+                <span data-node-id="39:154">1.2K videos</span>
+              </div>
+              <p data-node-id="39:132" className="text-[14px] text-[#aaa] mt-[8px] truncate">
+                Your ultimate guide to mastering modern web development, software engineering, and tech careers.
+              </p>
+            </div>
+
+            {/* action cluster: Subscribe (pill, red) + notification-bell icon button (pill, muted) */}
+            <div data-node-id="39:97" className="flex gap-2">
+              <button data-node-id="39:133" className="h-[44px] rounded-full bg-[red] px-[24px] text-white text-[16px] font-semibold">Subscribe</button>
+              <button data-node-id="39:134" className="h-[48px] w-[35.75px] rounded-full bg-[#272727]">
+                <!-- icon: notification bell, already extracted at
+                     docs/phases/phase-04-video-channel-management/figma-assets/icons/channel-show-notification-bell-icon.svg -->
+              </button>
+            </div>
+          </div>
+        </div>
+
+STRUCTURE NOTES:
+- Subscriber count ("2.4M subscribers") is one `<span>` inside the same
+  flex row as `@handle` and video count — not a standalone component; this
+  is `ChannelProfileHeader`'s existing composite, already implemented in
+  `next-frontend/components/channel/channel-public-page.tsx` (the
+  `subscriberCount` prop). No new markup needed, only real data.
+- SubscribeButton here is visually IDENTICAL in shape to the Video Watch
+  Page's SubscribeButton (Section 1) — same red rounded-full pill, "Subscribe"
+  label, no icon. Consistent implementation across both screens is expected.
+- NotificationBellButton (39:134) — still no capability in any phase
+  (see this phase's screen-inventory Open Questions, carried forward from
+  phase-04). No action needed on it in this phase.
+
+================================================================
+ICON ASSETS — already extracted, nothing new needed for this phase
+================================================================
+docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/video-like-thumbsup-icon.svg
+docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/video-dislike-thumbsdown-icon.svg
+docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/comment-like-icon.svg
+docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/comment-dislike-icon.svg
+docs/figma-reference/phase-05-video-watch-page/figma-assets/icons/comments-sort-icon.svg
+docs/phases/phase-04-video-channel-management/figma-assets/icons/channel-show-notification-bell-icon.svg
+docs/phases/phase-04-video-channel-management/figma-assets/icons/channel-settings-subscribers-icon.svg
+docs/phases/phase-04-video-channel-management/figma-assets/icons/nav-subscriptions-icon.svg
+
+One gap: no icon exists yet for the sidebar's "Show N more" chevron (see
+SECTION 3 notes) — not needed if the Followed Channels Page's pagination
+follows the project's established text-only "Show more" / numbered
+PaginationControls pattern instead of a literal chevron affordance.
+
+================================================================
+END OF CONSOLIDATED REFERENCE
+================================================================

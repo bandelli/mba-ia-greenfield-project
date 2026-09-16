@@ -200,6 +200,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/me/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List channels the caller follows
+         * @description Paginated listing of the caller's followed channels (per social-interactions/TD-05).
+         */
+        get: operations["UsersController_getMySubscriptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/channels/me": {
         parameters: {
             query?: never;
@@ -253,7 +273,7 @@ export interface paths {
         };
         /**
          * Get public channel info
-         * @description Returns a channel's public-facing fields (no user_id/email).
+         * @description Returns a channel's public-facing fields (no user_id/email). `isSubscribed` is `false` unless the caller is authenticated (per social-interactions/TD-01).
          */
         get: operations["ChannelsController_getByNickname"];
         put?: never;
@@ -284,6 +304,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/channels/{nickname}/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the caller subscription to a channel
+         * @description Sets the caller's follow state on a channel to the given value — idempotent, repeating the same request has no further effect (per social-interactions/TD-02, TD-03).
+         */
+        put: operations["ChannelsController_setSubscription"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/videos/public/{publicId}": {
         parameters: {
             query?: never;
@@ -293,7 +333,7 @@ export interface paths {
         };
         /**
          * Get public video metadata
-         * @description Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02).
+         * @description Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02). `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-01).
          */
         get: operations["VideosController_getPublicVideo"];
         put?: never;
@@ -358,6 +398,70 @@ export interface paths {
         get: operations["VideosController_getSuggestedVideos"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/videos/{publicId}/reaction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the caller reaction to a video
+         * @description Sets the caller's like/dislike state on a published video to the given value, or clears it when `type` is `null` — idempotent, repeating the same request has no further effect (per social-interactions/TD-01, TD-02, TD-03).
+         */
+        put: operations["VideosController_setVideoReaction"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/videos/{publicId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List comments for a video
+         * @description Returns paginated top-level comments with embedded replies (depth 1) for a published video, readable anonymously; `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-04).
+         */
+        get: operations["VideosController_getComments"];
+        put?: never;
+        /**
+         * Post a top-level comment on a video
+         * @description Creates a top-level comment on a published video and increments its comment count (per social-interactions/TD-04).
+         */
+        post: operations["VideosController_createComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/videos/{publicId}/comments/{commentId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply to a top-level comment on a video
+         * @description Creates a reply to a top-level comment, capped at a single level of depth — replying to a reply is rejected (per social-interactions/TD-04).
+         */
+        post: operations["VideosController_createReply"];
         delete?: never;
         options?: never;
         head?: never;
@@ -468,6 +572,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/comments/{commentId}/reaction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the caller reaction to a comment
+         * @description Sets the caller's like/dislike state on a comment to the given value, or clears it when `type` is `null` — same idempotent contract as the video reaction endpoint (per social-interactions/TD-01, TD-02, TD-03).
+         */
+        put: operations["CommentsController_setCommentReaction"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -479,6 +603,9 @@ export interface components {
         ForgotPasswordDto: Record<string, never>;
         ResetPasswordDto: Record<string, never>;
         UpdateChannelDto: Record<string, never>;
+        SetSubscriptionDto: Record<string, never>;
+        SetReactionDto: Record<string, never>;
+        CreateCommentDto: Record<string, never>;
         UpdateVideoDto: Record<string, never>;
         ApiErrorEnvelope: {
             /** @example 401 */
@@ -860,6 +987,49 @@ export interface operations {
             };
         };
     };
+    UsersController_getMySubscriptions: {
+        parameters: {
+            query?: {
+                /** @description Pagination offset (default 0) */
+                offset?: number;
+                /** @description Max channels to return (default 20, max 50) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated followed channels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items?: {
+                            /** Format: uuid */
+                            id?: string;
+                            nickname?: string;
+                            name?: string;
+                            avatarUrl?: string | null;
+                        }[];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
     ChannelsController_getMe: {
         parameters: {
             query?: never;
@@ -1030,6 +1200,8 @@ export interface operations {
                         description?: string | null;
                         /** Format: date-time */
                         created_at?: string;
+                        subscribersCount?: number;
+                        isSubscribed?: boolean;
                     };
                 };
             };
@@ -1094,6 +1266,71 @@ export interface operations {
             };
         };
     };
+    ChannelsController_setSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nickname: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetSubscriptionDto"];
+            };
+        };
+        responses: {
+            /** @description Current subscription state and updated subscriber count */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        subscribed?: boolean;
+                        subscribersCount?: number;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description No channel with this nickname */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description Caller is the owner of this channel */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
     VideosController_getPublicVideo: {
         parameters: {
             query?: never;
@@ -1122,11 +1359,16 @@ export interface operations {
                         duration_seconds?: number | null;
                         thumbnail_key?: string | null;
                         views?: number;
+                        likesCount?: number;
+                        dislikesCount?: number;
+                        /** @enum {string|null} */
+                        currentUserReaction?: "like" | "dislike" | null;
                         /** Format: date-time */
                         published_at?: string | null;
                         channel?: {
                             nickname?: string;
                             name?: string;
+                            subscribersCount?: number;
                         };
                     };
                 };
@@ -1248,6 +1490,287 @@ export interface operations {
                 };
             };
             /** @description Anchor video not found, not ready, or not public/unlisted */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    VideosController_setVideoReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publicId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetReactionDto"];
+            };
+        };
+        responses: {
+            /** @description Current reaction and updated counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string|null} */
+                        type?: "like" | "dislike" | null;
+                        likesCount?: number;
+                        dislikesCount?: number;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description No valid access token presented */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description Video not found, not ready, or not public/unlisted */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    VideosController_getComments: {
+        parameters: {
+            query?: {
+                /** @description Pagination offset over top-level comments (default 0) */
+                offset?: number;
+                /** @description Max top-level comments to return (default 20, max 50) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                publicId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated comments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items?: {
+                            /** Format: uuid */
+                            id?: string;
+                            body?: string;
+                            author?: {
+                                /** Format: uuid */
+                                id?: string;
+                                nickname?: string;
+                            };
+                            /** Format: date-time */
+                            createdAt?: string;
+                            likesCount?: number;
+                            dislikesCount?: number;
+                            /** @enum {string|null} */
+                            currentUserReaction?: "like" | "dislike" | null;
+                            replies?: {
+                                /** Format: uuid */
+                                id?: string;
+                                body?: string;
+                                author?: {
+                                    /** Format: uuid */
+                                    id?: string;
+                                    nickname?: string;
+                                };
+                                /** Format: date-time */
+                                createdAt?: string;
+                                likesCount?: number;
+                                dislikesCount?: number;
+                                /** @enum {string|null} */
+                                currentUserReaction?: "like" | "dislike" | null;
+                            }[];
+                        }[];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Video not found, not ready, or not public/unlisted */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    VideosController_createComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publicId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommentDto"];
+            };
+        };
+        responses: {
+            /** @description Created comment */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id?: string;
+                        body?: string;
+                        author?: {
+                            /** Format: uuid */
+                            id?: string;
+                            nickname?: string;
+                        };
+                        /** Format: date-time */
+                        createdAt?: string;
+                        likesCount?: number;
+                        dislikesCount?: number;
+                        /** @enum {string|null} */
+                        currentUserReaction?: "like" | "dislike" | null;
+                        replies?: {
+                            /** Format: uuid */
+                            id?: string;
+                            body?: string;
+                            author?: {
+                                /** Format: uuid */
+                                id?: string;
+                                nickname?: string;
+                            };
+                            /** Format: date-time */
+                            createdAt?: string;
+                            likesCount?: number;
+                            dislikesCount?: number;
+                            /** @enum {string|null} */
+                            currentUserReaction?: "like" | "dislike" | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description No valid access token presented */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description Video not found, not ready, or not public/unlisted */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    VideosController_createReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publicId: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommentDto"];
+            };
+        };
+        responses: {
+            /** @description Created reply */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id?: string;
+                        body?: string;
+                        author?: {
+                            /** Format: uuid */
+                            id?: string;
+                            nickname?: string;
+                        };
+                        /** Format: date-time */
+                        createdAt?: string;
+                        likesCount?: number;
+                        dislikesCount?: number;
+                        /** @enum {string|null} */
+                        currentUserReaction?: "like" | "dislike" | null;
+                    };
+                };
+            };
+            /** @description Validation error, or target comment is itself a reply */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description No valid access token presented */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description Video or target comment not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1526,6 +2049,64 @@ export interface operations {
                 };
             };
             /** @description Video not found, not owned by the caller, or not ready */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    CommentsController_setCommentReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetReactionDto"];
+            };
+        };
+        responses: {
+            /** @description Current reaction and updated counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string|null} */
+                        type?: "like" | "dislike" | null;
+                        likesCount?: number;
+                        dislikesCount?: number;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description No valid access token presented */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+            /** @description Comment not found */
             404: {
                 headers: {
                     [name: string]: unknown;

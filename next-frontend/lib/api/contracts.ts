@@ -97,3 +97,39 @@ export type VideoDownloadUrlResponse =
 
 export type SuggestedVideosResponse =
   paths["/videos/public/{publicId}/suggested"]["get"]["responses"][200]["content"]["application/json"];
+
+// ─── Social interactions (phase-06-social-interactions) ───────────────────────
+
+// Shared request body shape — the upstream reuses the same `SetReactionDto`
+// class for both the video- and comment-reaction endpoints.
+export type SetReactionDto =
+  paths["/videos/{publicId}/reaction"]["put"]["requestBody"]["content"]["application/json"];
+
+export type VideoReactionResponse =
+  paths["/videos/{publicId}/reaction"]["put"]["responses"][200]["content"]["application/json"];
+
+export type CommentReactionResponse =
+  paths["/comments/{commentId}/reaction"]["put"]["responses"][200]["content"]["application/json"];
+
+export type FindCommentsResponse =
+  paths["/videos/{publicId}/comments"]["get"]["responses"][200]["content"]["application/json"];
+
+export type CreateCommentDto =
+  paths["/videos/{publicId}/comments"]["post"]["requestBody"]["content"]["application/json"];
+
+export type CreateCommentResponse =
+  paths["/videos/{publicId}/comments"]["post"]["responses"][201]["content"]["application/json"];
+
+// Reuses the same `CreateCommentDto` request shape (body: string) — the
+// upstream's `createReply` reuses `CreateCommentDto` for its request body.
+export type CreateReplyResponse =
+  paths["/videos/{publicId}/comments/{commentId}/replies"]["post"]["responses"][201]["content"]["application/json"];
+
+export type SetSubscriptionDto =
+  paths["/channels/{nickname}/subscription"]["put"]["requestBody"]["content"]["application/json"];
+
+export type SubscriptionResponse =
+  paths["/channels/{nickname}/subscription"]["put"]["responses"][200]["content"]["application/json"];
+
+export type MySubscriptionsResponse =
+  paths["/users/me/subscriptions"]["get"]["responses"][200]["content"]["application/json"];

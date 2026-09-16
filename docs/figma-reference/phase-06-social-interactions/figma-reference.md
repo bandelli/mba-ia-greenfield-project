@@ -3,13 +3,26 @@ kind: figma-reference-prefetch
 project_plan_phase: "Phase 06 — Social Interactions (Likes, Comments, Subscriptions)"
 guessed_slug: social-interactions
 captured: "2026-09-13"
+updated: "2026-09-14"
 figma_file: "https://www.figma.com/design/40c57EfcNjN6u5St7n5SlG/FC-Tube-sem-padrão"
-status: pre-collected — no /plan-phase run yet for this phase; no dedicated Figma frame exists
+status: screen-inventory completed (Status: Validated) — all Figma data consolidated, no further Figma MCP calls needed for this phase
 ---
 
-# Phase 06 — Social Interactions — Figma Reference (pre-collection)
+# Phase 06 — Social Interactions — Figma Reference
 
 **Read `docs/figma-reference/README.md` first.**
+
+**Everything below is now fully consolidated into one file — read that instead of re-deriving from this doc or hitting the Figma MCP:**
+
+📄 **`docs/figma-reference/phase-06-social-interactions/figma-assets/raw/social-interactions-consolidated.RAW.txt`**
+
+It contains, verbatim, every raw Figma code excerpt this phase needs (Like/Dislike button, full Comments section tree, Subscribe button + subscriber count on both screens, Notification bell, and the sidebar row-style reference for the new Followed Channels page), plus the live-validated 13-frame list confirming no dedicated frame exists for this phase's screens, plus pointers to every already-extracted icon asset. Built 2026-09-14 during `/screen-inventory 06`, after live-validating the frame list against Figma (`get_metadata`) — the account's Figma seat hit a rate limit mid-session (cleared on retry).
+
+The screen-by-screen classification (components, verbs, capability coverage) lives in `docs/inventories/screen-inventory-phase-06-social-interactions.md` (`Status: Validated`).
+
+---
+
+## Original pre-collection notes (2026-09-13, superseded by the above)
 
 ## No dedicated frame — this phase's UI is embedded in two other phases' frames
 

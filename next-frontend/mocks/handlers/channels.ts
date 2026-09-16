@@ -6,6 +6,7 @@ import type {
   OwnerVideoListResponse,
   PublicChannelInfo,
   PublicVideoListResponse,
+  SubscriptionResponse,
 } from "@/lib/api/contracts";
 import { env } from "@/lib/env";
 
@@ -24,6 +25,8 @@ const basePublicChannel: PublicChannelInfo = {
   nickname: "alice",
   description: "Fixture channel",
   created_at: "2026-09-12T00:00:00.000Z",
+  subscribersCount: 4_200,
+  isSubscribed: false,
 };
 
 // Reserved trigger (E2E + Vitest) — a `search` value that always yields an empty
@@ -43,6 +46,10 @@ export const CHANNEL_NOT_FOUND_TRIGGER = "nickname-does-not-exist";
 // yields an empty list on GET /channels/:nickname/videos (the channel itself
 // still resolves normally).
 export const EMPTY_PUBLIC_VIDEO_LIST_TRIGGER = "channel-with-no-public-videos";
+
+// Reserved trigger (E2E + Vitest) — a `:nickname` path value that always
+// yields 409 CANNOT_SUBSCRIBE_OWN_CHANNEL on PUT /channels/:nickname/subscription.
+export const OWN_CHANNEL_SUBSCRIPTION_TRIGGER = "own-channel-nickname";
 
 const ownerVideoFixtures: NonNullable<OwnerVideoListResponse["items"]> = [
   {
@@ -158,6 +165,29 @@ export const handlers = [
 
     return HttpResponse.json<PublicVideoListResponse>(
       { items, page: 1, limit: 20, total: items.length },
+      { status: 200 }
+    );
+  }),
+
+  // PUT /channels/:nickname/subscription
+  http.put(`${env.API_URL}/channels/:nickname/subscription`, async ({ params, request }) => {
+    if (params.nickname === CHANNEL_NOT_FOUND_TRIGGER) {
+      return HttpResponse.json(notFoundEnvelope(), { status: 404 });
+    }
+    if (params.nickname === OWN_CHANNEL_SUBSCRIPTION_TRIGGER) {
+      return HttpResponse.json(
+        {
+          statusCode: 409,
+          error: "CANNOT_SUBSCRIBE_OWN_CHANNEL",
+          message: "Cannot subscribe to a channel you own",
+          code: null,
+        },
+        { status: 409 }
+      );
+    }
+    const body = (await request.json()) as { subscribed: boolean };
+    return HttpResponse.json<SubscriptionResponse>(
+      { subscribed: body.subscribed, subscribersCount: body.subscribed ? 1 : 0 },
       { status: 200 }
     );
   }),

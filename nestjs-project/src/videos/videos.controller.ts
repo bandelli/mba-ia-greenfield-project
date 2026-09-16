@@ -9,6 +9,7 @@ import {
   ParseFilePipe,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -26,14 +27,25 @@ import {
 } from '@nestjs/swagger';
 import type { JwtPayload } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUserOptional } from '../auth/decorators/current-user-optional.decorator';
+import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ThumbnailInvalidFileException } from '../common/exceptions/domain.exception';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { StorageService } from '../storage/storage.service';
+import {
+  CommentItem,
+  CommentReplyItem,
+  CommentsService,
+} from './comments.service';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { FindCommentsQueryDto } from './dto/find-comments-query.dto';
 import { FindSuggestedVideosQueryDto } from './dto/find-suggested-videos-query.dto';
+import { SetReactionDto } from './dto/set-reaction.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { Video } from './entities/video.entity';
 import { VideoPublicationService } from './video-publication.service';
+import { ReactionResult, VideoReactionService } from './video-reaction.service';
 import {
   PublicVideoDetail,
   SuggestedVideoItem,
@@ -85,12 +97,20 @@ const PUBLIC_VIDEO_RESPONSE_SCHEMA = {
     duration_seconds: { type: 'number', nullable: true },
     thumbnail_key: { type: 'string', nullable: true },
     views: { type: 'number' },
+    likesCount: { type: 'number' },
+    dislikesCount: { type: 'number' },
+    currentUserReaction: {
+      type: 'string',
+      enum: ['like', 'dislike'],
+      nullable: true,
+    },
     published_at: { type: 'string', format: 'date-time', nullable: true },
     channel: {
       type: 'object',
       properties: {
         nickname: { type: 'string' },
         name: { type: 'string' },
+        subscribersCount: { type: 'number' },
       },
     },
   },
@@ -122,6 +142,54 @@ const SUGGESTED_VIDEOS_RESPONSE_SCHEMA = {
         },
       },
     },
+  },
+};
+
+const REACTION_RESPONSE_SCHEMA = {
+  properties: {
+    type: { type: 'string', enum: ['like', 'dislike'], nullable: true },
+    likesCount: { type: 'number' },
+    dislikesCount: { type: 'number' },
+  },
+};
+
+const COMMENT_AUTHOR_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    nickname: { type: 'string' },
+  },
+};
+
+const COMMENT_REPLY_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    body: { type: 'string' },
+    author: COMMENT_AUTHOR_SCHEMA,
+    createdAt: { type: 'string', format: 'date-time' },
+    likesCount: { type: 'number' },
+    dislikesCount: { type: 'number' },
+    currentUserReaction: {
+      type: 'string',
+      enum: ['like', 'dislike'],
+      nullable: true,
+    },
+  },
+};
+
+const COMMENT_ITEM_SCHEMA = {
+  type: 'object',
+  properties: {
+    ...COMMENT_REPLY_SCHEMA.properties,
+    replies: { type: 'array', items: COMMENT_REPLY_SCHEMA },
+  },
+};
+
+const FIND_COMMENTS_RESPONSE_SCHEMA = {
+  properties: {
+    items: { type: 'array', items: COMMENT_ITEM_SCHEMA },
+    total: { type: 'number' },
   },
 };
 
@@ -169,14 +237,16 @@ export class VideosController {
     private readonly videosService: VideosService,
     private readonly storageService: StorageService,
     private readonly videoPublicationService: VideoPublicationService,
+    private readonly videoReactionService: VideoReactionService,
+    private readonly commentsService: CommentsService,
   ) {}
 
   @Get('public/:publicId')
-  @Public()
+  @OptionalAuth()
   @ApiOperation({
     summary: 'Get public video metadata',
     description:
-      'Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02).',
+      'Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02). `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-01).',
   })
   @ApiResponse({
     status: 200,
@@ -190,8 +260,9 @@ export class VideosController {
   })
   async getPublicVideo(
     @Param('publicId') publicId: string,
+    @CurrentUserOptional() user: JwtPayload | undefined,
   ): Promise<PublicVideoDetail> {
-    return this.videosService.findPublicVideo(publicId);
+    return this.videosService.findPublicVideo(publicId, user?.sub);
   }
 
   @Get('public/:publicId/stream-url')
@@ -276,6 +347,156 @@ export class VideosController {
       query.limit,
     );
     return { items };
+  }
+
+  @Put(':publicId/reaction')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Set the caller reaction to a video',
+    description:
+      "Sets the caller's like/dislike state on a published video to the given value, or clears it when `type` is `null` — idempotent, repeating the same request has no further effect (per social-interactions/TD-01, TD-02, TD-03).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current reaction and updated counts',
+    schema: REACTION_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No valid access token presented',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async setVideoReaction(
+    @Param('publicId') publicId: string,
+    @Body() dto: SetReactionDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ReactionResult> {
+    return this.videoReactionService.setReaction(user.sub, publicId, dto.type);
+  }
+
+  @Get(':publicId/comments')
+  @OptionalAuth()
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max top-level comments to return (default 20, max 50)',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Pagination offset over top-level comments (default 0)',
+  })
+  @ApiOperation({
+    summary: 'List comments for a video',
+    description:
+      'Returns paginated top-level comments with embedded replies (depth 1) for a published video, readable anonymously; `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-04).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated comments',
+    schema: FIND_COMMENTS_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getComments(
+    @Param('publicId') publicId: string,
+    @Query() query: FindCommentsQueryDto,
+    @CurrentUserOptional() user: JwtPayload | undefined,
+  ): Promise<{ items: CommentItem[]; total: number }> {
+    return this.commentsService.findComments(publicId, query, user?.sub);
+  }
+
+  @Post(':publicId/comments')
+  @HttpCode(201)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Post a top-level comment on a video',
+    description:
+      'Creates a top-level comment on a published video and increments its comment count (per social-interactions/TD-04).',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Created comment',
+    schema: COMMENT_ITEM_SCHEMA,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No valid access token presented',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found, not ready, or not public/unlisted',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async createComment(
+    @Param('publicId') publicId: string,
+    @Body() dto: CreateCommentDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<CommentItem> {
+    return this.commentsService.createComment(user.sub, publicId, dto.body);
+  }
+
+  @Post(':publicId/comments/:commentId/replies')
+  @HttpCode(201)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Reply to a top-level comment on a video',
+    description:
+      'Creates a reply to a top-level comment, capped at a single level of depth — replying to a reply is rejected (per social-interactions/TD-04).',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Created reply',
+    schema: COMMENT_REPLY_SCHEMA,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No valid access token presented',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video or target comment not found',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error, or target comment is itself a reply',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async createReply(
+    @Param('publicId') publicId: string,
+    @Param('commentId') commentId: string,
+    @Body() dto: CreateCommentDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<CommentReplyItem> {
+    return this.commentsService.createReply(
+      user.sub,
+      publicId,
+      commentId,
+      dto.body,
+    );
   }
 
   @Get(':id')

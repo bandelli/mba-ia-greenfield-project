@@ -1,5 +1,6 @@
 "use client"
 
+import { useOptimistic, useTransition } from "react"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -21,9 +22,10 @@ export type PublicChannelVideoItem = {
   views: number
 }
 
-// `GET /channels/:nickname` (PublicChannelInfo, per contracts.ts) carries no
-// subscriber count — same gap already documented for the owner Channel
-// Settings screen (SI-04.10). Rendered only when passed, never fabricated.
+// `GET /channels/:nickname` now returns `subscribersCount`/`isSubscribed`
+// (per social-interactions/TD-01, extended alongside this SI — see
+// progress.md). `isOwnChannel`/`isSubscribed` default to the safe values for
+// an anonymous/unauthenticated viewer.
 export type ChannelPublicPageProps = {
   channel: {
     name: string
@@ -33,9 +35,29 @@ export type ChannelPublicPageProps = {
   avatarUrl?: string | null
   bannerUrl?: string | null
   subscriberCount?: number
+  isOwnChannel?: boolean
+  isSubscribed?: boolean
   videos: PublicChannelVideoItem[]
   total: number
   sort: "latest" | "popular" | "oldest"
+}
+
+type SubscriptionState = {
+  subscribed: boolean
+  subscribersCount: number
+}
+
+// Same counter-delta convention as like-dislike-button.tsx's applyReaction —
+// mirrors the backend's SubscriptionService.applyCounterDelta math.
+function applySubscription(
+  state: SubscriptionState,
+  next: boolean
+): SubscriptionState {
+  if (state.subscribed === next) return state
+  return {
+    subscribed: next,
+    subscribersCount: state.subscribersCount + (next ? 1 : -1),
+  }
 }
 
 const SORT_OPTIONS: { value: ChannelPublicPageProps["sort"]; label: string }[] = [
@@ -49,12 +71,40 @@ function ChannelPublicPage({
   avatarUrl,
   bannerUrl,
   subscriberCount,
+  isOwnChannel = false,
+  isSubscribed = false,
   videos,
   total,
   sort,
 }: ChannelPublicPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
+  const [optimisticSubscription, setOptimisticSubscription] = useOptimistic<
+    SubscriptionState,
+    boolean
+  >(
+    { subscribed: isSubscribed, subscribersCount: subscriberCount ?? 0 },
+    applySubscription
+  )
+
+  function handleSubscribeClick() {
+    const next = !optimisticSubscription.subscribed
+
+    startTransition(async () => {
+      setOptimisticSubscription(next)
+
+      const res = await fetch(`/api/channels/${channel.nickname}/subscription`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscribed: next }),
+      })
+
+      if (!res.ok) return
+
+      router.refresh()
+    })
+  }
 
   function handleSortChange(nextSort: ChannelPublicPageProps["sort"]) {
     const params = new URLSearchParams(searchParams.toString())
@@ -83,12 +133,11 @@ function ChannelPublicPage({
               <h1 className="text-display text-foreground">{channel.name}</h1>
               <div className="flex flex-wrap items-center gap-2 text-body-lg font-medium text-muted-foreground">
                 <span>@{channel.nickname}</span>
-                {subscriberCount !== undefined && (
-                  <>
-                    <span aria-hidden="true">•</span>
-                    <span>{subscriberCount.toLocaleString("en-US")} subscribers</span>
-                  </>
-                )}
+                <span aria-hidden="true">•</span>
+                <span>
+                  {optimisticSubscription.subscribersCount.toLocaleString("en-US")}{" "}
+                  subscribers
+                </span>
                 <span aria-hidden="true">•</span>
                 <span>{total.toLocaleString("en-US")} videos</span>
               </div>
@@ -100,12 +149,22 @@ function ChannelPublicPage({
             </div>
           </div>
 
-          {/* Subscribe/notifications: Phase 06 scope (Social Interactions) — not
-              wired in this phase. Rendered for visual fidelity, no onClick. */}
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="destructive" size="lg">
-              Subscribe
-            </Button>
+            {/* Hidden entirely for the channel owner — CANNOT_SUBSCRIBE_OWN_CHANNEL
+                should be unreachable from the UI (per §Error Catalog → UX mapping). */}
+            {!isOwnChannel && (
+              <Button
+                variant={optimisticSubscription.subscribed ? "secondary" : "destructive"}
+                size="lg"
+                aria-pressed={optimisticSubscription.subscribed}
+                disabled={isPending}
+                onClick={handleSubscribeClick}
+              >
+                {optimisticSubscription.subscribed ? "Subscribed" : "Subscribe"}
+              </Button>
+            )}
+            {/* Notifications: no capability in this phase's scope — rendered
+                inert, matching the Figma frame, no onClick. */}
             <IconButton aria-label="Notifications" variant="outline" size="lg">
               <BellIcon className="size-4" />
             </IconButton>
