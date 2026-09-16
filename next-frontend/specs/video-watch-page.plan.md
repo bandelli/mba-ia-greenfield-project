@@ -1,8 +1,8 @@
 ---
 subproject: frontend
 runner: playwright
-scope: phase-05-video-watch-page
-si: SI-05.6b
+scope: phase-05-video-watch-page, phase-06-social-interactions
+si: SI-05.6b, SI-06.14b
 target_file: next-frontend/tests/video-watch-page.e2e-spec.ts
 ---
 
@@ -109,3 +109,39 @@ target_file: next-frontend/tests/video-watch-page.e2e-spec.ts
 **Steps:**
   1. Usuário anônimo visualiza o `DownloadButton` na página
     - expect: `href` do botão corresponde à URL pré-assinada retornada pela fixture de `GET /api/videos/public/[publicId]/download-url`
+
+### 4. Comentários (per phase-06-social-interactions/SI-06.14b)
+
+**Setup:** `next-frontend/tests/fixtures.ts` (MSW network fixture auto-aplicado); usuário autenticado (sessão válida) para os cenários de escrita; fixture de `GET /api/videos/public/[publicId]/comments` retorna uma lista com ao menos 1 comentário de nível superior.
+
+#### 4.1. renderizar-lista-real-de-comentarios
+
+**Covers AC:** #3
+**Source:** auto
+**Last sync:** 2026-09-15T03:57:19Z
+
+**Steps:**
+  1. Usuário (anônimo ou autenticado) navega para `/watch/:publicId`
+    - expect: `CommentsSection` renderiza a contagem real de comentários e a lista real vinda da fixture de `GET /api/videos/public/[publicId]/comments` (não o exemplo hardcoded do stub removido)
+
+#### 4.2. publicar-novo-comentario
+
+**Covers AC:** #3
+**Source:** auto
+**Last sync:** 2026-09-15T03:57:19Z
+
+**Steps:**
+  1. Usuário autenticado digita um texto no `CommentForm` e envia
+    - expect: `POST /api/videos/public/[publicId]/comments` é chamado com o `body` digitado
+    - expect: o novo comentário aparece no topo da lista, sem reload completo da página
+
+#### 4.3. responder-a-comentario-aparece-aninhada
+
+**Covers AC:** #3
+**Source:** auto
+**Last sync:** 2026-09-15T03:57:19Z
+
+**Steps:**
+  1. Usuário autenticado clica em "Reply" em um comentário de nível superior, digita um texto e envia
+    - expect: `POST /api/videos/public/[publicId]/comments/:commentId/replies` é chamado
+    - expect: a resposta aparece indentada sob o comentário pai, sem seu próprio botão "Reply" (cap de profundidade única)

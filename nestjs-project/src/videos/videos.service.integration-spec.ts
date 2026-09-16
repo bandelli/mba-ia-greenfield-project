@@ -14,15 +14,24 @@ import {
   VideoStatus,
   VideoVisibility,
 } from './entities/video.entity';
+import { ReactionType, VideoReaction } from './entities/video-reaction.entity';
 import { VideosService } from './videos.service';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken, Video];
+const ALL_ENTITIES = [
+  User,
+  Channel,
+  RefreshToken,
+  VerificationToken,
+  Video,
+  VideoReaction,
+];
 
 describe('VideosService (integration)', () => {
   let dataSource: DataSource;
   let userRepository: Repository<User>;
   let channelRepository: Repository<Channel>;
   let videoRepository: Repository<Video>;
+  let videoReactionRepository: Repository<VideoReaction>;
   let service: VideosService;
 
   beforeAll(async () => {
@@ -31,8 +40,9 @@ describe('VideosService (integration)', () => {
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);
     videoRepository = dataSource.getRepository(Video);
+    videoReactionRepository = dataSource.getRepository(VideoReaction);
 
-    service = new VideosService(videoRepository);
+    service = new VideosService(videoRepository, videoReactionRepository);
   });
 
   afterAll(async () => {
@@ -90,6 +100,45 @@ describe('VideosService (integration)', () => {
         visibility: VideoVisibility.PUBLIC,
         channel: { nickname: channel.nickname, name: channel.name },
       });
+    });
+
+    it('includes the channel subscribersCount, defaulting to 0', async () => {
+      const video = await createVideo();
+
+      const result = await service.findPublicVideo(video.public_id);
+
+      expect(result.channel.subscribersCount).toBe(0);
+    });
+
+    it('includes likesCount/dislikesCount and a null currentUserReaction for an anonymous caller', async () => {
+      const video = await createVideo({ likes_count: 4, dislikes_count: 1 });
+
+      const result = await service.findPublicVideo(video.public_id);
+
+      expect(result.likesCount).toBe(4);
+      expect(result.dislikesCount).toBe(1);
+      expect(result.currentUserReaction).toBeNull();
+    });
+
+    it('reflects the real reaction for the authenticated caller', async () => {
+      const video = await createVideo();
+      const reactor = await userRepository.save(
+        userRepository.create({
+          email: `public_watch_reactor_${++counter}@example.com`,
+          password: 'hashed',
+        }),
+      );
+      await videoReactionRepository.save(
+        videoReactionRepository.create({
+          user_id: reactor.id,
+          video_id: video.id,
+          type: ReactionType.LIKE,
+        }),
+      );
+
+      const result = await service.findPublicVideo(video.public_id, reactor.id);
+
+      expect(result.currentUserReaction).toBe(ReactionType.LIKE);
     });
 
     it('returns metadata for a ready+unlisted video (direct-link access)', async () => {

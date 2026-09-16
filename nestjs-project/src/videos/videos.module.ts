@@ -10,12 +10,19 @@ import { ChannelsModule } from '../channels/channels.module';
 import { ProcessingModule } from '../processing/processing.module';
 import { QueueModule } from '../queue/queue.module';
 import { StorageModule } from '../storage/storage.module';
+import { CommentReactionService } from './comment-reaction.service';
+import { CommentsController } from './comments.controller';
+import { CommentsService } from './comments.service';
+import { Comment } from './entities/comment.entity';
+import { CommentReaction } from './entities/comment-reaction.entity';
 import { Video } from './entities/video.entity';
+import { VideoReaction } from './entities/video-reaction.entity';
 import {
   TusAuthMiddleware,
   TusServerMiddleware,
 } from './tus-upload.middleware';
 import { VideoPublicationService } from './video-publication.service';
+import { VideoReactionService } from './video-reaction.service';
 import { VideoStatusService } from './video-status.service';
 import { VideoUploadService } from './video-upload.service';
 import { VideosController } from './videos.controller';
@@ -24,16 +31,19 @@ import { VideosService } from './videos.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Video]),
+    TypeOrmModule.forFeature([Video, VideoReaction, Comment, CommentReaction]),
     AuthModule,
     ChannelsModule,
     StorageModule,
     ProcessingModule,
     QueueModule,
   ],
-  controllers: [VideosController],
+  controllers: [VideosController, CommentsController],
   providers: [
+    CommentReactionService,
+    CommentsService,
     VideoPublicationService,
+    VideoReactionService,
     VideoStatusService,
     VideoUploadService,
     VideosService,

@@ -11,21 +11,30 @@ import { formatRelativeTime } from "@/lib/utils"
 import { LikeDislikeButton } from "./like-dislike-button"
 
 // Mirrors GET /api/videos/public/[publicId]'s response shape (per
-// phase-05-video-watch-page §API Contracts) for the fields this card needs.
+// phase-05-video-watch-page §API Contracts, extended in social-interactions
+// §API Contracts → Modified existing endpoints) for the fields this card needs.
 export type DescriptionCardProps = {
+  publicId: string
   channel: { nickname: string; name: string }
   description: string | null
   views: number
   publishedAt: string | null
   downloadUrl?: string
+  likesCount: number
+  dislikesCount: number
+  currentUserReaction: "like" | "dislike" | null
 }
 
 function DescriptionCard({
+  publicId,
   channel,
   description,
   views,
   publishedAt,
   downloadUrl,
+  likesCount,
+  dislikesCount,
+  currentUserReaction,
 }: DescriptionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -50,7 +59,12 @@ function DescriptionCard({
         </div>
 
         <div className="flex items-center gap-2">
-          <LikeDislikeButton />
+          <LikeDislikeButton
+            publicId={publicId}
+            likesCount={likesCount}
+            dislikesCount={dislikesCount}
+            currentUserReaction={currentUserReaction}
+          />
 
           {/* Share: no capability in this phase's scope — rendered inert,
               matching the Figma frame, no onClick. */}

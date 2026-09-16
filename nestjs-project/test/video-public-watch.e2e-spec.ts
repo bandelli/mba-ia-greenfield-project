@@ -5,6 +5,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { DataSource, Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { AuthService } from '../src/auth/auth.service';
 import { Channel } from '../src/channels/entities/channel.entity';
 import { DomainExceptionFilter } from '../src/common/filters/domain-exception.filter';
 import { ValidationExceptionFilter } from '../src/common/filters/validation-exception.filter';
@@ -16,6 +17,10 @@ import {
   VideoStatus,
   VideoVisibility,
 } from '../src/videos/entities/video.entity';
+import {
+  ReactionType,
+  VideoReaction,
+} from '../src/videos/entities/video-reaction.entity';
 
 describe('Public video watch endpoint (e2e)', () => {
   let app: INestApplication<App>;
@@ -23,6 +28,7 @@ describe('Public video watch endpoint (e2e)', () => {
   let userRepository: Repository<User>;
   let channelRepository: Repository<Channel>;
   let videoRepository: Repository<Video>;
+  let videoReactionRepository: Repository<VideoReaction>;
   let throttlerStorage: ThrottlerStorageService;
 
   beforeAll(async () => {
@@ -48,6 +54,7 @@ describe('Public video watch endpoint (e2e)', () => {
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);
     videoRepository = dataSource.getRepository(Video);
+    videoReactionRepository = dataSource.getRepository(VideoReaction);
     throttlerStorage =
       moduleFixture.get<ThrottlerStorageService>(ThrottlerStorage);
   });
@@ -91,6 +98,65 @@ describe('Public video watch endpoint (e2e)', () => {
       }),
     );
   }
+
+  async function registerConfirmAndLogin(email: string): Promise<string> {
+    const password = 'password123';
+    const authService = app.get(AuthService);
+
+    const mailServiceInstance = (authService as any).mailService;
+    let capturedToken = '';
+    jest
+      .spyOn(mailServiceInstance, 'sendConfirmationEmail')
+      .mockImplementationOnce((..._args: unknown[]) => {
+        capturedToken = _args[2] as string;
+        return Promise.resolve();
+      });
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email, password });
+    await request(app.getHttpServer())
+      .get('/auth/confirm-email')
+      .query({ token: capturedToken });
+    const res = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password });
+
+    return res.body.access_token as string;
+  }
+
+  it('inclui likesCount/dislikesCount/currentUserReaction:null para um chamador anônimo', async () => {
+    const video = await createVideo({ likes_count: 3, dislikes_count: 1 });
+
+    const res = await request(app.getHttpServer()).get(
+      `/videos/public/${video.public_id}`,
+    );
+
+    expect(res.body.likesCount).toBe(3);
+    expect(res.body.dislikesCount).toBe(1);
+    expect(res.body.currentUserReaction).toBeNull();
+  });
+
+  it('reflete a reação real do chamador autenticado', async () => {
+    const video = await createVideo();
+    const token = await registerConfirmAndLogin('watchreactor@example.com');
+    const user = await userRepository.findOneByOrFail({
+      email: 'watchreactor@example.com',
+    });
+    await videoReactionRepository.save(
+      videoReactionRepository.create({
+        user_id: user.id,
+        video_id: video.id,
+        type: ReactionType.LIKE,
+      }),
+    );
+
+    const res = await request(app.getHttpServer())
+      .get(`/videos/public/${video.public_id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.body.currentUserReaction).toBe('like');
+  });
 
   it('retorna 200 com os campos documentados para um vídeo ready+public', async () => {
     const video = await createVideo({ visibility: VideoVisibility.PUBLIC });

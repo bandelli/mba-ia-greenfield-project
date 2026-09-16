@@ -26,6 +26,11 @@ export class Channel {
   @Column({ type: 'uuid', unique: true })
   user_id: string;
 
+  // Denormalized atomic counter, updated via `UPDATE ... RETURNING` on every
+  // Subscription insert/delete (per social-interactions/TD-01).
+  @Column({ type: 'int', default: 0 })
+  subscribers_count: number;
+
   @CreateDateColumn()
   created_at: Date;
 

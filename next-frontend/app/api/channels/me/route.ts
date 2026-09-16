@@ -32,5 +32,14 @@ export async function PATCH(request: Request) {
     return upstreamErrorResponse(error, response.status);
   }
 
+  // Keep the session's `channelSlug` (used to derive `isOwnChannel` on the
+  // public channel page) in sync with a successful nickname change — without
+  // this, a renamed owner's session would keep pointing at their old
+  // nickname until they log in again.
+  if (data.nickname && data.nickname !== session.channelSlug) {
+    session.channelSlug = data.nickname;
+    await session.save();
+  }
+
   return NextResponse.json<Channel>(data, { status: 200 });
 }

@@ -85,6 +85,19 @@ describe("PATCH /api/channels/me", () => {
     expect(body.nickname).toBe("novo_nick_livre");
   });
 
+  it("updates the session's channelSlug to match a successful nickname change", async () => {
+    server.use(
+      http.patch(`${env.API_URL}/channels/me`, () =>
+        HttpResponse.json({ nickname: "alice-official" }, { status: 200 })
+      )
+    );
+
+    await PATCH(makePatchRequest({ nickname: "alice-official" }));
+
+    const session = await (await import("@/lib/auth/session")).getSession();
+    expect(session.channelSlug).toBe("alice-official");
+  });
+
   it("passes through a 409 CHANNEL_NICKNAME_TAKEN without reshaping", async () => {
     server.use(
       http.patch(`${env.API_URL}/channels/me`, () =>

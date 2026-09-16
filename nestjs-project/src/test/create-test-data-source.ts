@@ -26,6 +26,13 @@ export function createTestDataSource(
 export async function cleanAllTables(dataSource: DataSource): Promise<void> {
   await dataSource.query('DELETE FROM "refresh_tokens"');
   await dataSource.query('DELETE FROM "verification_tokens"');
+  // Social-interactions child tables must be cleared before their parents
+  // (videos/comments/channels/users) or the FK constraints reject the
+  // parent deletes (per social-interactions/TD-02).
+  await dataSource.query('DELETE FROM "subscriptions"');
+  await dataSource.query('DELETE FROM "comment_reactions"');
+  await dataSource.query('DELETE FROM "video_reactions"');
+  await dataSource.query('DELETE FROM "comments"');
   await dataSource.query('DELETE FROM "videos"');
   await dataSource.query('DELETE FROM "channels"');
   await dataSource.query('DELETE FROM "users"');

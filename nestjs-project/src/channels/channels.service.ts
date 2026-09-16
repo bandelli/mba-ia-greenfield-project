@@ -14,6 +14,7 @@ import { FindPublicVideosQueryDto } from './dto/find-public-videos-query.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { appendRandomSuffix, sanitizeNickname } from './nickname.util';
 import { Channel } from './entities/channel.entity';
+import { Subscription } from './entities/subscription.entity';
 
 export interface PublicChannelInfo {
   id: string;
@@ -21,6 +22,12 @@ export interface PublicChannelInfo {
   nickname: string;
   description: string | null;
   created_at: Date;
+  subscribersCount: number;
+  // Present only when the caller authenticated via `@OptionalAuth()`;
+  // anonymous callers always get `false` (per social-interactions/TD-01,
+  // same optional-auth pattern as VideosService.findPublicVideo's
+  // currentUserReaction).
+  isSubscribed: boolean;
 }
 
 export interface OwnerVideoListItem {
@@ -111,14 +118,25 @@ export class ChannelsService {
     return channel;
   }
 
-  async findPublicChannelInfo(nickname: string): Promise<PublicChannelInfo> {
+  async findPublicChannelInfo(
+    nickname: string,
+    currentUserId?: string,
+  ): Promise<PublicChannelInfo> {
     const channel = await this.findChannelByNicknameOrFail(nickname);
+    const isSubscribed = currentUserId
+      ? await this.dataSource.getRepository(Subscription).exists({
+          where: { subscriber_user_id: currentUserId, channel_id: channel.id },
+        })
+      : false;
     return {
       id: channel.id,
       name: channel.name,
       nickname: channel.nickname,
       description: channel.description,
       created_at: channel.created_at,
+      // per social-interactions/TD-01 — denormalized atomic counter.
+      subscribersCount: channel.subscribers_count,
+      isSubscribed,
     };
   }
 
@@ -192,9 +210,11 @@ export class ChannelsService {
     }
   }
 
-  // views/likes/comments are fixed at 0 — those subsystems (view tracking,
-  // likes, comments) don't exist until Phase 05/06 (per
-  // phase-04-video-channel-management/TD-05).
+  // `views` stays fixed at 0 — view tracking exists (phase-05) but wiring it
+  // into this dashboard listing was flagged as a separate, still-open
+  // follow-up by phase-05-video-watch-page's own progress notes; out of
+  // scope here. `likes`/`comments` now read the real denormalized counters
+  // (per social-interactions/TD-01).
   async findVideosForOwner(
     userId: string,
     query: FindOwnerVideosQueryDto,
@@ -235,9 +255,13 @@ export class ChannelsService {
         visibility: video.visibility,
         status: video.status,
         published_at: video.published_at,
+        // `views` stays a pre-existing, separately-flagged gap (per
+        // phase-05-video-watch-page's own follow-up note) — out of scope
+        // here. `likes`/`comments` now read the real denormalized counters
+        // (per social-interactions/TD-01).
         views: 0,
-        likes: 0,
-        comments: 0,
+        likes: video.likes_count,
+        comments: video.comments_count,
       })),
       page,
       limit,

@@ -119,9 +119,35 @@ export class ThumbnailInvalidFileException extends DomainException {
   }
 }
 
+export class CommentNotFoundException extends DomainException {
+  constructor() {
+    super('COMMENT_NOT_FOUND', 404, 'Comment not found');
+  }
+}
+
+export class ReplyDepthExceededException extends DomainException {
+  constructor() {
+    super(
+      'REPLY_DEPTH_EXCEEDED',
+      400,
+      'Cannot reply to a comment that is itself a reply',
+    );
+  }
+}
+
 export class ChannelNotFoundException extends DomainException {
   constructor() {
     super('CHANNEL_NOT_FOUND', 404, 'Channel not found');
+  }
+}
+
+export class CannotSubscribeOwnChannelException extends DomainException {
+  constructor() {
+    super(
+      'CANNOT_SUBSCRIBE_OWN_CHANNEL',
+      409,
+      'Cannot subscribe to a channel you own',
+    );
   }
 }
 

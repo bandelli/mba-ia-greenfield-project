@@ -14,8 +14,16 @@ import {
 } from '../videos/entities/video.entity';
 import { ChannelsService } from './channels.service';
 import { Channel } from './entities/channel.entity';
+import { Subscription } from './entities/subscription.entity';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken, Video];
+const ALL_ENTITIES = [
+  User,
+  Channel,
+  RefreshToken,
+  VerificationToken,
+  Video,
+  Subscription,
+];
 
 describe('ChannelsService (integration)', () => {
   let dataSource: DataSource;
@@ -160,6 +168,22 @@ describe('ChannelsService (integration)', () => {
       expect(result.items.every((item) => item.views === 0)).toBe(true);
     });
 
+    it('reads likes and comments from the denormalized counters instead of hardcoding 0', async () => {
+      const { user, channel } = await createChannelWithVideos(
+        'owner-counters@example.com',
+      );
+      await createVideo(channel, {
+        likes_count: 4,
+        dislikes_count: 1,
+        comments_count: 2,
+      });
+
+      const result = await channelsService.findVideosForOwner(user.id, {});
+
+      expect(result.items[0].likes).toBe(4);
+      expect(result.items[0].comments).toBe(2);
+    });
+
     it('filters by visibility', async () => {
       const { user, channel } =
         await createChannelWithVideos('owner2@example.com');
@@ -204,6 +228,59 @@ describe('ChannelsService (integration)', () => {
       expect(result.items).toHaveLength(1);
       expect(result.page).toBe(2);
       expect(result.limit).toBe(2);
+    });
+  });
+
+  describe('findPublicChannelInfo', () => {
+    it('includes subscribersCount, defaulting to 0', async () => {
+      const { channel } = await createChannelWithVideos(
+        'public-info@example.com',
+      );
+
+      const result = await channelsService.findPublicChannelInfo(
+        channel.nickname,
+      );
+
+      expect(result.subscribersCount).toBe(0);
+      expect(result.nickname).toBe(channel.nickname);
+    });
+
+    it('defaults isSubscribed to false for an anonymous caller', async () => {
+      const { channel } = await createChannelWithVideos(
+        'public-info-anon@example.com',
+      );
+
+      const result = await channelsService.findPublicChannelInfo(
+        channel.nickname,
+      );
+
+      expect(result.isSubscribed).toBe(false);
+    });
+
+    it('reflects a real subscription for the authenticated caller', async () => {
+      const { channel } = await createChannelWithVideos(
+        'public-info-sub@example.com',
+      );
+      const subscriber = await createUser();
+      await dataSource.getRepository(Subscription).save(
+        dataSource.getRepository(Subscription).create({
+          subscriber_user_id: subscriber.id,
+          channel_id: channel.id,
+        }),
+      );
+
+      const result = await channelsService.findPublicChannelInfo(
+        channel.nickname,
+        subscriber.id,
+      );
+
+      expect(result.isSubscribed).toBe(true);
+    });
+
+    it('throws ChannelNotFoundException for an unknown nickname', async () => {
+      await expect(
+        channelsService.findPublicChannelInfo('no-such-channel'),
+      ).rejects.toThrow();
     });
   });
 

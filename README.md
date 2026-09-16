@@ -127,7 +127,7 @@ Sufixos: `*.test.ts(x)` (unitário), `*.integration.test.ts(x)` (Route Handlers 
 
 ## ✅ Funcionalidades implementadas
 
-**Fase 01 — Configuração base**, **Fase 02 — Autenticação**, **Fase 03 — Upload e Processamento de Vídeos** e **Fase 04 — Gerenciamento de Vídeos e Canal** estão concluídas (backend + frontend).
+**Fase 01 — Configuração base**, **Fase 02 — Autenticação**, **Fase 03 — Upload e Processamento de Vídeos**, **Fase 04 — Gerenciamento de Vídeos e Canal**, **Fase 05 — Página de Visualização do Vídeo** e **Fase 06 — Interações Sociais** estão concluídas (backend + frontend).
 
 ### Autenticação (Fase 02)
 
@@ -196,6 +196,49 @@ Endpoints da API (`nestjs-project`):
 
 Route Handlers BFF (`next-frontend`): `app/api/videos/[id]/{,/publish,/thumbnail}` e `app/api/channels/{me,me/videos,[nickname],[nickname]/videos}` — proxy same-origin para os endpoints acima.
 
+### Página de Visualização do Vídeo (Fase 05)
+
+Página pública de assistir vídeo, com player custom, contagem real de visualizações e vídeos sugeridos.
+
+Tela (`next-frontend`):
+
+- `/watch/[publicId]` — player de vídeo (play/pause, seek, volume), descrição expansível, botão de download e lista de vídeos sugeridos.
+
+Endpoints da API (`nestjs-project`):
+
+| Método & Rota | Descrição |
+|---------------|-----------|
+| `GET /videos/public/:publicId` | Metadados públicos do vídeo (incrementa `views` de forma atômica) |
+| `GET /videos/public/:publicId/stream-url` | URL assinada para streaming |
+| `GET /videos/public/:publicId/download-url` | URL assinada para download |
+| `GET /videos/public/:publicId/suggested` | Lista de vídeos sugeridos |
+
+Route Handlers BFF (`next-frontend`): `app/api/videos/public/[publicId]/{,/stream-url,/download-url,/suggested}` — proxy same-origin para os endpoints acima.
+
+### Interações Sociais (Fase 06)
+
+Curtidas/descurtidas em vídeos e comentários, comentários com respostas (profundidade 1), inscrição em canais e a nova página de canais seguidos — todas as ações sociais com atualização otimista (`useOptimistic`, React 19).
+
+Telas (`next-frontend`):
+
+- `/watch/[publicId]` — seção real de comentários (listar, criar, responder) e curtir/descurtir o vídeo, além de inscrição real no canal do autor.
+- `/channel/[nickname]` — inscrição real no canal (botão Subscribe com contagem real de inscritos).
+- `/subscriptions` **(nova)** — lista paginada dos canais seguidos pelo usuário autenticado, com estado vazio e skeleton de carregamento.
+
+Endpoints da API (`nestjs-project`):
+
+| Método & Rota | Descrição |
+|---------------|-----------|
+| `PUT /videos/:publicId/reaction` | Define a reação do usuário ao vídeo (`like`/`dislike`/`null`) |
+| `GET /videos/:publicId/comments` | Lista paginada de comentários do vídeo (com respostas embutidas) |
+| `POST /videos/:publicId/comments` | Cria um novo comentário no vídeo |
+| `POST /videos/:publicId/comments/:commentId/replies` | Responde a um comentário (profundidade máxima 1) |
+| `PUT /comments/:commentId/reaction` | Define a reação do usuário a um comentário |
+| `PUT /channels/:nickname/subscription` | Inscreve/cancela inscrição no canal |
+| `GET /users/me/subscriptions` | Lista paginada dos canais seguidos pelo usuário autenticado |
+
+Route Handlers BFF (`next-frontend`): `app/api/videos/public/[publicId]/{reaction,comments,comments/[commentId]/replies}`, `app/api/comments/[commentId]/reaction`, `app/api/channels/[nickname]/subscription` e `app/api/subscriptions` — proxy same-origin para os endpoints acima.
+
 ## 🛠️ Estrutura do Projeto
 
 ```
@@ -207,15 +250,17 @@ green-field-ia-project/
 │   │   ├── phase-02-auth/               # Auth (backend)
 │   │   ├── phase-02-auth-frontend/      # Auth (frontend)
 │   │   ├── phase-03-videos/             # Upload e processamento de vídeos
-│   │   └── phase-04-video-channel-management/  # Gerenciamento de vídeos e canal
+│   │   ├── phase-04-video-channel-management/  # Gerenciamento de vídeos e canal
+│   │   ├── phase-05-video-watch-page/   # Página de visualização do vídeo
+│   │   └── phase-06-social-interactions/  # Curtidas, comentários e inscrições
 │   └── diagrams/
 │       └── software-arch.mermaid        # Diagrama de arquitetura (C4)
 ├── nestjs-project/                      # Backend API (NestJS 11)
 │   ├── src/
 │   │   ├── auth/                        # Cadastro, login, JWT, refresh, reset de senha
-│   │   ├── users/                       # Entidade e serviço de usuários
-│   │   ├── channels/                    # Canal 1:1 por usuário; listagens e edição
-│   │   ├── videos/                      # Upload (tus), edição, publish, thumbnail
+│   │   ├── users/                       # Entidade/serviço de usuários; listagem de canais seguidos
+│   │   ├── channels/                    # Canal 1:1 por usuário; listagens, edição e inscrições
+│   │   ├── videos/                      # Upload (tus), edição, publish, thumbnail, watch, reactions, comments
 │   │   ├── processing/                  # Extração de metadados/thumbnail (ffmpeg/ffprobe)
 │   │   ├── queue/                       # Fila de jobs (pg-boss)
 │   │   ├── storage/                     # Cliente S3/MinIO
@@ -229,10 +274,13 @@ green-field-ia-project/
 │   └── Dockerfile.dev
 ├── next-frontend/                       # Frontend (Next.js 16, App Router)
 │   ├── app/                             # Rotas, layouts, páginas e Route Handlers BFF
-│   │   ├── api/videos/, api/channels/   # BFF de vídeo e canal (Fase 04)
+│   │   ├── api/videos/, api/channels/   # BFF de vídeo, canal, reações, comentários e inscrições
+│   │   ├── api/comments/, api/subscriptions/  # BFF de reação em comentário e canais seguidos (Fase 06)
 │   │   ├── dashboard/videos/            # Dashboard do canal + edição de vídeo (Fase 04)
 │   │   ├── dashboard/channel/           # Edição de informações do canal (Fase 04)
-│   │   └── channel/[nickname]/          # Página pública do canal (Fase 04)
+│   │   ├── channel/[nickname]/          # Página pública do canal (Fase 04, inscrição real na Fase 06)
+│   │   ├── watch/[publicId]/            # Página de assistir vídeo (Fase 05, comentários/curtidas na Fase 06)
+│   │   └── subscriptions/               # Canais seguidos (Fase 06)
 │   ├── components/                      # Componentes de auth, video, UI (shadcn) e ícones
 │   ├── lib/                             # env, api (openapi-fetch), auth/session
 │   ├── mocks/                           # MSW (handlers + server)
@@ -253,8 +301,8 @@ green-field-ia-project/
 | **02** | Cadastro, Login e Gerenciamento de Conta | ✅ Concluída |
 | **03** | Upload e Processamento de Vídeos | ✅ Concluída |
 | **04** | Gerenciamento de Vídeos e Canal | ✅ Concluída |
-| **05** | Página de Visualização do Vídeo | ⏳ Planejada |
-| **06** | Interações Sociais (Likes, Comentários, Inscrições) | ⏳ Planejada |
+| **05** | Página de Visualização do Vídeo | ✅ Concluída |
+| **06** | Interações Sociais (Likes, Comentários, Inscrições) | ✅ Concluída |
 | **07** | Página Inicial, Busca e Finalização | ⏳ Planejada |
 
 Detalhes completos em `docs/project-plan.md`.

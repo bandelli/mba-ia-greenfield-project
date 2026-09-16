@@ -1,6 +1,9 @@
 import { http, HttpResponse } from "msw";
 
 import type {
+  CreateCommentResponse,
+  CreateReplyResponse,
+  FindCommentsResponse,
   PublicVideoDetail,
   SuggestedVideosResponse,
   Video,
@@ -33,8 +36,11 @@ export const basePublicVideo: PublicVideoDetail = {
   duration_seconds: 212,
   thumbnail_key: "thumbnails/video-1.png",
   views: 1234,
+  likesCount: 24_000,
+  dislikesCount: 120,
+  currentUserReaction: null,
   published_at: "2026-09-12T00:00:00.000Z",
-  channel: { nickname: "alice", name: "Alice" },
+  channel: { nickname: "alice", name: "Alice", subscribersCount: 4_200 },
 };
 
 const suggestedVideoFixtures: NonNullable<SuggestedVideosResponse["items"]> = [
@@ -49,6 +55,17 @@ const suggestedVideoFixtures: NonNullable<SuggestedVideosResponse["items"]> = [
     channel: { nickname: "bob", name: "Bob" },
   },
 ];
+
+const baseComment: NonNullable<FindCommentsResponse["items"]>[number] = {
+  id: "comment-1",
+  body: "Fixture comment",
+  author: { id: "author-1", nickname: "alice" },
+  createdAt: "2026-09-12T00:00:00.000Z",
+  likesCount: 0,
+  dislikesCount: 0,
+  currentUserReaction: null,
+  replies: [],
+};
 
 // Reserved trigger ids (E2E only — shared with Vitest fixture values must not
 // collide; these are distinct from any Vitest-used id such as "pub123").
@@ -76,12 +93,50 @@ const LONG_DESCRIPTION =
 // genuinely loadable <video> element without a real network dependency.
 export const PLAYABLE_STREAM_TRIGGER = "trigger-playable-stream";
 
+// Reserved trigger (E2E + Vitest) — a `:commentId` path value that always
+// yields 404 COMMENT_NOT_FOUND on the create-reply endpoint.
+export const COMMENT_NOT_FOUND_TRIGGER = "trigger-comment-not-found";
+
+// Reserved trigger (E2E + Vitest) — a `:commentId` path value that always
+// yields 400 REPLY_DEPTH_EXCEEDED on the create-reply endpoint (simulates
+// replying to a comment that is itself already a reply).
+export const REPLY_DEPTH_EXCEEDED_TRIGGER = "trigger-reply-depth-exceeded";
+
+// Reserved trigger PREFIX (E2E only) — any `:publicId` starting with this
+// prefix gets its own in-memory comment list (seeded with one copy of
+// `baseComment`) that POST-comment/POST-reply calls mutate for the lifetime
+// of the dev-server process. This lets an E2E scenario do a genuine
+// write-then-`router.refresh()` round trip and see its own write reflected.
+// Every E2E test that needs this uses its OWN uniquely-suffixed publicId
+// (e.g. "trigger-stateful-comments-post-1") to stay isolated under
+// Playwright's `fullyParallel: true` config — concurrent tests never share
+// a key. Every publicId NOT under this prefix keeps the static
+// single-fixture behavior the BFF route integration tests already rely on.
+export const STATEFUL_COMMENTS_PREFIX = "trigger-stateful-comments-";
+const statefulCommentsByPublicId = new Map<
+  string,
+  NonNullable<FindCommentsResponse["items"]>
+>();
+
+function getStatefulComments(
+  publicId: string
+): NonNullable<FindCommentsResponse["items"]> {
+  if (!statefulCommentsByPublicId.has(publicId)) {
+    statefulCommentsByPublicId.set(publicId, [{ ...baseComment, replies: [] }]);
+  }
+  return statefulCommentsByPublicId.get(publicId)!;
+}
+
 function errorEnvelope(error: string, message: string) {
   return { statusCode: 400, error, message, code: null };
 }
 
 function publicVideoNotFoundEnvelope() {
   return { statusCode: 404, error: "VIDEO_NOT_FOUND", message: "Video not found", code: null };
+}
+
+function commentNotFoundEnvelope() {
+  return { statusCode: 404, error: "COMMENT_NOT_FOUND", message: "Comment not found", code: null };
 }
 
 export const handlers = [
@@ -189,4 +244,87 @@ export const handlers = [
       { status: 200 }
     );
   }),
+
+  // GET /videos/:publicId/comments — note: NOT under /public/, matches the
+  // upstream's own literal route (per social-interactions phase-06).
+  http.get(`${env.API_URL}/videos/:publicId/comments`, ({ params, request }) => {
+    if (params.publicId === PUBLIC_VIDEO_NOT_FOUND_TRIGGER) {
+      return HttpResponse.json(publicVideoNotFoundEnvelope(), { status: 404 });
+    }
+    if ((params.publicId as string).startsWith(STATEFUL_COMMENTS_PREFIX)) {
+      const items = getStatefulComments(params.publicId as string);
+      return HttpResponse.json<FindCommentsResponse>(
+        { items, total: items.length },
+        { status: 200 }
+      );
+    }
+    const limit = new URL(request.url).searchParams.get("limit");
+    const items = limit ? [baseComment].slice(0, Number(limit)) : [baseComment];
+    return HttpResponse.json<FindCommentsResponse>(
+      { items, total: 1 },
+      { status: 200 }
+    );
+  }),
+
+  // POST /videos/:publicId/comments
+  http.post(`${env.API_URL}/videos/:publicId/comments`, async ({ params, request }) => {
+    if (params.publicId === PUBLIC_VIDEO_NOT_FOUND_TRIGGER) {
+      return HttpResponse.json(publicVideoNotFoundEnvelope(), { status: 404 });
+    }
+    const body = (await request.json()) as { body: string };
+    if ((params.publicId as string).startsWith(STATEFUL_COMMENTS_PREFIX)) {
+      const items = getStatefulComments(params.publicId as string);
+      const created = {
+        ...baseComment,
+        id: `comment-new-${items.length + 1}`,
+        body: body.body,
+        replies: [],
+      };
+      items.unshift(created);
+      return HttpResponse.json<CreateCommentResponse>(created, { status: 201 });
+    }
+    return HttpResponse.json<CreateCommentResponse>(
+      { ...baseComment, id: "comment-new", body: body.body },
+      { status: 201 }
+    );
+  }),
+
+  // POST /videos/:publicId/comments/:commentId/replies
+  http.post(
+    `${env.API_URL}/videos/:publicId/comments/:commentId/replies`,
+    async ({ params, request }) => {
+      if (params.publicId === PUBLIC_VIDEO_NOT_FOUND_TRIGGER) {
+        return HttpResponse.json(publicVideoNotFoundEnvelope(), { status: 404 });
+      }
+      if (params.commentId === COMMENT_NOT_FOUND_TRIGGER) {
+        return HttpResponse.json(commentNotFoundEnvelope(), { status: 404 });
+      }
+      if (params.commentId === REPLY_DEPTH_EXCEEDED_TRIGGER) {
+        return HttpResponse.json(
+          errorEnvelope("REPLY_DEPTH_EXCEEDED", "Cannot reply to a reply"),
+          { status: 400 }
+        );
+      }
+      const body = (await request.json()) as { body: string };
+      // Replies never carry a `replies` field (depth-1 cap) — build the
+      // shape explicitly rather than spreading `baseComment` wholesale.
+      const reply = {
+        id: `reply-${Date.now()}`,
+        body: body.body,
+        author: baseComment.author,
+        createdAt: baseComment.createdAt,
+        likesCount: baseComment.likesCount,
+        dislikesCount: baseComment.dislikesCount,
+        currentUserReaction: baseComment.currentUserReaction,
+      };
+      if ((params.publicId as string).startsWith(STATEFUL_COMMENTS_PREFIX)) {
+        const items = getStatefulComments(params.publicId as string);
+        const parent = items.find((item) => item.id === params.commentId);
+        if (parent) {
+          parent.replies = [...(parent.replies ?? []), reply];
+        }
+      }
+      return HttpResponse.json<CreateReplyResponse>(reply, { status: 201 });
+    }
+  ),
 ];

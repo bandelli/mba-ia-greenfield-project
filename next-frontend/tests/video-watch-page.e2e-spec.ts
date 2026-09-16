@@ -1,3 +1,5 @@
+import type { Page } from "@playwright/test"
+
 import { expect, test } from "./fixtures"
 
 // Upstream is faked server-side by mocks/ MSW via instrumentation.ts.
@@ -143,4 +145,69 @@ test.describe("video-watch-page", () => {
       "https://storage.example.com/download-presigned-url"
     )
   })
+
+  // 4. Comentários (per phase-06-social-interactions/SI-06.14b)
+  //
+  // GET/POST /videos/:publicId/comments(/:commentId/replies) are handled by
+  // mocks/handlers/videos.ts. Reads use the same static single-comment
+  // fixture ("pub123" etc.) other tests in this file already rely on.
+  // Writes use a dedicated STATEFUL_COMMENTS_PREFIX-prefixed publicId per
+  // test — each gets its own in-memory comment list, so a write really is
+  // reflected the next time the page re-fetches (`router.refresh()`),
+  // without leaking state across this file's concurrently-run tests.
+
+  test("4.1 renderizar-lista-real-de-comentarios", async ({ page }) => {
+    await page.goto("/watch/pub123")
+
+    await expect(page.getByRole("heading", { name: "1 Comment" })).toBeVisible()
+    // Real fixture content, not the removed stub's hardcoded "4,256 Comments"
+    // / "@DevStudent99" example.
+    await expect(page.getByText("Fixture comment")).toBeVisible()
+  })
+
+  test("4.2 publicar-novo-comentario", async ({ page }) => {
+    await loginAsCommenter(page)
+    await page.goto("/watch/trigger-stateful-comments-post")
+
+    await page.getByPlaceholder("Add a comment...").fill("Great explanation!")
+    // `exact: true` — a substring match on "Comment" would also hit the
+    // "Like comment"/"Dislike comment" reaction buttons.
+    await page.getByRole("button", { name: "Comment", exact: true }).click()
+
+    await expect(page.getByText("Great explanation!")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "2 Comments" })).toBeVisible()
+  })
+
+  test("4.3 responder-a-comentario-aparece-aninhada", async ({ page }) => {
+    await loginAsCommenter(page)
+    await page.goto("/watch/trigger-stateful-comments-reply")
+
+    // Scope to the specific comment's own container (its body paragraph's
+    // immediate parent) rather than a broad `div` filter, which would match
+    // every ancestor containing the text and make the button lookup ambiguous.
+    const parentContainer = page
+      .getByText("Fixture comment", { exact: true })
+      .locator("xpath=..")
+    await parentContainer.getByRole("button", { name: "Reply" }).click()
+    await page.getByPlaceholder("Add a reply...").fill("Agreed!")
+    await page.getByRole("button", { name: "Post reply" }).click()
+
+    await expect(page.getByText("Agreed!", { exact: true })).toBeVisible()
+    // Depth-1 cap: the reply itself must not have its own Reply action.
+    const replyContainer = page
+      .getByText("Agreed!", { exact: true })
+      .locator("xpath=..")
+    await expect(replyContainer.getByRole("button", { name: "Reply" })).toHaveCount(0)
+  })
 })
+
+async function loginAsCommenter(page: Page) {
+  await page.goto("/login")
+  await page.getByLabel("Email address").fill("commenter@example.com")
+  await page.getByLabel("Password", { exact: true }).fill("secret123")
+  const loginResponse = page.waitForResponse(
+    (r) => r.url().includes("/api/auth/login") && r.request().method() === "POST"
+  )
+  await page.getByRole("button", { name: "Sign in" }).click()
+  await loginResponse
+}

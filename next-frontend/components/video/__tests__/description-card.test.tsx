@@ -1,17 +1,30 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 
 import { DescriptionCard } from "@/components/video/description-card"
 
+// LikeDislikeButton (rendered inside DescriptionCard) calls useRouter().
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
+
 const CHANNEL = { nickname: "webdevsimplified", name: "WebDev Simplified" }
+
+const REACTION_PROPS = {
+  publicId: "abc123",
+  likesCount: 0,
+  dislikesCount: 0,
+  currentUserReaction: null,
+}
 
 describe("<DescriptionCard />", () => {
   it("expands the clamped description when 'Show more' is clicked, with no network request", async () => {
     const user = userEvent.setup()
     render(
       <DescriptionCard
+        {...REACTION_PROPS}
         channel={CHANNEL}
         description="A long description that should be clamped by default."
         views={1234}
@@ -34,6 +47,7 @@ describe("<DescriptionCard />", () => {
     const user = userEvent.setup()
     render(
       <DescriptionCard
+        {...REACTION_PROPS}
         channel={CHANNEL}
         description="A long description that should be clamped by default."
         views={1234}
@@ -53,6 +67,7 @@ describe("<DescriptionCard />", () => {
   it("renders no toggle button when there is no description", () => {
     render(
       <DescriptionCard
+        {...REACTION_PROPS}
         channel={CHANNEL}
         description={null}
         views={1234}

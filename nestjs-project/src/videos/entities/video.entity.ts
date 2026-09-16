@@ -130,6 +130,18 @@ export class Video {
   @Column({ type: 'int', default: 0 })
   views: number;
 
+  // Denormalized atomic counters, updated via `UPDATE ... RETURNING` on every
+  // VideoReaction/Comment write (per social-interactions/TD-01) — same
+  // pattern as `views` above.
+  @Column({ type: 'int', default: 0 })
+  likes_count: number;
+
+  @Column({ type: 'int', default: 0 })
+  dislikes_count: number;
+
+  @Column({ type: 'int', default: 0 })
+  comments_count: number;
+
   @CreateDateColumn()
   created_at: Date;
 

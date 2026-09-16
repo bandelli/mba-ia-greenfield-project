@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { VideoNotFoundException } from '../common/exceptions/domain.exception';
 import { Video, VideoStatus, VideoVisibility } from './entities/video.entity';
+import { ReactionType, VideoReaction } from './entities/video-reaction.entity';
 
 export interface PublicVideoDetail {
   id: string;
@@ -14,8 +15,14 @@ export interface PublicVideoDetail {
   duration_seconds: number | null;
   thumbnail_key: string | null;
   views: number;
+  likesCount: number;
+  dislikesCount: number;
+  // Present only when the caller authenticated via `@OptionalAuth()`;
+  // anonymous callers always get `null` (per social-interactions/TD-01,
+  // same pattern as CommentsService.findComments' currentUserReaction).
+  currentUserReaction: ReactionType | null;
   published_at: Date | null;
-  channel: { nickname: string; name: string };
+  channel: { nickname: string; name: string; subscribersCount: number };
 }
 
 export interface SuggestedVideoItem {
@@ -39,6 +46,8 @@ export class VideosService {
   constructor(
     @InjectRepository(Video)
     private readonly videoRepository: Repository<Video>,
+    @InjectRepository(VideoReaction)
+    private readonly videoReactionRepository: Repository<VideoReaction>,
   ) {}
 
   // Owner-only, `ready`-only lookup keyed by the public identifier (per
@@ -93,7 +102,10 @@ export class VideosService {
   // post-increment value even under concurrent requests for the same video
   // (repository.increment() + reading the pre-increment entity's `views + 1`
   // would under-report whichever request's read lost the race).
-  async findPublicVideo(publicId: string): Promise<PublicVideoDetail> {
+  async findPublicVideo(
+    publicId: string,
+    currentUserId?: string,
+  ): Promise<PublicVideoDetail> {
     const video = await this.findPublicReadyVideo(publicId);
 
     const updateResult = await this.videoRepository
@@ -105,6 +117,14 @@ export class VideosService {
       .execute();
     const [{ views }] = updateResult.raw as { views: number }[];
 
+    const currentUserReaction = currentUserId
+      ? ((
+          await this.videoReactionRepository.findOne({
+            where: { user_id: currentUserId, video_id: video.id },
+          })
+        )?.type ?? null)
+      : null;
+
     return {
       id: video.id,
       public_id: video.public_id,
@@ -115,10 +135,18 @@ export class VideosService {
       duration_seconds: video.duration_seconds,
       thumbnail_key: video.thumbnail_key,
       views,
+      // per social-interactions/TD-01 — denormalized atomic counters kept
+      // in sync by VideoReactionService's writes.
+      likesCount: video.likes_count,
+      dislikesCount: video.dislikes_count,
+      currentUserReaction,
       published_at: video.published_at,
       channel: {
         nickname: video.channel.nickname,
         name: video.channel.name,
+        // per social-interactions/TD-01 — denormalized atomic counter,
+        // same column `channels.service.ts`'s public channel endpoint reads.
+        subscribersCount: video.channel.subscribers_count,
       },
     };
   }
