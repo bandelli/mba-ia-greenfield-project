@@ -127,7 +127,7 @@ Sufixos: `*.test.ts(x)` (unitário), `*.integration.test.ts(x)` (Route Handlers 
 
 ## ✅ Funcionalidades implementadas
 
-**Fase 01 — Configuração base**, **Fase 02 — Autenticação**, **Fase 03 — Upload e Processamento de Vídeos**, **Fase 04 — Gerenciamento de Vídeos e Canal**, **Fase 05 — Página de Visualização do Vídeo** e **Fase 06 — Interações Sociais** estão concluídas (backend + frontend).
+**Fase 01 — Configuração base**, **Fase 02 — Autenticação**, **Fase 03 — Upload e Processamento de Vídeos**, **Fase 04 — Gerenciamento de Vídeos e Canal**, **Fase 05 — Página de Visualização do Vídeo**, **Fase 06 — Interações Sociais** e **Fase 07 — Página Inicial, Busca e Lançamento** estão concluídas (backend + frontend). O projeto de 7 fases do `docs/project-plan.md` está completo.
 
 ### Autenticação (Fase 02)
 
@@ -239,12 +239,32 @@ Endpoints da API (`nestjs-project`):
 
 Route Handlers BFF (`next-frontend`): `app/api/videos/public/[publicId]/{reaction,comments,comments/[commentId]/replies}`, `app/api/comments/[commentId]/reaction`, `app/api/channels/[nickname]/subscription` e `app/api/subscriptions` — proxy same-origin para os endpoints acima.
 
+### Página Inicial, Busca e Lançamento (Fase 07)
+
+Home page com grade global de vídeos (todos os canais), filtro por categoria, busca por título/canal (índices trigram `pg_trgm`) e infinite scroll — mais o primeiro shell compartilhado de header/sidebar/menu de conta (colapsável em mobile), e a preparação para produção (Dockerfiles, CI).
+
+Tela (`next-frontend`):
+
+- `/` (`app/(main)/`) — grade de vídeos com `CategoryFilterBar`, `SearchBar` e infinite scroll; `AppShell` compõe `Header`/`Sidebar`/menu de conta em todas as rotas do grupo.
+
+Endpoint da API (`nestjs-project`):
+
+| Método & Rota | Descrição |
+|---------------|-----------|
+| `GET /videos/public` | Listagem paginada e filtrável (`category`, `q`) de vídeos públicos de todos os canais |
+
+Route Handler BFF (`next-frontend`): `app/api/videos/public` — proxy same-origin (sem reshape) para o endpoint acima.
+
+CI (`.github/workflows/`): `ci.yml` (lint + `tsc` + testes unit/integração em todo PR contra `dev`/`main`), `full-stack-e2e.yml` (jornadas principais via Playwright contra o stack real) e `openapi-freshness.yml` (bloqueia merge se `openapi.json`/`types.gen.ts` do frontend ficarem desatualizados em relação ao contrato do backend). Topologia de deploy de produção documentada em `docs/deployment.md`.
+
 ## 🛠️ Estrutura do Projeto
 
 ```
 green-field-ia-project/
+├── .github/workflows/                   # CI: ci.yml, full-stack-e2e.yml, openapi-freshness.yml
 ├── docs/
 │   ├── project-plan.md                  # Planejamento geral do projeto
+│   ├── deployment.md                    # Topologia de deploy de produção (Fase 07)
 │   ├── phases/                          # Planos e implementação por fase
 │   │   ├── phase-01-configuracao-base/
 │   │   ├── phase-02-auth/               # Auth (backend)
@@ -252,7 +272,8 @@ green-field-ia-project/
 │   │   ├── phase-03-videos/             # Upload e processamento de vídeos
 │   │   ├── phase-04-video-channel-management/  # Gerenciamento de vídeos e canal
 │   │   ├── phase-05-video-watch-page/   # Página de visualização do vídeo
-│   │   └── phase-06-social-interactions/  # Curtidas, comentários e inscrições
+│   │   ├── phase-06-social-interactions/  # Curtidas, comentários e inscrições
+│   │   └── phase-07-home-search-launch/   # Home, busca e lançamento
 │   └── diagrams/
 │       └── software-arch.mermaid        # Diagrama de arquitetura (C4)
 ├── nestjs-project/                      # Backend API (NestJS 11)
@@ -260,7 +281,7 @@ green-field-ia-project/
 │   │   ├── auth/                        # Cadastro, login, JWT, refresh, reset de senha
 │   │   ├── users/                       # Entidade/serviço de usuários; listagem de canais seguidos
 │   │   ├── channels/                    # Canal 1:1 por usuário; listagens, edição e inscrições
-│   │   ├── videos/                      # Upload (tus), edição, publish, thumbnail, watch, reactions, comments
+│   │   ├── videos/                      # Upload (tus), edição, publish, thumbnail, watch, listagem pública/busca, reactions, comments
 │   │   ├── processing/                  # Extração de metadados/thumbnail (ffmpeg/ffprobe)
 │   │   ├── queue/                       # Fila de jobs (pg-boss)
 │   │   ├── storage/                     # Cliente S3/MinIO
@@ -271,9 +292,11 @@ green-field-ia-project/
 │   │   └── database/                    # data-source, migrations e seeds
 │   ├── test/                            # Testes e2e
 │   ├── compose.yaml                     # Docker Compose (API + PostgreSQL + Mailpit + MinIO)
-│   └── Dockerfile.dev
+│   ├── Dockerfile.dev
+│   └── Dockerfile                       # Build de produção multi-stage (Fase 07)
 ├── next-frontend/                       # Frontend (Next.js 16, App Router)
 │   ├── app/                             # Rotas, layouts, páginas e Route Handlers BFF
+│   │   ├── (main)/                      # Home (grade global, filtro, busca) + shell compartilhado (Fase 07)
 │   │   ├── api/videos/, api/channels/   # BFF de vídeo, canal, reações, comentários e inscrições
 │   │   ├── api/comments/, api/subscriptions/  # BFF de reação em comentário e canais seguidos (Fase 06)
 │   │   ├── dashboard/videos/            # Dashboard do canal + edição de vídeo (Fase 04)
@@ -281,12 +304,14 @@ green-field-ia-project/
 │   │   ├── channel/[nickname]/          # Página pública do canal (Fase 04, inscrição real na Fase 06)
 │   │   ├── watch/[publicId]/            # Página de assistir vídeo (Fase 05, comentários/curtidas na Fase 06)
 │   │   └── subscriptions/               # Canais seguidos (Fase 06)
-│   ├── components/                      # Componentes de auth, video, UI (shadcn) e ícones
+│   ├── components/                      # Componentes de auth, video, layout (header/sidebar/menu), UI (shadcn) e ícones
 │   ├── lib/                             # env, api (openapi-fetch), auth/session
 │   ├── mocks/                           # MSW (handlers + server)
-│   ├── tests/                           # E2E (Playwright)
+│   ├── tests/                           # E2E (Playwright, incl. tests/full-stack/ contra o backend real)
 │   ├── compose.yaml                     # Docker Compose (dev server)
-│   └── Dockerfile.dev
+│   ├── Dockerfile.dev
+│   └── Dockerfile                       # Build de produção multi-stage (Fase 07)
+├── scripts/sync-openapi.sh              # Sincroniza openapi.json do backend para o frontend
 ├── CLAUDE.md                            # Instruções para IA
 ├── FC Tube.fig                          # Design system do projeto (Figma)
 ├── whiteboard.png                       # Quadro branco do projeto
@@ -303,7 +328,7 @@ green-field-ia-project/
 | **04** | Gerenciamento de Vídeos e Canal | ✅ Concluída |
 | **05** | Página de Visualização do Vídeo | ✅ Concluída |
 | **06** | Interações Sociais (Likes, Comentários, Inscrições) | ✅ Concluída |
-| **07** | Página Inicial, Busca e Finalização | ⏳ Planejada |
+| **07** | Página Inicial, Busca e Finalização | ✅ Concluída |
 
 Detalhes completos em `docs/project-plan.md`.
 

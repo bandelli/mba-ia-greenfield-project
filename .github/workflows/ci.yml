@@ -1,0 +1,134 @@
+name: CI
+
+# Fast gates — home-search-launch/TD-06, Option B part 1: lint + tsc --noEmit +
+# unit/integration tests per subproject, on every PR against dev/main. The
+# slower full-stack Playwright job (main-flow journeys against a real
+# docker compose stack) is SI-07.7's separate workflow, not this one.
+on:
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  backend:
+    name: nestjs-project — lint, tsc, unit + integration tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nestjs-project
+    services:
+      db:
+        image: postgres:17
+        env:
+          POSTGRES_USER: streamtube
+          POSTGRES_PASSWORD: streamtube
+          POSTGRES_DB: streamtube
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U streamtube"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+          - 8025:8025
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: streamtube
+      DB_PASSWORD: streamtube
+      DB_NAME: streamtube
+      DB_DATABASE: streamtube
+      JWT_SECRET: ci-test-jwt-secret
+      JWT_REFRESH_SECRET: ci-test-jwt-refresh-secret
+      MAIL_HOST: localhost
+      MAIL_PORT: 1025
+      MAIL_FROM: "StreamTube <noreply@streamtube.com>"
+      # StorageService is mocked in every test that touches it (no real S3/MinIO
+      # traffic in the unit/integration tier) — these values only need to satisfy
+      # env.validation.ts's Joi schema at ConfigModule bootstrap, same dev-fixture
+      # shape as .env.example.
+      STORAGE_ENDPOINT: http://localhost:9000
+      STORAGE_REGION: us-east-1
+      STORAGE_BUCKET: streamtube
+      STORAGE_ACCESS_KEY_ID: streamtube
+      STORAGE_SECRET_ACCESS_KEY: streamtube123
+      STORAGE_FORCE_PATH_STYLE: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25.6.0"
+          cache: npm
+          cache-dependency-path: nestjs-project/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npx tsc --noEmit
+
+      # video-processing.service.spec.ts shells out to a real ffmpeg/ffprobe
+      # binary (present in the Docker dev image, absent on the bare runner).
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      # storage.service.spec.ts wires up the real StorageModule (no mocks)
+      # against real object storage. GitHub Actions' `services:` block can't
+      # pass a custom command, and minio/minio requires one (`server /data`)
+      # to actually start — so MinIO is started as a plain `docker run` step
+      # instead, mirroring nestjs-project/compose.yaml's dev setup. Pulled
+      # from quay.io, not Docker Hub — GitHub Actions' shared runner IPs hit
+      # Docker Hub's anonymous-pull rate limit on `minio/minio` (denied,
+      # same root cause as the full-stack-e2e.yml job's known MinIO gap;
+      # quay.io mirrors the same images without that limit).
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=streamtube -e MINIO_ROOT_PASSWORD=streamtube123 \
+            quay.io/minio/minio server /data
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            sleep 1
+          done
+
+      - name: Create the storage test bucket
+        run: |
+          docker run --rm --network host \
+            -e MC_HOST_local=http://streamtube:streamtube123@localhost:9000 \
+            quay.io/minio/mc mb --ignore-existing local/streamtube
+
+      - name: Unit + integration tests
+        run: npm test -- --runInBand
+
+  frontend:
+    name: next-frontend — lint, tsc, unit + integration tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: next-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+          cache-dependency-path: next-frontend/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npx tsc --noEmit
+
+      # No env vars needed here — vitest.setup.ts falls back to fixture
+      # values for API_URL/SESSION_PASSWORD when they aren't set, and every
+      # network call in this tier is intercepted by MSW (mocks/server.ts),
+      # never a real upstream.
+      - name: Unit + integration tests
+        run: npm test

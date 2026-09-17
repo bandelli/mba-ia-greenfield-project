@@ -1082,6 +1082,127 @@
         ]
       }
     },
+    "/videos/public": {
+      "get": {
+        "description": "Returns a paginated, searchable, category-filterable list of ready+public videos across every channel, most recent first — the global home feed (per home-search-launch/TD-01, TD-02). Accessible anonymously.",
+        "operationId": "VideosController_findHomeFeed",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated home feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "public_id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "thumbnail_key": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "duration_seconds": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "views": {
+                            "type": "number"
+                          },
+                          "published_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "channel": {
+                            "type": "object",
+                            "properties": {
+                              "nickname": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "limit": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid category, q, page, or limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List public videos (home feed)",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
     "/videos/public/{publicId}": {
       "get": {
         "description": "Returns metadata for a published (public or unlisted) video, accessible anonymously, and increments its view count (per phase-05-video-watch-page/TD-01, TD-02). `currentUserReaction` is `null` unless the caller is authenticated (per social-interactions/TD-01).",

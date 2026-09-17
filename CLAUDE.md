@@ -10,7 +10,7 @@ More info in the project overview: [docs/project-plan.md](docs/project-plan.md)
 
 This is a monorepo with two main areas:
 
-- `nestjs-project/` — Backend API (NestJS 11, TypeScript, Express). Contains modules for auth, users, channels, and videos (upload, processing, worker). Comments, likes, and subscriptions are planned for a future phase.
+- `nestjs-project/` — Backend API (NestJS 11, TypeScript, Express). Contains modules for auth, users, channels, videos (upload, processing, worker), comments, likes/reactions, and subscriptions.
 - `docs/` — Project documentation, architecture diagrams, and planning.
 - `next-frontend/` — Frontend (Next.js 16, App Router, React 19). Talks to the API through same-origin BFF Route Handlers.
 

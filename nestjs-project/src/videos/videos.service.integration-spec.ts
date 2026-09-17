@@ -1,10 +1,9 @@
 import { DataSource, Repository } from 'typeorm';
-import { RefreshToken } from '../auth/entities/refresh-token.entity';
-import { VerificationToken } from '../auth/entities/verification-token.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { User } from '../users/entities/user.entity';
 import { VideoNotFoundException } from '../common/exceptions/domain.exception';
@@ -17,15 +16,6 @@ import {
 import { ReactionType, VideoReaction } from './entities/video-reaction.entity';
 import { VideosService } from './videos.service';
 
-const ALL_ENTITIES = [
-  User,
-  Channel,
-  RefreshToken,
-  VerificationToken,
-  Video,
-  VideoReaction,
-];
-
 describe('VideosService (integration)', () => {
   let dataSource: DataSource;
   let userRepository: Repository<User>;
@@ -35,7 +25,7 @@ describe('VideosService (integration)', () => {
   let service: VideosService;
 
   beforeAll(async () => {
-    dataSource = createTestDataSource(ALL_ENTITIES);
+    dataSource = createTestDataSource(ALL_APP_ENTITIES);
     await dataSource.initialize();
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);
@@ -272,6 +262,95 @@ describe('VideosService (integration)', () => {
       await expect(
         service.findSuggestedVideos('does-not-exist'),
       ).rejects.toThrow(VideoNotFoundException);
+    });
+  });
+
+  describe('findHomeFeed', () => {
+    it('only returns ready+public+published videos, most recent first', async () => {
+      const ready = await createVideo({
+        title: 'Ready public video',
+        published_at: new Date('2026-01-01T00:00:00.000Z'),
+      });
+      await createVideo({
+        title: 'Draft video',
+        status: VideoStatus.DRAFT,
+        published_at: null,
+      });
+      await createVideo({
+        title: 'Unlisted video',
+        visibility: VideoVisibility.UNLISTED,
+      });
+      await createVideo({
+        title: 'Unpublished video',
+        published_at: null,
+      });
+      const newer = await createVideo({
+        title: 'Newer ready public video',
+        published_at: new Date('2026-02-01T00:00:00.000Z'),
+      });
+
+      const result = await service.findHomeFeed({});
+
+      expect(result.items.map((item) => item.title)).toEqual([
+        newer.title,
+        ready.title,
+      ]);
+      expect(result.total).toBe(2);
+    });
+
+    it('filters by category', async () => {
+      await createVideo({
+        title: 'Music video',
+        category: VideoCategory.MUSIC,
+      });
+      await createVideo({
+        title: 'Gaming video',
+        category: VideoCategory.GAMING,
+      });
+
+      const result = await service.findHomeFeed({
+        category: VideoCategory.MUSIC,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].title).toBe('Music video');
+    });
+
+    it('searches by title (case-insensitive substring)', async () => {
+      await createVideo({ title: 'Building a Home Page' });
+      await createVideo({ title: 'Unrelated video' });
+
+      const result = await service.findHomeFeed({ q: 'home page' });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].title).toBe('Building a Home Page');
+    });
+
+    it('searches by channel name (case-insensitive substring)', async () => {
+      const video = await createVideo({ title: 'Some video' });
+      const channel = await channelRepository.findOneByOrFail({
+        id: video.channel_id,
+      });
+      await channelRepository.update(channel.id, { name: 'Mari Martin' });
+
+      const result = await service.findHomeFeed({ q: 'mari' });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].title).toBe('Some video');
+    });
+
+    it('paginates with page/limit and reports the real total', async () => {
+      for (let i = 0; i < 5; i++) {
+        await createVideo({ title: `Video ${i}` });
+      }
+
+      const page1 = await service.findHomeFeed({ page: 1, limit: 2 });
+      const page2 = await service.findHomeFeed({ page: 2, limit: 2 });
+
+      expect(page1.items).toHaveLength(2);
+      expect(page2.items).toHaveLength(2);
+      expect(page1.total).toBe(5);
+      expect(page1.items[0].public_id).not.toBe(page2.items[0].public_id);
     });
   });
 });

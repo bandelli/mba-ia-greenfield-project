@@ -77,6 +77,17 @@ export function resolvePageParam(value: string | undefined): number {
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1
 }
 
+// "Mariana Martin" -> "MM" — up to 2 initials, for avatar fallbacks (no channel
+// avatar image upload exists in this project; initials are the only fallback).
+export function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("")
+}
+
 // "14:20" / "1:05:22" — matches the duration badge format shown in Figma.
 export function formatDuration(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600)

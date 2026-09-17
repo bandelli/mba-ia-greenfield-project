@@ -8,7 +8,8 @@ Pre-fetched Figma data for phases that have **not been planned yet** (no `/plan-
 
 - `phase-05-video-watch-page/` — Phase 05 (Video Watch Page). Primary frame: "Video show" (node `39:1013`).
 - `phase-06-social-interactions/` — Phase 06 (Likes, Comments, Subscriptions). **No dedicated Figma frame** — its UI is embedded inside Phase 05's "Video show" frame (comments, like/dislike) and Phase 04's "Channel show" frame (subscribe button, already captured at `docs/phases/phase-04-video-channel-management/figma-assets/raw/channel-show-39-30.reference.txt`). See this folder's `figma-reference.md` for the exact pointers.
-- `phase-07-home-search-wrapup/` — Phase 07 (Home Page, Search, and Wrap-up). Primary frame: "Home (Catalog Show)" (node `39:379`), plus two supplementary nav-chrome states: "Account User Menu" (node `39:1513`, the avatar dropdown/slide-over) and "Left Menu" (node `39:1294`, a duplicate/reference rendering of the same sidebar already captured — no new data).
+
+Phase 07's pre-collection has been migrated to `docs/phases/phase-07-home-search-launch/figma-reference.md` (its real slug from `/research phase 07`, differing from the `home-search-wrapup` guess) now that `/screen-inventory` is running for it — see that file instead of looking here.
 
 ## What was deliberately NOT captured
 

@@ -1,21 +1,12 @@
 import { DataSource, Repository } from 'typeorm';
-import { RefreshToken } from '../../auth/entities/refresh-token.entity';
-import { VerificationToken } from '../../auth/entities/verification-token.entity';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../../test/create-test-data-source';
 import { User } from '../../users/entities/user.entity';
 import { Channel } from './channel.entity';
 import { Subscription } from './subscription.entity';
-
-const ALL_ENTITIES = [
-  User,
-  Channel,
-  RefreshToken,
-  VerificationToken,
-  Subscription,
-];
 
 describe('Subscription entity (integration)', () => {
   let dataSource: DataSource;
@@ -24,7 +15,7 @@ describe('Subscription entity (integration)', () => {
   let subscriptionRepository: Repository<Subscription>;
 
   beforeAll(async () => {
-    dataSource = createTestDataSource(ALL_ENTITIES);
+    dataSource = createTestDataSource(ALL_APP_ENTITIES);
     await dataSource.initialize();
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);

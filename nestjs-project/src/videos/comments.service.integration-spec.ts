@@ -1,6 +1,4 @@
 import { DataSource, Repository } from 'typeorm';
-import { RefreshToken } from '../auth/entities/refresh-token.entity';
-import { VerificationToken } from '../auth/entities/verification-token.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import {
   CommentNotFoundException,
@@ -10,6 +8,7 @@ import {
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { User } from '../users/entities/user.entity';
 import { CommentsService } from './comments.service';
@@ -18,17 +17,6 @@ import { CommentReaction } from './entities/comment-reaction.entity';
 import { Video, VideoStatus, VideoVisibility } from './entities/video.entity';
 import { ReactionType, VideoReaction } from './entities/video-reaction.entity';
 import { VideosService } from './videos.service';
-
-const ALL_ENTITIES = [
-  User,
-  Channel,
-  RefreshToken,
-  VerificationToken,
-  Video,
-  VideoReaction,
-  Comment,
-  CommentReaction,
-];
 
 describe('CommentsService (integration)', () => {
   let dataSource: DataSource;
@@ -40,7 +28,7 @@ describe('CommentsService (integration)', () => {
   let service: CommentsService;
 
   beforeAll(async () => {
-    dataSource = createTestDataSource(ALL_ENTITIES);
+    dataSource = createTestDataSource(ALL_APP_ENTITIES);
     await dataSource.initialize();
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);

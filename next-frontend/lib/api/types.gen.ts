@@ -324,6 +324,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/videos/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List public videos (home feed)
+         * @description Returns a paginated, searchable, category-filterable list of ready+public videos across every channel, most recent first — the global home feed (per home-search-launch/TD-01, TD-02). Accessible anonymously.
+         */
+        get: operations["VideosController_findHomeFeed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/videos/public/{publicId}": {
         parameters: {
             query?: never;
@@ -1322,6 +1342,58 @@ export interface operations {
             };
             /** @description Caller is the owner of this channel */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    VideosController_findHomeFeed: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                q?: string;
+                category?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated home feed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items?: {
+                            public_id?: string;
+                            title?: string | null;
+                            thumbnail_key?: string | null;
+                            duration_seconds?: number | null;
+                            views?: number;
+                            /** Format: date-time */
+                            published_at?: string | null;
+                            category?: string;
+                            channel?: {
+                                nickname?: string;
+                                name?: string;
+                            };
+                        }[];
+                        total?: number;
+                        page?: number;
+                        limit?: number;
+                    };
+                };
+            };
+            /** @description Invalid category, q, page, or limit */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
