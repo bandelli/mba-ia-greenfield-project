@@ -203,6 +203,15 @@ jobs:
       # links since Phase 04; backend tus upload exists, no frontend page or
       # client). See this phase's progress.md § SI-07.7 for the flagged gap.
 
+      # Both dev servers run detached (`docker compose exec -d`), so their
+      # stdout/stderr never reaches this job's own log — only visible via
+      # `docker compose logs` before teardown removes the containers.
+      - name: Dump backend + frontend container logs on failure
+        if: failure()
+        run: |
+          docker compose -f nestjs-project/compose.yaml logs nestjs-api mailpit video-worker
+          docker compose -f next-frontend/compose.yaml logs next-frontend
+
       - name: Tear down
         if: always()
         run: |
