@@ -117,11 +117,26 @@ jobs:
           SESSION_PASSWORD=ci-fullstack-session-password-at-least-32-chars
           EOF
 
+      # next-frontend's Dockerfile.dev runs as the image's built-in `node`
+      # user (uid 1000) and bind-mounts next-frontend/ into the container.
+      # actions/checkout leaves those files owned by the runner user (a
+      # different uid), so `node` can't write into the bind-mounted dir
+      # (e.g. `npm install` fails with EACCES creating node_modules).
+      # Unlike nestjs-project, this directory is ALSO written by the runner
+      # user right after (the "npm ci" step below, for the host-side
+      # Playwright run), so the chown here is undone right before that step
+      # instead of staying at uid 1000.
+      - name: Fix next-frontend bind-mount ownership for the container's npm install
+        run: sudo chown -R 1000:1000 next-frontend
+
       - name: Start next-frontend (idle) + install deps
         working-directory: next-frontend
         run: |
           docker compose up -d
           docker compose exec -T next-frontend npm install
+
+      - name: Restore next-frontend ownership to the runner user for the host-side npm ci
+        run: sudo chown -R "$(id -u):$(id -g)" next-frontend
 
       # Playwright itself runs on the RUNNER (never inside the container —
       # see playwright.config.ts's own header comment), so it needs the
