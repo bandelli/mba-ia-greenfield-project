@@ -179,11 +179,19 @@ jobs:
         run: npx playwright test
 
       # ── Pass 2 — new full-stack journeys, real upstream ──
-      # -u root: the process being killed was itself started as root (see
-      # above) — only root (or the process owner) can signal it.
+      # Restarts the whole container instead of `pkill -f 'next dev'`: with
+      # Turbopack, the actual listening server is a child process whose
+      # cmdline doesn't match that pattern, so pkill silently killed nothing.
+      # The pass-1 (MSW) server then kept holding the container's port 3000
+      # while pass 2's fresh `next dev` fell back to port 3001 internally —
+      # since the container's port mapping is fixed at host 3001 → container
+      # 3000, every pass-2 request was actually still served by pass 1's
+      # MSW-faked upstream (explains signup "succeeding" with no real email,
+      # and the real seeded video never showing up in search). A container
+      # restart guarantees no leftover process, regardless of its name.
       - name: Stop MSW-enabled dev server
         working-directory: next-frontend
-        run: docker compose exec -u root -T next-frontend sh -c "pkill -f 'next dev' || true"
+        run: docker compose restart next-frontend
 
       - name: Start next-frontend dev server (real backend, no MSW)
         working-directory: next-frontend
