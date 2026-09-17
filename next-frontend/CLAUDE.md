@@ -91,7 +91,7 @@ curl -I http://localhost:3001
 npx playwright test
 
 # Run a specific test file
-npx playwright test tests/smoke.e2e-spec.ts
+npx playwright test tests/home.e2e-spec.ts
 
 # Open the HTML report after a run
 npx playwright show-report
@@ -250,7 +250,7 @@ next-frontend/
 └── components.json                   # shadcn config (do not edit by hand)
 ```
 
-Path aliases live in `tsconfig.json` and `components.json` — `@/components`, `@/components/ui`, `@/components/icons`, `@/lib`, `@/lib/utils`, `@/hooks` (create when first hook is added).
+Path aliases live in `tsconfig.json` and `components.json` — `@/components`, `@/components/ui`, `@/components/icons`, `@/lib`, `@/lib/utils`, `@/hooks`.
 
 ## Design Tokens — Source of Truth
 
