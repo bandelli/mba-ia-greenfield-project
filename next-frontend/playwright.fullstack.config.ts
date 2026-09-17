@@ -16,6 +16,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: "html",
+  // Higher than the 5s default: unlike playwright.config.ts's MSW-backed
+  // run, this hits a genuinely cold dev server (just restarted for this
+  // pass) talking to a real upstream — Turbopack lazily compiles each route
+  // on its first real request, and `router.refresh()` after a mutation is a
+  // real round trip to the real nestjs-api, not a mocked one.
+  expect: {
+    timeout: 15_000,
+  },
   use: {
     baseURL: "http://localhost:3001",
     trace: "on-first-retry",
