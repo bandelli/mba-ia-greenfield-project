@@ -81,12 +81,16 @@ jobs:
       # against real object storage. GitHub Actions' `services:` block can't
       # pass a custom command, and minio/minio requires one (`server /data`)
       # to actually start — so MinIO is started as a plain `docker run` step
-      # instead, mirroring nestjs-project/compose.yaml's dev setup.
+      # instead, mirroring nestjs-project/compose.yaml's dev setup. Pulled
+      # from quay.io, not Docker Hub — GitHub Actions' shared runner IPs hit
+      # Docker Hub's anonymous-pull rate limit on `minio/minio` (denied,
+      # same root cause as the full-stack-e2e.yml job's known MinIO gap;
+      # quay.io mirrors the same images without that limit).
       - name: Start MinIO
         run: |
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=streamtube -e MINIO_ROOT_PASSWORD=streamtube123 \
-            minio/minio server /data
+            quay.io/minio/minio server /data
           for i in $(seq 1 30); do
             curl -sf http://localhost:9000/minio/health/live && break
             sleep 1
@@ -96,7 +100,7 @@ jobs:
         run: |
           docker run --rm --network host \
             -e MC_HOST_local=http://streamtube:streamtube123@localhost:9000 \
-            minio/mc mb --ignore-existing local/streamtube
+            quay.io/minio/mc mb --ignore-existing local/streamtube
 
       - name: Unit + integration tests
         run: npm test -- --runInBand
