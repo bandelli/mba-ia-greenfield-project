@@ -34,15 +34,6 @@ jobs:
           cache: npm
           cache-dependency-path: next-frontend/package-lock.json
 
-      # Both subprojects' Dockerfile.dev run as the image's built-in `node`
-      # user (uid 1000) and bind-mount the checked-out source into the
-      # container. actions/checkout leaves the files owned by the runner
-      # user (a different uid), so `node` can't write into the bind-mounted
-      # dir (e.g. `npm install` fails with EACCES creating node_modules).
-      # Re-own both subprojects to uid/gid 1000 before any container starts.
-      - name: Fix bind-mount ownership for containerized npm installs
-        run: sudo chown -R 1000:1000 nestjs-project next-frontend
-
       # ── Backend stack (real nestjs-api + video-worker + db + mailpit + minio) ──
       #
       # Reuses the existing dev Dockerfile.dev + compose.yaml (idle containers,
@@ -79,6 +70,16 @@ jobs:
           STORAGE_SECRET_ACCESS_KEY=streamtube123
           STORAGE_FORCE_PATH_STYLE=true
           EOF
+
+      # nestjs-api's Dockerfile.dev runs as the image's built-in `node` user
+      # (uid 1000) and bind-mounts nestjs-project/ into the container.
+      # actions/checkout leaves those files owned by the runner user (a
+      # different uid), so `node` can't write into the bind-mounted dir
+      # (e.g. `npm install` fails with EACCES creating node_modules). Only
+      # containers ever write into nestjs-project/ in this job (no host-side
+      # npm step touches it afterwards), so a one-time chown here is safe.
+      - name: Fix nestjs-project bind-mount ownership for the container's npm install
+        run: sudo chown -R 1000:1000 nestjs-project
 
       - name: Start db, mailpit, minio, nestjs-api (idle)
         working-directory: nestjs-project
