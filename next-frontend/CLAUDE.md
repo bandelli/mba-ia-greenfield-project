@@ -136,7 +136,7 @@ Source of decisions: `docs/decisions/technical-decisions-next-frontend-openapi-t
 
 The concrete value of `API_URL` depends on Docker Compose topology (e.g., `http://nestjs-api:3000` on a shared Compose network vs `http://host.docker.internal:3000` from a separate stack). The stacks are currently separate — networking integration is deferred to its own infra task; in the meantime, `.env.local` carries whichever value the local environment can reach.
 
-Media streaming will eventually come from Object Storage (S3/MinIO) — TBD.
+Video playback and download use presigned URLs the backend issues against Object Storage (S3/MinIO) — `GET /videos/public/{publicId}/stream-url` and `.../download-url` (proxied through `app/api/videos/public/[publicId]/stream-url/route.ts` etc.), consumed by `app/watch/[publicId]/page.tsx`.
 
 Refer to the C4 container diagram at `docs/diagrams/software-arch.mermaid` for the full system view.
 
