@@ -55,21 +55,9 @@ export class AddVideoViews1789341438071 implements MigrationInterface {
       `ALTER TABLE "videos" ALTER COLUMN "visibility" SET DEFAULT 'public'`,
     );
     await queryRunner.query(`DROP TYPE "public"."videos_visibility_enum_old"`);
-    await queryRunner.query(
-      `ALTER TABLE "videos" ADD CONSTRAINT "FK_900733992fb36a6d855308c0039" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "videos" ADD CONSTRAINT "FK_023a8e4f3f1a34ff3d8ca04a4cc" FOREIGN KEY ("channel_id") REFERENCES "channels"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
-    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "videos" DROP CONSTRAINT "FK_023a8e4f3f1a34ff3d8ca04a4cc"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "videos" DROP CONSTRAINT "FK_900733992fb36a6d855308c0039"`,
-    );
     await queryRunner.query(
       `CREATE TYPE "public"."videos_visibility_enum_old" AS ENUM('public', 'unlisted')`,
     );
