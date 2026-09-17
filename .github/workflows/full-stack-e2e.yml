@@ -96,9 +96,13 @@ jobs:
         working-directory: nestjs-project
         run: docker compose up -d video-worker
 
+      # Redirected to a file on the bind mount, not left on stdout: `exec -d`
+      # runs as a process separate from the container's own PID 1 (the idle
+      # `tail -f /dev/null` from Dockerfile.dev), so `docker compose logs`
+      # never captures it — this is the only way to see it after the fact.
       - name: Start real nestjs-api dev server
         working-directory: nestjs-project
-        run: docker compose exec -d nestjs-api npm run start:dev
+        run: docker compose exec -d nestjs-api sh -c "npm run start:dev > /home/node/app/nest-dev.log 2>&1"
 
       - name: Wait for nestjs-api
         run: |
@@ -155,9 +159,11 @@ jobs:
       # host-side writes), but `next dev` (container's `node` user, uid
       # 1000) needs to create .next/ inside it. Root bypasses that
       # permission check without touching directory ownership.
+      # Redirected to a file on the bind mount for the same reason as
+      # nestjs-api's dev server above — `docker compose logs` can't see it.
       - name: Start next-frontend dev server (MSW_ENABLED=true)
         working-directory: next-frontend
-        run: docker compose exec -u root -d next-frontend sh -c "MSW_ENABLED=true npm run dev"
+        run: docker compose exec -u root -d next-frontend sh -c "MSW_ENABLED=true npm run dev > /home/node/app/next-dev.log 2>&1"
 
       - name: Wait for next-frontend
         run: |
@@ -181,7 +187,7 @@ jobs:
 
       - name: Start next-frontend dev server (real backend, no MSW)
         working-directory: next-frontend
-        run: docker compose exec -u root -d next-frontend sh -c "npm run dev"
+        run: docker compose exec -u root -d next-frontend sh -c "npm run dev > /home/node/app/next-dev-pass2.log 2>&1"
 
       - name: Wait for next-frontend (pass 2)
         run: |
@@ -209,8 +215,13 @@ jobs:
       - name: Dump backend + frontend container logs on failure
         if: failure()
         run: |
-          docker compose -f nestjs-project/compose.yaml logs nestjs-api mailpit video-worker
-          docker compose -f next-frontend/compose.yaml logs next-frontend
+          echo "── nestjs-api (exec'd dev server, redirected to file) ──"
+          cat nestjs-project/nest-dev.log || echo "(no nest-dev.log)"
+          echo "── mailpit / video-worker (container PID 1, docker compose logs) ──"
+          docker compose -f nestjs-project/compose.yaml logs mailpit video-worker
+          echo "── next-frontend (exec'd dev server, redirected to file) ──"
+          cat next-frontend/next-dev.log || echo "(no next-dev.log)"
+          cat next-frontend/next-dev-pass2.log || echo "(no next-dev-pass2.log)"
 
       - name: Tear down
         if: always()
