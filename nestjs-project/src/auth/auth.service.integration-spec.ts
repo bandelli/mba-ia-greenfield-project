@@ -23,6 +23,7 @@ import { UsersModule } from '../users/users.module';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { clearMailpitMessages } from '../test/mailpit';
 import { AuthService } from './auth.service';
@@ -32,10 +33,8 @@ import {
   VerificationTokenType,
 } from './entities/verification-token.entity';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken];
-
 async function createAuthTestModule(): Promise<TestingModule> {
-  const ds = createTestDataSource(ALL_ENTITIES);
+  const ds = createTestDataSource(ALL_APP_ENTITIES);
   return Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({

@@ -1,23 +1,13 @@
 import { DataSource, Repository } from 'typeorm';
-import { RefreshToken } from '../../auth/entities/refresh-token.entity';
-import { VerificationToken } from '../../auth/entities/verification-token.entity';
 import { Channel } from '../../channels/entities/channel.entity';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../../test/create-test-data-source';
 import { User } from '../../users/entities/user.entity';
 import { Comment } from './comment.entity';
 import { Video } from './video.entity';
-
-const ALL_ENTITIES = [
-  User,
-  Channel,
-  RefreshToken,
-  VerificationToken,
-  Video,
-  Comment,
-];
 
 describe('Comment entity (integration)', () => {
   let dataSource: DataSource;
@@ -27,7 +17,7 @@ describe('Comment entity (integration)', () => {
   let commentRepository: Repository<Comment>;
 
   beforeAll(async () => {
-    dataSource = createTestDataSource(ALL_ENTITIES);
+    dataSource = createTestDataSource(ALL_APP_ENTITIES);
     await dataSource.initialize();
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);

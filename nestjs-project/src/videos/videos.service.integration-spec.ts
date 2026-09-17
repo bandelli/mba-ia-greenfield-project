@@ -1,10 +1,9 @@
 import { DataSource, Repository } from 'typeorm';
-import { RefreshToken } from '../auth/entities/refresh-token.entity';
-import { VerificationToken } from '../auth/entities/verification-token.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { User } from '../users/entities/user.entity';
 import { VideoNotFoundException } from '../common/exceptions/domain.exception';
@@ -17,15 +16,6 @@ import {
 import { ReactionType, VideoReaction } from './entities/video-reaction.entity';
 import { VideosService } from './videos.service';
 
-const ALL_ENTITIES = [
-  User,
-  Channel,
-  RefreshToken,
-  VerificationToken,
-  Video,
-  VideoReaction,
-];
-
 describe('VideosService (integration)', () => {
   let dataSource: DataSource;
   let userRepository: Repository<User>;
@@ -35,7 +25,7 @@ describe('VideosService (integration)', () => {
   let service: VideosService;
 
   beforeAll(async () => {
-    dataSource = createTestDataSource(ALL_ENTITIES);
+    dataSource = createTestDataSource(ALL_APP_ENTITIES);
     await dataSource.initialize();
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);

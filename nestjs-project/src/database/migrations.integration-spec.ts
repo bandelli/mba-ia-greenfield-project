@@ -1,17 +1,15 @@
 import { DataSource } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Channel } from '../channels/entities/channel.entity';
-import { Subscription } from '../channels/entities/subscription.entity';
 import { RefreshToken } from '../auth/entities/refresh-token.entity';
 import { VerificationToken } from '../auth/entities/verification-token.entity';
-import { Video } from '../videos/entities/video.entity';
-import { VideoReaction } from '../videos/entities/video-reaction.entity';
-import { Comment } from '../videos/entities/comment.entity';
-import { CommentReaction } from '../videos/entities/comment-reaction.entity';
 import { CreateUsersAndChannels1775687773260 } from './migrations/1775687773260-CreateUsersAndChannels';
 import { CreateAuthTokens1777579850478 } from './migrations/1777579850478-CreateAuthTokens';
 import { AddSearchTrigramIndexes1789612694674 } from './migrations/1789612694674-AddSearchTrigramIndexes';
-import { createTestDataSource } from '../test/create-test-data-source';
+import {
+  createTestDataSource,
+  ALL_APP_ENTITIES,
+} from '../test/create-test-data-source';
 
 const MANAGED_TABLES = [
   'users',
@@ -20,7 +18,7 @@ const MANAGED_TABLES = [
   'verification_tokens',
 ];
 
-// Every entity in the app. This suite's beforeAll drops and recreates
+// This suite's beforeAll drops and recreates
 // `users`/`channels`/`refresh_tokens`/`verification_tokens` using only the
 // first 2 migrations (to test runMigrations()/undoLastMigration() mechanics
 // in isolation) — intentionally narrower than the DB's real current shape,
@@ -28,22 +26,12 @@ const MANAGED_TABLES = [
 // `synchronize: true` without ever being captured by a tracked migration
 // (the project's documented "synchronize residue" —
 // .claude/rules/typeorm-migrations.md). Without the full resync in afterAll
-// below, every such column/constraint would be silently wiped on every full
-// test-suite run: this is exactly what happened to `channels.subscribers_count`
-// and every FK pointing at `channels`/`users` during
-// phase-06-social-interactions/SI-06.2 — discovered when a full `npm test`
-// run made the e2e suite fail immediately afterward.
-const ALL_APP_ENTITIES = [
-  User,
-  Channel,
-  RefreshToken,
-  VerificationToken,
-  Video,
-  VideoReaction,
-  Comment,
-  CommentReaction,
-  Subscription,
-];
+// below (using the shared `ALL_APP_ENTITIES`), every such column/constraint
+// would be silently wiped on every full test-suite run: this is exactly what
+// happened to `channels.subscribers_count` and every FK pointing at
+// `channels`/`users` during phase-06-social-interactions/SI-06.2 —
+// discovered when a full `npm test` run made the e2e suite fail immediately
+// afterward.
 
 describe('Database migrations (integration)', () => {
   let dataSource: DataSource;
