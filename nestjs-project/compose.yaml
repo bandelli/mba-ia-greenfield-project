@@ -36,7 +36,10 @@ services:
       - "8025:8025"
 
   minio:
-    image: minio/minio
+    # Pulled from quay.io, not Docker Hub — GitHub Actions' shared runner IPs
+    # hit Docker Hub's anonymous-pull rate limit on `minio/minio` (denied);
+    # quay.io mirrors the same image without that limit.
+    image: quay.io/minio/minio
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
