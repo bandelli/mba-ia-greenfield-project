@@ -150,9 +150,14 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # ── Pass 1 — existing suite, MSW-faked upstream ──
+      # Runs as root: next-frontend/ is owned by the runner user again (see
+      # the ownership restore above, needed for npm ci/Playwright's later
+      # host-side writes), but `next dev` (container's `node` user, uid
+      # 1000) needs to create .next/ inside it. Root bypasses that
+      # permission check without touching directory ownership.
       - name: Start next-frontend dev server (MSW_ENABLED=true)
         working-directory: next-frontend
-        run: docker compose exec -d next-frontend sh -c "MSW_ENABLED=true npm run dev"
+        run: docker compose exec -u root -d next-frontend sh -c "MSW_ENABLED=true npm run dev"
 
       - name: Wait for next-frontend
         run: |
@@ -168,13 +173,15 @@ jobs:
         run: npx playwright test
 
       # ── Pass 2 — new full-stack journeys, real upstream ──
+      # -u root: the process being killed was itself started as root (see
+      # above) — only root (or the process owner) can signal it.
       - name: Stop MSW-enabled dev server
         working-directory: next-frontend
-        run: docker compose exec -T next-frontend sh -c "pkill -f 'next dev' || true"
+        run: docker compose exec -u root -T next-frontend sh -c "pkill -f 'next dev' || true"
 
       - name: Start next-frontend dev server (real backend, no MSW)
         working-directory: next-frontend
-        run: docker compose exec -d next-frontend sh -c "npm run dev"
+        run: docker compose exec -u root -d next-frontend sh -c "npm run dev"
 
       - name: Wait for next-frontend (pass 2)
         run: |
