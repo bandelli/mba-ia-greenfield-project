@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { VideoNotFoundException } from '../common/exceptions/domain.exception';
-import { Video, VideoStatus, VideoVisibility } from './entities/video.entity';
+import { FindHomeFeedQueryDto } from './dto/find-home-feed-query.dto';
+import {
+  Video,
+  VideoCategory,
+  VideoStatus,
+  VideoVisibility,
+} from './entities/video.entity';
 import { ReactionType, VideoReaction } from './entities/video-reaction.entity';
 
 export interface PublicVideoDetail {
@@ -36,7 +42,27 @@ export interface SuggestedVideoItem {
   channel: { nickname: string; name: string };
 }
 
+export interface HomeFeedItem {
+  public_id: string;
+  title: string | null;
+  thumbnail_key: string | null;
+  duration_seconds: number | null;
+  views: number;
+  published_at: Date | null;
+  category: VideoCategory;
+  channel: { nickname: string; name: string };
+}
+
+export interface HomeFeedResult {
+  items: HomeFeedItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 const DEFAULT_SUGGESTED_LIMIT = 12;
+const HOME_FEED_DEFAULT_PAGE = 1;
+const HOME_FEED_DEFAULT_LIMIT = 24;
 
 // Owns read access to a video for delivery (streaming/download) — separate
 // from VideoStatusService, which owns status transitions
@@ -188,5 +214,61 @@ export class VideosService {
         name: video.channel.name,
       },
     }));
+  }
+
+  // Global cross-channel feed for the home page — search by title/channel
+  // (ILIKE, backed by the pg_trgm trigram indexes from SI-07.1) and optional
+  // category filter, offset/limit pagination (per home-search-launch/TD-01,
+  // TD-02 — TD-02 deliberately keeps the offset/limit contract already
+  // established by phase-04-video-channel-management/TD-05 rather than
+  // switching to cursor pagination).
+  async findHomeFeed(query: FindHomeFeedQueryDto): Promise<HomeFeedResult> {
+    const page = query.page ?? HOME_FEED_DEFAULT_PAGE;
+    const limit = query.limit ?? HOME_FEED_DEFAULT_LIMIT;
+
+    const qb = this.videoRepository
+      .createQueryBuilder('video')
+      .innerJoinAndSelect('video.channel', 'channel')
+      .where('video.status = :status', { status: VideoStatus.READY })
+      .andWhere('video.visibility = :visibility', {
+        visibility: VideoVisibility.PUBLIC,
+      })
+      .andWhere('video.published_at IS NOT NULL');
+
+    if (query.category) {
+      qb.andWhere('video.category = :category', { category: query.category });
+    }
+
+    if (query.q) {
+      qb.andWhere(
+        '(video.title ILIKE :q OR channel.name ILIKE :q OR channel.nickname ILIKE :q)',
+        { q: `%${query.q}%` },
+      );
+    }
+
+    const [videos, total] = await qb
+      .orderBy('video.published_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      items: videos.map((video) => ({
+        public_id: video.public_id,
+        title: video.title,
+        thumbnail_key: video.thumbnail_key,
+        duration_seconds: video.duration_seconds,
+        views: video.views,
+        published_at: video.published_at,
+        category: video.category,
+        channel: {
+          nickname: video.channel.nickname,
+          name: video.channel.name,
+        },
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 }

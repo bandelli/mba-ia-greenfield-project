@@ -98,6 +98,9 @@ export type VideoDownloadUrlResponse =
 export type SuggestedVideosResponse =
   paths["/videos/public/{publicId}/suggested"]["get"]["responses"][200]["content"]["application/json"];
 
+export type HomeFeedResponse =
+  paths["/videos/public"]["get"]["responses"][200]["content"]["application/json"];
+
 // ─── Social interactions (phase-06-social-interactions) ───────────────────────
 
 // Shared request body shape — the upstream reuses the same `SetReactionDto`

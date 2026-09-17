@@ -27,6 +27,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
     "migration:create": "npm run typeorm -- migration:create",
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/database/seeds/seed.ts",
+    "seed:e2e-fullstack": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/database/seeds/e2e-fullstack-seed.ts",
     "openapi:export": "ts-node -r tsconfig-paths/register src/openapi-export.ts"
   },
   "dependencies": {

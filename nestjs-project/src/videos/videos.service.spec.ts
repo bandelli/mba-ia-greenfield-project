@@ -229,4 +229,104 @@ describe('VideosService', () => {
       expect(repository.find).not.toHaveBeenCalled();
     });
   });
+
+  describe('findHomeFeed', () => {
+    function makeHomeFeedQueryBuilder(videos: Video[], total: number): any {
+      const qb: any = {
+        innerJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([videos, total]),
+      };
+      return qb;
+    }
+
+    it('applies the ready+public+published predicate and default pagination', async () => {
+      const video = makeVideo();
+      const qb = makeHomeFeedQueryBuilder([video], 1);
+      const repository = makeRepository({
+        createQueryBuilder: jest.fn().mockReturnValue(qb),
+      });
+      const service = new VideosService(repository, makeReactionRepository());
+
+      const result = await service.findHomeFeed({});
+
+      expect(qb.where).toHaveBeenCalledWith('video.status = :status', {
+        status: VideoStatus.READY,
+      });
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'video.visibility = :visibility',
+        { visibility: VideoVisibility.PUBLIC },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'video.published_at IS NOT NULL',
+      );
+      expect(qb.skip).toHaveBeenCalledWith(0);
+      expect(qb.take).toHaveBeenCalledWith(24);
+      expect(result).toEqual({
+        items: [
+          {
+            public_id: 'pub123',
+            title: 'Existing title',
+            thumbnail_key: 'thumbnails/key.png',
+            duration_seconds: 120,
+            views: 5,
+            published_at: video.published_at,
+            category: VideoCategory.OTHER,
+            channel: { nickname: 'someone', name: 'Someone' },
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 24,
+      });
+    });
+
+    it('adds a category filter when category is provided', async () => {
+      const qb = makeHomeFeedQueryBuilder([], 0);
+      const repository = makeRepository({
+        createQueryBuilder: jest.fn().mockReturnValue(qb),
+      });
+      const service = new VideosService(repository, makeReactionRepository());
+
+      await service.findHomeFeed({ category: VideoCategory.MUSIC });
+
+      expect(qb.andWhere).toHaveBeenCalledWith('video.category = :category', {
+        category: VideoCategory.MUSIC,
+      });
+    });
+
+    it('adds an ILIKE title/channel search filter when q is provided', async () => {
+      const qb = makeHomeFeedQueryBuilder([], 0);
+      const repository = makeRepository({
+        createQueryBuilder: jest.fn().mockReturnValue(qb),
+      });
+      const service = new VideosService(repository, makeReactionRepository());
+
+      await service.findHomeFeed({ q: 'mari' });
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        '(video.title ILIKE :q OR channel.name ILIKE :q OR channel.nickname ILIKE :q)',
+        { q: '%mari%' },
+      );
+    });
+
+    it('applies page/limit to skip/take', async () => {
+      const qb = makeHomeFeedQueryBuilder([], 0);
+      const repository = makeRepository({
+        createQueryBuilder: jest.fn().mockReturnValue(qb),
+      });
+      const service = new VideosService(repository, makeReactionRepository());
+
+      const result = await service.findHomeFeed({ page: 3, limit: 10 });
+
+      expect(qb.skip).toHaveBeenCalledWith(20);
+      expect(qb.take).toHaveBeenCalledWith(10);
+      expect(result.page).toBe(3);
+      expect(result.limit).toBe(10);
+    });
+  });
 });

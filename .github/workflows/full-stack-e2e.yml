@@ -1,0 +1,178 @@
+name: Full-stack E2E
+
+# home-search-launch/TD-06, Option B part 2: brings up the REAL stack via
+# docker compose (both subprojects' existing dev compose.yaml/Dockerfile.dev
+# — not the production Dockerfiles from SI-07.5, see this job's own comments
+# below for why) and runs the platform's main-flow Playwright journeys
+# against it. Slower than the fast gates in ci.yml, so PR-only (not every
+# push), same trigger shape.
+#
+# Two passes, because this project's E2E suite is split across two
+# fundamentally different upstream setups that must never run together:
+#   Pass 1 — the existing tests/*.e2e-spec.ts suite, which all assume the
+#     upstream nestjs-api is FAKED server-side via MSW (MSW_ENABLED=true,
+#     see next-frontend/CLAUDE.md's E2E architecture section) — a hard
+#     project rule, not something this job changes.
+#   Pass 2 — the new tests/full-stack/*.e2e-spec.ts journeys (SI-07.7),
+#     which hit the REAL nestjs-api/Postgres/Mailpit — MSW_ENABLED unset.
+# The env var is read once at next-frontend's server boot (instrumentation.ts),
+# so the dev server process is stopped and restarted between passes.
+on:
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  full-stack-e2e:
+    name: Full-stack main-flow E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+          cache-dependency-path: next-frontend/package-lock.json
+
+      # ── Backend stack (real nestjs-api + video-worker + db + mailpit + minio) ──
+      #
+      # Reuses the existing dev Dockerfile.dev + compose.yaml (idle containers,
+      # driven via `exec`, exactly like local dev) rather than SI-07.5's new
+      # production Dockerfile — that image's `next.config.ts` output:"standalone"
+      # build likely prunes `mocks/` (only reachable via instrumentation.ts's
+      # MSW_ENABLED-conditional dynamic import) since standalone tracing may not
+      # follow that conditional path, untested/unnecessary risk for a job about
+      # E2E correctness, not deployment-readiness (SI-07.5 already separately
+      # verified the production images build).
+      - name: Write nestjs-project/.env
+        run: |
+          cat > nestjs-project/.env <<'EOF'
+          NODE_ENV=development
+          PORT=3000
+          DB_HOST=db
+          DB_PORT=5432
+          DB_USERNAME=streamtube
+          DB_PASSWORD=streamtube
+          DB_NAME=streamtube
+          JWT_SECRET=ci-fullstack-jwt-secret
+          JWT_REFRESH_SECRET=ci-fullstack-jwt-refresh-secret
+          JWT_ACCESS_EXPIRATION=15m
+          JWT_REFRESH_EXPIRATION=7d
+          CONFIRMATION_TOKEN_EXPIRATION_HOURS=1
+          PASSWORD_RESET_TOKEN_EXPIRATION_HOURS=1
+          MAIL_HOST=mailpit
+          MAIL_PORT=1025
+          MAIL_FROM="StreamTube <noreply@streamtube.com>"
+          STORAGE_ENDPOINT=http://minio:9000
+          STORAGE_REGION=us-east-1
+          STORAGE_BUCKET=streamtube
+          STORAGE_ACCESS_KEY_ID=streamtube
+          STORAGE_SECRET_ACCESS_KEY=streamtube123
+          STORAGE_FORCE_PATH_STYLE=true
+          EOF
+
+      - name: Start db, mailpit, minio, nestjs-api (idle)
+        working-directory: nestjs-project
+        run: docker compose up -d db mailpit minio nestjs-api
+
+      - name: Install backend deps + migrate + seed
+        working-directory: nestjs-project
+        run: |
+          docker compose exec -T nestjs-api npm install
+          docker compose exec -T nestjs-api npm run migration:run
+          docker compose exec -T nestjs-api npm run seed:e2e-fullstack
+
+      - name: Start video-worker (needs node_modules from the step above — shares nestjs-api's bind mount)
+        working-directory: nestjs-project
+        run: docker compose up -d video-worker
+
+      - name: Start real nestjs-api dev server
+        working-directory: nestjs-project
+        run: docker compose exec -d nestjs-api npm run start:dev
+
+      - name: Wait for nestjs-api
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/videos/public > /dev/null && exit 0
+            sleep 2
+          done
+          echo "nestjs-api did not become ready in time" >&2
+          exit 1
+
+      # ── Frontend container (real BFF, no MSW yet — enabled per-pass below) ──
+      - name: Write next-frontend/.env.local
+        run: |
+          cat > next-frontend/.env.local <<'EOF'
+          API_URL=http://host.docker.internal:3000
+          SESSION_PASSWORD=ci-fullstack-session-password-at-least-32-chars
+          EOF
+
+      - name: Start next-frontend (idle) + install deps
+        working-directory: next-frontend
+        run: |
+          docker compose up -d
+          docker compose exec -T next-frontend npm install
+
+      # Playwright itself runs on the RUNNER (never inside the container —
+      # see playwright.config.ts's own header comment), so it needs the
+      # frontend's deps + browser binaries here too.
+      - name: Install next-frontend deps on the runner (for Playwright)
+        working-directory: next-frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: next-frontend
+        run: npx playwright install --with-deps chromium
+
+      # ── Pass 1 — existing suite, MSW-faked upstream ──
+      - name: Start next-frontend dev server (MSW_ENABLED=true)
+        working-directory: next-frontend
+        run: docker compose exec -d next-frontend sh -c "MSW_ENABLED=true npm run dev"
+
+      - name: Wait for next-frontend
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3001 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "next-frontend did not become ready in time" >&2
+          exit 1
+
+      - name: "Pass 1: existing Playwright suite (MSW)"
+        working-directory: next-frontend
+        run: npx playwright test
+
+      # ── Pass 2 — new full-stack journeys, real upstream ──
+      - name: Stop MSW-enabled dev server
+        working-directory: next-frontend
+        run: docker compose exec -T next-frontend sh -c "pkill -f 'next dev' || true"
+
+      - name: Start next-frontend dev server (real backend, no MSW)
+        working-directory: next-frontend
+        run: docker compose exec -d next-frontend sh -c "npm run dev"
+
+      - name: Wait for next-frontend (pass 2)
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3001 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "next-frontend did not become ready in time (pass 2)" >&2
+          exit 1
+
+      - name: "Pass 2: full-stack main-flow journeys (real stack) — signup-to-login, search-to-watch, social-interactions"
+        working-directory: next-frontend
+        env:
+          CI: "true"
+        run: npx playwright test --config=playwright.fullstack.config.ts
+
+      # upload-to-watch (upload→publish→watch) is intentionally NOT part of
+      # this job — /dashboard/videos/upload has no page yet (3 dangling UI
+      # links since Phase 04; backend tus upload exists, no frontend page or
+      # client). See this phase's progress.md § SI-07.7 for the flagged gap.
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose -f nestjs-project/compose.yaml down -v
+          docker compose -f next-frontend/compose.yaml down -v

@@ -40,6 +40,7 @@ import {
 } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { FindCommentsQueryDto } from './dto/find-comments-query.dto';
+import { FindHomeFeedQueryDto } from './dto/find-home-feed-query.dto';
 import { FindSuggestedVideosQueryDto } from './dto/find-suggested-videos-query.dto';
 import { SetReactionDto } from './dto/set-reaction.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
@@ -145,6 +146,38 @@ const SUGGESTED_VIDEOS_RESPONSE_SCHEMA = {
   },
 };
 
+// Mirrors GET /videos/public's documented Response 200 field list
+// (per home-search-launch Tech Specs § API Contracts).
+const HOME_FEED_RESPONSE_SCHEMA = {
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          public_id: { type: 'string' },
+          title: { type: 'string', nullable: true },
+          thumbnail_key: { type: 'string', nullable: true },
+          duration_seconds: { type: 'number', nullable: true },
+          views: { type: 'number' },
+          published_at: { type: 'string', format: 'date-time', nullable: true },
+          category: { type: 'string' },
+          channel: {
+            type: 'object',
+            properties: {
+              nickname: { type: 'string' },
+              name: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    total: { type: 'number' },
+    page: { type: 'number' },
+    limit: { type: 'number' },
+  },
+};
+
 const REACTION_RESPONSE_SCHEMA = {
   properties: {
     type: { type: 'string', enum: ['like', 'dislike'], nullable: true },
@@ -240,6 +273,31 @@ export class VideosController {
     private readonly videoReactionService: VideoReactionService,
     private readonly commentsService: CommentsService,
   ) {}
+
+  @Get('public')
+  @Public()
+  @ApiOperation({
+    summary: 'List public videos (home feed)',
+    description:
+      'Returns a paginated, searchable, category-filterable list of ready+public videos across every channel, most recent first — the global home feed (per home-search-launch/TD-01, TD-02). Accessible anonymously.',
+  })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'q', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated home feed',
+    schema: HOME_FEED_RESPONSE_SCHEMA,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid category, q, page, or limit',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async findHomeFeed(@Query() query: FindHomeFeedQueryDto) {
+    return this.videosService.findHomeFeed(query);
+  }
 
   @Get('public/:publicId')
   @OptionalAuth()

@@ -10,6 +10,7 @@ import { Comment } from '../videos/entities/comment.entity';
 import { CommentReaction } from '../videos/entities/comment-reaction.entity';
 import { CreateUsersAndChannels1775687773260 } from './migrations/1775687773260-CreateUsersAndChannels';
 import { CreateAuthTokens1777579850478 } from './migrations/1777579850478-CreateAuthTokens';
+import { AddSearchTrigramIndexes1789612694674 } from './migrations/1789612694674-AddSearchTrigramIndexes';
 import { createTestDataSource } from '../test/create-test-data-source';
 
 const MANAGED_TABLES = [
@@ -139,5 +140,68 @@ describe('Database migrations (integration)', () => {
       [['refresh_tokens', 'verification_tokens']],
     );
     expect(result).toHaveLength(0);
+  });
+});
+
+// Scoped narrowly to this one migration's up()/down() queries against the
+// real dev DB's current schema — does NOT replay the full migration history
+// (per the file-level comment above, that mechanism is reserved for the
+// first-2-migrations mechanics test; every later migration's schema is
+// covered by the ALL_APP_ENTITIES resync instead). AddSearchTrigramIndexes
+// adds no entity/column (only a Postgres extension + 3 index-only DDL
+// statements), so it is invisible to that synchronize-based resync and
+// needs its own direct exercise of up()/down().
+describe('AddSearchTrigramIndexes1789612694674 (integration)', () => {
+  let dataSource: DataSource;
+  const migration = new AddSearchTrigramIndexes1789612694674();
+
+  beforeAll(async () => {
+    dataSource = createTestDataSource([], { synchronize: false });
+    await dataSource.initialize();
+  });
+
+  afterAll(async () => {
+    // Restore the indexes for the rest of the suite/app — this migration
+    // is expected to stay applied on the shared dev DB.
+    const queryRunner = dataSource.createQueryRunner();
+    await migration.up(queryRunner);
+    await queryRunner.release();
+    await dataSource.destroy();
+  });
+
+  async function trigramIndexNames(): Promise<string[]> {
+    const rows = await dataSource.query<{ indexname: string }[]>(
+      `SELECT indexname FROM pg_indexes WHERE indexname ILIKE '%trgm%' ORDER BY indexname`,
+    );
+    return rows.map((r) => r.indexname);
+  }
+
+  it('creates the pg_trgm extension and the 3 trigram indexes', async () => {
+    const queryRunner = dataSource.createQueryRunner();
+    await migration.up(queryRunner);
+    await queryRunner.release();
+
+    const [{ extname }] = await dataSource.query<{ extname: string }[]>(
+      `SELECT extname FROM pg_extension WHERE extname = 'pg_trgm'`,
+    );
+    expect(extname).toBe('pg_trgm');
+    expect(await trigramIndexNames()).toEqual([
+      'IDX_channels_name_trgm',
+      'IDX_channels_nickname_trgm',
+      'IDX_videos_title_trgm',
+    ]);
+  });
+
+  it('down() removes the 3 trigram indexes without dropping the shared pg_trgm extension', async () => {
+    const queryRunner = dataSource.createQueryRunner();
+    await migration.down(queryRunner);
+    await queryRunner.release();
+
+    expect(await trigramIndexNames()).toEqual([]);
+
+    const extensions = await dataSource.query<{ extname: string }[]>(
+      `SELECT extname FROM pg_extension WHERE extname = 'pg_trgm'`,
+    );
+    expect(extensions).toHaveLength(1);
   });
 });

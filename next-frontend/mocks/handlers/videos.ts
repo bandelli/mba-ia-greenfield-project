@@ -4,6 +4,7 @@ import type {
   CreateCommentResponse,
   CreateReplyResponse,
   FindCommentsResponse,
+  HomeFeedResponse,
   PublicVideoDetail,
   SuggestedVideosResponse,
   Video,
@@ -54,6 +55,46 @@ const suggestedVideoFixtures: NonNullable<SuggestedVideosResponse["items"]> = [
     published_at: "2026-09-10T00:00:00.000Z",
     channel: { nickname: "bob", name: "Bob" },
   },
+];
+
+const homeFeedFixtures: NonNullable<HomeFeedResponse["items"]> = [
+  {
+    public_id: "pub-home-1",
+    title: "Building a home page",
+    category: "technology",
+    thumbnail_key: "thumbnails/video-home-1.png",
+    duration_seconds: 305,
+    views: 4200,
+    published_at: "2026-09-11T00:00:00.000Z",
+    channel: { nickname: "alice", name: "Alice" },
+  },
+  {
+    public_id: "pub-home-2",
+    title: "Relaxing music mix",
+    category: "music",
+    thumbnail_key: "thumbnails/video-home-2.png",
+    duration_seconds: 620,
+    views: 9800,
+    published_at: "2026-09-10T00:00:00.000Z",
+    channel: { nickname: "bob", name: "Bob" },
+  },
+  // 24 filler items (category "entertainment" — never collides with the
+  // category=music/technology fixtures above or the assertions that count on
+  // them) so the unfiltered `/videos/public` listing has 26 items total,
+  // exceeding the home page's DEFAULT_LIMIT of 24 — this gives the E2E
+  // infinite-scroll scenario a genuine, naturally-occurring second page (2
+  // items) with no reserved trigger needed, mirroring the same strategy
+  // tests/subscriptions.e2e-spec.ts already uses for its own pagination test.
+  ...Array.from({ length: 24 }, (_, i) => ({
+    public_id: `pub-home-filler-${i + 1}`,
+    title: `Bonus video ${i + 1}`,
+    category: "entertainment",
+    thumbnail_key: `thumbnails/video-home-filler-${i + 1}.png`,
+    duration_seconds: 200,
+    views: 100 * (i + 1),
+    published_at: "2026-09-01T00:00:00.000Z",
+    channel: { nickname: "alice", name: "Alice" },
+  })),
 ];
 
 const baseComment: NonNullable<FindCommentsResponse["items"]>[number] = {
@@ -140,6 +181,37 @@ function commentNotFoundEnvelope() {
 }
 
 export const handlers = [
+  // GET /videos/public
+  // NOTE: this MUST be registered before `GET /videos/:id` below — MSW
+  // matches handlers in array order, and `:id` matches any single path
+  // segment including the literal "public", so registering this after
+  // `/videos/:id` would silently shadow it.
+  http.get(`${env.API_URL}/videos/public`, ({ request }) => {
+    const searchParams = new URL(request.url).searchParams;
+    const category = searchParams.get("category");
+    const q = searchParams.get("q");
+    const page = Number(searchParams.get("page") ?? "1");
+    const limit = Number(searchParams.get("limit") ?? "24");
+
+    let items = homeFeedFixtures;
+    if (category) {
+      items = items.filter((item) => item.category === category);
+    }
+    if (q) {
+      const needle = q.toLowerCase();
+      items = items.filter((item) => (item.title ?? "").toLowerCase().includes(needle));
+    }
+
+    const total = items.length;
+    const start = (page - 1) * limit;
+    const pageItems = items.slice(start, start + limit);
+
+    return HttpResponse.json<HomeFeedResponse>(
+      { items: pageItems, total, page, limit },
+      { status: 200 }
+    );
+  }),
+
   // GET /videos/:id
   http.get(`${env.API_URL}/videos/:id`, ({ params }) => {
     return HttpResponse.json<Video>(
