@@ -145,9 +145,21 @@ export class TusServerMiddleware implements NestMiddleware {
       };
     }
     this.logger.error(error);
+    // TEMP diagnostic — a generic 500 is happening here specifically when
+    // this endpoint is hit through next-frontend's BFF proxy in CI (not
+    // locally, not via this project's own supertest e2e specs); the
+    // redirected dev-server log isn't flushed by the time the CI job reads
+    // it, so echo the real error into the body instead — visible via the
+    // Playwright trace the failing test already captures. Revert to the
+    // generic message once root-caused.
     return {
       status_code: 500,
-      body: JSON.stringify({ statusCode: 500, message: 'Internal error' }),
+      body: JSON.stringify({
+        statusCode: 500,
+        message: error instanceof Error ? error.message : 'Internal error',
+        tusProxyDebugName: error instanceof Error ? error.name : typeof error,
+        tusProxyDebugStack: error instanceof Error ? error.stack : undefined,
+      }),
     };
   }
 }
