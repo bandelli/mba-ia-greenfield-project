@@ -46,8 +46,11 @@ test.describe("video-dashboard", () => {
     await loginAsOwner(page)
     await page.goto("/dashboard/videos")
 
+    // Scoped to `main` — now that /dashboard/videos renders inside the
+    // shared AppShell (Gap 1), the header's own global SearchBar also has a
+    // "Search" submit button; `main` disambiguates from this page's local one.
     await page.getByPlaceholder("Search your videos").fill("gadgets")
-    await page.getByRole("button", { name: "Search" }).click()
+    await page.getByRole("main").getByRole("button", { name: "Search" }).click()
     await expect(page).toHaveURL(/[?&]search=gadgets\b/)
   })
 

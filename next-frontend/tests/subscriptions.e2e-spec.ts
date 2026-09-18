@@ -5,11 +5,11 @@ import { expect, test } from "./fixtures"
 // Upstream is faked server-side by mocks/ MSW via instrumentation.ts.
 // GET /users/me/subscriptions (mocks/handlers/subscriptions.ts) returns 22
 // fixture channels ("Channel 2".."Channel 23") — more than
-// app/subscriptions/page.tsx's DEFAULT_LIMIT of 20, so page 1 has 20 items
+// app/(main)/subscriptions/page.tsx's DEFAULT_LIMIT of 20, so page 1 has 20 items
 // and page 2 has the remaining 2, giving a genuine second page with no
 // reserved trigger needed. Requesting a page beyond both (e.g. ?page=3)
 // naturally yields an empty items array, exercising the empty state. The
-// handler also adds a small fixed delay so app/subscriptions/loading.tsx's
+// handler also adds a small fixed delay so app/(main)/subscriptions/loading.tsx's
 // skeleton is observable.
 // No page.route() of /api/** — that would short-circuit the real Route Handlers.
 test.describe("subscriptions", () => {
@@ -19,11 +19,15 @@ test.describe("subscriptions", () => {
     await loginAsSubscriber(page)
     await page.goto("/subscriptions")
 
-    const firstRow = page.getByRole("link", { name: "Channel 2", exact: true })
+    // Scoped to `main` — the sidebar's own "Subscribed channels" section
+    // (Gap 2) renders a real fetch of the same fixture data, so "Channel 2"
+    // now also appears there; `main` disambiguates from that landmark.
+    const list = page.getByRole("main")
+    const firstRow = list.getByRole("link", { name: "Channel 2", exact: true })
     await expect(firstRow).toBeVisible()
     await expect(firstRow).toHaveAttribute("href", "/channel/channel-2")
 
-    const lastRowOnPage1 = page.getByRole("link", { name: "Channel 21", exact: true })
+    const lastRowOnPage1 = list.getByRole("link", { name: "Channel 21", exact: true })
     await expect(lastRowOnPage1).toBeVisible()
     await expect(lastRowOnPage1).toHaveAttribute("href", "/channel/channel-21")
   })
@@ -66,7 +70,11 @@ test.describe("subscriptions", () => {
     await expect(page.locator('[data-slot="skeleton"]').first()).toBeVisible()
     await navigation
 
-    await expect(page.getByRole("link", { name: "Channel 2", exact: true })).toBeVisible()
+    // Scoped to `main` — see the "1.1" comment above re: the sidebar's own
+    // "Subscribed channels" section also rendering a "Channel 2" row.
+    await expect(
+      page.getByRole("main").getByRole("link", { name: "Channel 2", exact: true })
+    ).toBeVisible()
   })
 })
 
