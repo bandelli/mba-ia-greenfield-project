@@ -85,6 +85,26 @@ jobs:
         working-directory: nestjs-project
         run: docker compose up -d db mailpit minio nestjs-api
 
+      # Root cause of the upload-to-watch spec's 500s, found via the real
+      # backend error echoed in a Playwright trace (server-log redirection
+      # isn't flushed in time for the diagnostic dump below to show it):
+      # "The specified bucket does not exist" — this job's MinIO starts
+      # with a fresh volume every run and nothing ever created the
+      # `streamtube` bucket `STORAGE_BUCKET` points at. `ci.yml`'s backend
+      # job already does this for its own separate MinIO instance; this job
+      # needs its own, since it's a different container. MinIO's port is
+      # published to the host (nestjs-project/compose.yaml), so `mc` can
+      # reach it the same way ci.yml's does.
+      - name: Create the storage bucket
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live > /dev/null && break
+            sleep 1
+          done
+          docker run --rm --network host \
+            -e MC_HOST_local=http://streamtube:streamtube123@localhost:9000 \
+            quay.io/minio/mc mb --ignore-existing local/streamtube
+
       - name: Install backend deps + migrate + seed
         working-directory: nestjs-project
         run: |
