@@ -24,6 +24,11 @@ test.describe("video-watch-page", () => {
   test("1.1 renderizar-pagina-com-video-publico", async ({ page }) => {
     await page.goto("/watch/pub123")
 
+    // /watch now lives under app/(main)/ (Gap 1) — proves the shared
+    // header/sidebar chrome actually wraps this route.
+    await expect(page.getByRole("banner")).toBeVisible()
+    await expect(page.getByRole("complementary")).toBeVisible()
+
     await expect(page.locator("video")).toHaveAttribute(
       "src",
       "https://storage.example.com/stream-presigned-url"

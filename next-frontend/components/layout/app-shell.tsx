@@ -19,10 +19,22 @@ import { Header } from "@/components/layout/header"
 import { SearchBar } from "@/components/layout/search-bar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { SidebarNavItem } from "@/components/layout/sidebar-nav-item"
+import { SidebarSubscriptionsSection } from "@/components/layout/sidebar-subscriptions-section"
 import { SidebarToggleButton } from "@/components/layout/sidebar-toggle-button"
+
+export type AppShellSubscriptions = {
+  items: { nickname: string; name: string; avatarUrl: string | null }[]
+  total: number
+} | null
 
 export type AppShellProps = {
   children: ReactNode
+  // Server-fetched in app/(main)/layout.tsx (the RSC boundary above this
+  // Client Component) and passed down as a prop — `null` means "anonymous
+  // visitor", which hides the section entirely (Gap 2). A logged-in visitor
+  // with zero subscriptions still gets `{ items: [], total: 0 }` so the
+  // section renders its own empty state instead of disappearing.
+  subscriptions: AppShellSubscriptions
 }
 
 // Per home-search-launch/TD-04 (Option B — route-group layout, auth excluded):
@@ -30,7 +42,7 @@ export type AppShellProps = {
 // state-management dependency. Explicitly no "Liked videos" nav item — a
 // commissioned-page gap flagged in TD-04's own context note (Non-UI/Deferred
 // Capabilities), not something this shell renders.
-function AppShell({ children }: AppShellProps) {
+function AppShell({ children, subscriptions }: AppShellProps) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -87,6 +99,12 @@ function AppShell({ children }: AppShellProps) {
             label="Your videos"
             icon={<NavYourVideosIcon />}
           />
+          {subscriptions && (
+            <SidebarSubscriptionsSection
+              items={subscriptions.items}
+              total={subscriptions.total}
+            />
+          )}
         </Sidebar>
         <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
