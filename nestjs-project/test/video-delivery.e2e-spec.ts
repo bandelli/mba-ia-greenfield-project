@@ -9,6 +9,7 @@ import { AuthService } from '../src/auth/auth.service';
 import { Channel } from '../src/channels/entities/channel.entity';
 import { DomainExceptionFilter } from '../src/common/filters/domain-exception.filter';
 import { ValidationExceptionFilter } from '../src/common/filters/validation-exception.filter';
+import { StorageService } from '../src/storage/storage.service';
 import { cleanAllTables } from '../src/test/create-test-data-source';
 import { User } from '../src/users/entities/user.entity';
 import { Video, VideoStatus } from '../src/videos/entities/video.entity';
@@ -19,6 +20,7 @@ describe('Video delivery (e2e)', () => {
   let userRepository: Repository<User>;
   let channelRepository: Repository<Channel>;
   let videoRepository: Repository<Video>;
+  let storageService: StorageService;
   let throttlerStorage: ThrottlerStorageService;
 
   beforeAll(async () => {
@@ -44,6 +46,7 @@ describe('Video delivery (e2e)', () => {
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);
     videoRepository = dataSource.getRepository(Video);
+    storageService = moduleFixture.get(StorageService);
     throttlerStorage =
       moduleFixture.get<ThrottlerStorageService>(ThrottlerStorage);
   });
@@ -86,6 +89,7 @@ describe('Video delivery (e2e)', () => {
   async function createOwnedVideo(
     email: string,
     status: VideoStatus,
+    thumbnailKey?: string | null,
   ): Promise<{ token: string; video: Video }> {
     const token = await registerConfirmAndLogin(email);
     const user = await userRepository.findOneByOrFail({ email });
@@ -98,6 +102,7 @@ describe('Video delivery (e2e)', () => {
         channel_id: channel.id,
         storage_key: `videos/${email}.mp4`,
         status,
+        thumbnail_key: thumbnailKey ?? null,
       }),
     );
     return { token, video };
@@ -168,6 +173,90 @@ describe('Video delivery (e2e)', () => {
           .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(404);
+      }
+    });
+  });
+
+  describe('5. Emissão de URL de thumbnail', () => {
+    it('thumbnail-url-video-proprio-200', async () => {
+      const thumbnailKey = `thumbnails/e2e-delivery-${Date.now()}.png`;
+      await storageService.putObject(
+        thumbnailKey,
+        Buffer.from('thumbnail bytes'),
+        'image/png',
+      );
+
+      try {
+        const { token, video } = await createOwnedVideo(
+          'delivery5@example.com',
+          VideoStatus.READY,
+          thumbnailKey,
+        );
+
+        const res = await request(app.getHttpServer())
+          .get(`/videos/${video.public_id}/thumbnail-url`)
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(typeof res.body.url).toBe('string');
+        expect((res.body.url as string).length).toBeGreaterThan(0);
+      } finally {
+        await storageService.deleteObject(thumbnailKey);
+      }
+    });
+
+    it('thumbnail-url-video-sem-thumbnail-404', async () => {
+      const { token, video } = await createOwnedVideo(
+        'delivery6@example.com',
+        VideoStatus.READY,
+        null,
+      );
+
+      const res = await request(app.getHttpServer())
+        .get(`/videos/${video.public_id}/thumbnail-url`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('VIDEO_THUMBNAIL_NOT_FOUND');
+    });
+
+    it('thumbnail-url-video-inexistente-404', async () => {
+      const token = await registerConfirmAndLogin('delivery7@example.com');
+
+      const res = await request(app.getHttpServer())
+        .get('/videos/does-not-exist/thumbnail-url')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('VIDEO_NOT_FOUND');
+    });
+
+    it('thumbnail-url-video-de-outro-usuario-404', async () => {
+      const thumbnailKey = `thumbnails/e2e-delivery-other-${Date.now()}.png`;
+      await storageService.putObject(
+        thumbnailKey,
+        Buffer.from('thumbnail bytes'),
+        'image/png',
+      );
+
+      try {
+        const { video } = await createOwnedVideo(
+          'delivery8-owner@example.com',
+          VideoStatus.READY,
+          thumbnailKey,
+        );
+        const otherToken = await registerConfirmAndLogin(
+          'delivery8-other@example.com',
+        );
+
+        const res = await request(app.getHttpServer())
+          .get(`/videos/${video.public_id}/thumbnail-url`)
+          .set('Authorization', `Bearer ${otherToken}`);
+
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('VIDEO_NOT_FOUND');
+      } finally {
+        await storageService.deleteObject(thumbnailKey);
       }
     });
   });

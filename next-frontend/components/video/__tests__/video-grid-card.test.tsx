@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { describe, it, expect } from "vitest";
 
+import { server } from "@/mocks/server";
 import { VideoGridCard } from "../video-grid-card";
 
 describe("VideoGridCard", () => {
@@ -66,5 +68,46 @@ describe("VideoGridCard", () => {
       />
     );
     expect(screen.queryByText(/^\d+:\d{2}$/)).not.toBeInTheDocument();
+  });
+
+  it("renders the resolved thumbnail image when thumbnailKey is present", async () => {
+    server.use(
+      http.get("/api/videos/public/abc123/thumbnail-url", () =>
+        HttpResponse.json({ url: "https://storage.example.com/thumb.png" })
+      )
+    );
+
+    render(
+      <VideoGridCard
+        publicId="abc123"
+        title="Building a video grid"
+        thumbnailKey="thumbnails/abc123.png"
+        durationSeconds={80}
+        views={1234}
+        publishedAt={null}
+        channel={{ nickname: "marimartin", name: "Mari Martin" }}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByRole("img")).toBeInTheDocument());
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://storage.example.com/thumb.png"
+    );
+  });
+
+  it("renders no image when thumbnailKey is null (placeholder background only)", () => {
+    render(
+      <VideoGridCard
+        publicId="abc123"
+        title="Building a video grid"
+        thumbnailKey={null}
+        durationSeconds={80}
+        views={1234}
+        publishedAt={null}
+        channel={{ nickname: "marimartin", name: "Mari Martin" }}
+      />
+    );
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });

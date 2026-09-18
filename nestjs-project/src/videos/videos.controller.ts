@@ -30,7 +30,10 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CurrentUserOptional } from '../auth/decorators/current-user-optional.decorator';
 import { OptionalAuth } from '../auth/decorators/optional-auth.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import { ThumbnailInvalidFileException } from '../common/exceptions/domain.exception';
+import {
+  ThumbnailInvalidFileException,
+  VideoThumbnailNotFoundException,
+} from '../common/exceptions/domain.exception';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { StorageService } from '../storage/storage.service';
 import {
@@ -370,6 +373,35 @@ export class VideosController {
   ): Promise<{ url: string }> {
     const video = await this.videosService.findPublicReadyVideo(publicId);
     const url = await this.storageService.getPresignedUrl(video.storage_key);
+    return { url };
+  }
+
+  @Get('public/:publicId/thumbnail-url')
+  @Public()
+  @ApiOperation({
+    summary: 'Get a public thumbnail URL',
+    description:
+      'Returns a short-lived presigned object-storage URL for the thumbnail of a published (public or unlisted) video, accessible anonymously (per phase-05-video-watch-page/TD-01, phase-03-videos/TD-07).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned thumbnail URL',
+    schema: { properties: { url: { type: 'string' } } },
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Video not found, not ready, not public/unlisted, or has no thumbnail yet',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getPublicThumbnailUrl(
+    @Param('publicId') publicId: string,
+  ): Promise<{ url: string }> {
+    const video = await this.videosService.findPublicReadyVideo(publicId);
+    if (!video.thumbnail_key) {
+      throw new VideoThumbnailNotFoundException();
+    }
+    const url = await this.storageService.getPresignedUrl(video.thumbnail_key);
     return { url };
   }
 
@@ -764,6 +796,36 @@ export class VideosController {
   ): Promise<{ url: string }> {
     const video = await this.videosService.findOwnedReadyVideo(id, user.sub);
     const url = await this.storageService.getPresignedUrl(video.storage_key);
+    return { url };
+  }
+
+  @Get(':id/thumbnail-url')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Get a thumbnail URL',
+    description:
+      "Returns a short-lived presigned object-storage URL for the thumbnail of the caller's own ready video (per phase-03-videos/TD-07).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Presigned thumbnail URL',
+    schema: { properties: { url: { type: 'string' } } },
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Video not found, not owned by the caller, not ready, or has no thumbnail yet',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async getThumbnailUrl(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ url: string }> {
+    const video = await this.videosService.findOwnedReadyVideo(id, user.sub);
+    if (!video.thumbnail_key) {
+      throw new VideoThumbnailNotFoundException();
+    }
+    const url = await this.storageService.getPresignedUrl(video.thumbnail_key);
     return { url };
   }
 }

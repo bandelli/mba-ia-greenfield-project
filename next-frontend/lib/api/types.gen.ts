@@ -404,6 +404,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/videos/public/{publicId}/thumbnail-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a public thumbnail URL
+         * @description Returns a short-lived presigned object-storage URL for the thumbnail of a published (public or unlisted) video, accessible anonymously (per phase-05-video-watch-page/TD-01, phase-03-videos/TD-07).
+         */
+        get: operations["VideosController_getPublicThumbnailUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/videos/public/{publicId}/suggested": {
         parameters: {
             query?: never;
@@ -584,6 +604,26 @@ export interface paths {
          * @description Returns a short-lived presigned object-storage URL to download the caller's own ready video (per phase-03-videos/TD-07).
          */
         get: operations["VideosController_getDownloadUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/videos/{id}/thumbnail-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a thumbnail URL
+         * @description Returns a short-lived presigned object-storage URL for the thumbnail of the caller's own ready video (per phase-03-videos/TD-07).
+         */
+        get: operations["VideosController_getThumbnailUrl"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1522,6 +1562,39 @@ export interface operations {
             };
         };
     };
+    VideosController_getPublicThumbnailUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publicId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presigned thumbnail URL */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        url?: string;
+                    };
+                };
+            };
+            /** @description Video not found, not ready, not public/unlisted, or has no thumbnail yet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
     VideosController_getSuggestedVideos: {
         parameters: {
             query?: {
@@ -2121,6 +2194,39 @@ export interface operations {
                 };
             };
             /** @description Video not found, not owned by the caller, or not ready */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorEnvelope"];
+                };
+            };
+        };
+    };
+    VideosController_getThumbnailUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presigned thumbnail URL */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        url?: string;
+                    };
+                };
+            };
+            /** @description Video not found, not owned by the caller, not ready, or has no thumbnail yet */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -67,6 +67,9 @@ export type Video =
 export type VideoThumbnailResponse =
   paths["/videos/{id}/thumbnail"]["patch"]["responses"][200]["content"]["application/json"];
 
+export type VideoThumbnailUrlResponse =
+  paths["/videos/{id}/thumbnail-url"]["get"]["responses"][200]["content"]["application/json"];
+
 // ─── Channels (phase-04-video-channel-management) ─────────────────────────────
 
 export type UpdateChannelDto =
@@ -94,6 +97,9 @@ export type VideoStreamUrlResponse =
 
 export type VideoDownloadUrlResponse =
   paths["/videos/public/{publicId}/download-url"]["get"]["responses"][200]["content"]["application/json"];
+
+export type PublicVideoThumbnailUrlResponse =
+  paths["/videos/public/{publicId}/thumbnail-url"]["get"]["responses"][200]["content"]["application/json"];
 
 export type SuggestedVideosResponse =
   paths["/videos/public/{publicId}/suggested"]["get"]["responses"][200]["content"]["application/json"];

@@ -27,6 +27,7 @@ import { GlobeIcon } from "@/components/icons/globe-icon"
 import { ImageIcon } from "@/components/icons/image-icon"
 import { LinkIcon } from "@/components/icons/link-icon"
 import { PlayIcon } from "@/components/icons/play-icon"
+import { VideoThumbnail } from "@/components/video/video-thumbnail"
 import type { ApiErrorEnvelope, Video } from "@/lib/api/contracts"
 import { cn } from "@/lib/utils"
 
@@ -274,6 +275,13 @@ function VideoEditForm({ video }: { video: Video }) {
                     fill
                     unoptimized
                     className="object-cover"
+                  />
+                ) : video.thumbnail_key ? (
+                  <VideoThumbnail
+                    publicId={video.public_id ?? ""}
+                    thumbnailKey={video.thumbnail_key}
+                    alt="Current thumbnail"
+                    scope="owner"
                   />
                 ) : (
                   <ImageIcon className="size-8 text-muted-foreground" />

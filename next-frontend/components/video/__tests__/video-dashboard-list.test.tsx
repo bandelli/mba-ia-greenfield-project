@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { http, HttpResponse } from "msw"
+
+import { server } from "@/mocks/server"
 
 const push = vi.fn()
 let currentSearchParams = new URLSearchParams()
@@ -138,6 +141,32 @@ describe("<VideoDashboardList />", () => {
 
     expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "Next page" })).toBeEnabled()
+  })
+
+  it("renders the resolved thumbnail via the owner BFF route when thumbnailKey is present", async () => {
+    server.use(
+      http.get("/api/videos/pub123/thumbnail-url", () =>
+        HttpResponse.json({ url: "https://storage.example.com/owner-thumb.png" })
+      )
+    )
+    const videosWithThumbnail: ChannelVideoListItem[] = [
+      { ...videos[0], thumbnailKey: "thumbnails/pub123.png" },
+    ]
+
+    render(
+      <VideoDashboardList videos={videosWithThumbnail} total={1} page={1} limit={20} />
+    )
+
+    await waitFor(() => expect(screen.getByRole("img")).toBeInTheDocument())
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://storage.example.com/owner-thumb.png"
+    )
+  })
+
+  it("renders no image for a video with no thumbnail yet (placeholder background only)", () => {
+    render(<VideoDashboardList videos={videos} total={2} page={1} limit={20} />)
+    expect(screen.queryByRole("img")).not.toBeInTheDocument()
   })
 
   it("re-syncs the search box when the URL's search param changes externally", () => {

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { IconButton } from "@/components/ui/icon-button"
 import { BellIcon } from "@/components/icons/bell-icon"
+import { VideoThumbnail } from "@/components/video/video-thumbnail"
 import { formatDuration, formatRelativeTime } from "@/lib/utils"
 
 // Mirrors GET /channels/:nickname/videos's `items[]` shape
@@ -204,6 +205,11 @@ function ChannelPublicPage({
             {videos.map((video) => (
               <div key={video.id} className="flex flex-col gap-3">
                 <div className="relative aspect-video overflow-hidden rounded-[var(--radius-3)] bg-muted">
+                  <VideoThumbnail
+                    publicId={video.publicId}
+                    thumbnailKey={video.thumbnailKey}
+                    alt={video.title}
+                  />
                   {video.durationSeconds !== null && (
                     <span className="absolute right-2 bottom-2 rounded-[var(--radius-1)] bg-black/80 px-1.5 py-0.5 text-caption font-bold text-white">
                       {formatDuration(video.durationSeconds)}

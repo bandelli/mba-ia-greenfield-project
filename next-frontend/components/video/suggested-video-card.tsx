@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { VideoThumbnail } from "@/components/video/video-thumbnail"
 import { formatDuration, formatRelativeTime } from "@/lib/utils"
 
 // Mirrors GET /api/videos/public/[publicId]/suggested's `items[]` shape
@@ -17,6 +18,7 @@ export type SuggestedVideoCardProps = {
 function SuggestedVideoCard({
   publicId,
   title,
+  thumbnailKey,
   durationSeconds,
   views,
   publishedAt,
@@ -25,6 +27,11 @@ function SuggestedVideoCard({
   return (
     <Link href={`/watch/${publicId}`} className="flex gap-2">
       <div className="relative aspect-video w-40 shrink-0 overflow-hidden rounded-[var(--radius-3)] bg-muted">
+        <VideoThumbnail
+          publicId={publicId}
+          thumbnailKey={thumbnailKey}
+          alt={title ?? ""}
+        />
         {durationSeconds !== null && (
           <span className="absolute right-1 bottom-1 rounded-[var(--radius-1)] bg-black/80 px-1.5 py-0.5 text-caption font-bold text-white">
             {formatDuration(durationSeconds)}

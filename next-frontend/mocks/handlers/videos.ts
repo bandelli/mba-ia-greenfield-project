@@ -6,11 +6,13 @@ import type {
   FindCommentsResponse,
   HomeFeedResponse,
   PublicVideoDetail,
+  PublicVideoThumbnailUrlResponse,
   SuggestedVideosResponse,
   Video,
   VideoDownloadUrlResponse,
   VideoStreamUrlResponse,
   VideoThumbnailResponse,
+  VideoThumbnailUrlResponse,
 } from "@/lib/api/contracts";
 import { env } from "@/lib/env";
 
@@ -118,6 +120,12 @@ export const VIDEO_NOT_READY_TRIGGER_ID = "trigger-video-not-ready";
 // stream-url, download-url, suggested).
 export const PUBLIC_VIDEO_NOT_FOUND_TRIGGER = "trigger-public-video-not-found";
 
+// Reserved trigger (E2E + Vitest) — a `:publicId`/`:id` path value that
+// always yields 404 VIDEO_THUMBNAIL_NOT_FOUND on the thumbnail-url endpoints
+// (public and owner), simulating a video that has no thumbnail yet.
+export const VIDEO_THUMBNAIL_NOT_FOUND_TRIGGER =
+  "trigger-video-thumbnail-not-found";
+
 // Reserved trigger (E2E only) — a `:publicId` path value that returns a
 // description long enough to be clamped by `description-card.tsx`'s
 // `line-clamp-3`, for the "Show more" expand E2E scenario.
@@ -174,6 +182,15 @@ function errorEnvelope(error: string, message: string) {
 
 function publicVideoNotFoundEnvelope() {
   return { statusCode: 404, error: "VIDEO_NOT_FOUND", message: "Video not found", code: null };
+}
+
+function videoThumbnailNotFoundEnvelope() {
+  return {
+    statusCode: 404,
+    error: "VIDEO_THUMBNAIL_NOT_FOUND",
+    message: "Video has no thumbnail yet",
+    code: null,
+  };
 }
 
 function commentNotFoundEnvelope() {
@@ -302,6 +319,45 @@ export const handlers = [
     }
     return HttpResponse.json<VideoDownloadUrlResponse>(
       { url: "https://storage.example.com/download-presigned-url" },
+      { status: 200 }
+    );
+  }),
+
+  // GET /videos/public/:publicId/thumbnail-url
+  http.get(
+    `${env.API_URL}/videos/public/:publicId/thumbnail-url`,
+    ({ params }) => {
+      if (params.publicId === PUBLIC_VIDEO_NOT_FOUND_TRIGGER) {
+        return HttpResponse.json(publicVideoNotFoundEnvelope(), {
+          status: 404,
+        });
+      }
+      if (params.publicId === VIDEO_THUMBNAIL_NOT_FOUND_TRIGGER) {
+        return HttpResponse.json(videoThumbnailNotFoundEnvelope(), {
+          status: 404,
+        });
+      }
+      return HttpResponse.json<PublicVideoThumbnailUrlResponse>(
+        { url: "https://storage.example.com/thumbnail-presigned-url" },
+        { status: 200 }
+      );
+    }
+  ),
+
+  // GET /videos/:id/thumbnail-url
+  http.get(`${env.API_URL}/videos/:id/thumbnail-url`, ({ params }) => {
+    if (params.id === PUBLIC_VIDEO_NOT_FOUND_TRIGGER) {
+      return HttpResponse.json(publicVideoNotFoundEnvelope(), {
+        status: 404,
+      });
+    }
+    if (params.id === VIDEO_THUMBNAIL_NOT_FOUND_TRIGGER) {
+      return HttpResponse.json(videoThumbnailNotFoundEnvelope(), {
+        status: 404,
+      });
+    }
+    return HttpResponse.json<VideoThumbnailUrlResponse>(
+      { url: "https://storage.example.com/thumbnail-presigned-url" },
       { status: 200 }
     );
   }),

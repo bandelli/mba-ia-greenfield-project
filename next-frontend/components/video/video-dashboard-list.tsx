@@ -23,6 +23,7 @@ import { PlusIcon } from "@/components/icons/plus-icon"
 import { SearchIcon } from "@/components/icons/search-icon"
 import { SortIcon } from "@/components/icons/sort-icon"
 import { ThumbsUpIcon } from "@/components/icons/thumbs-up-icon"
+import { VideoThumbnail } from "@/components/video/video-thumbnail"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
 // Mirrors GET /channels/me/videos's `items[]` shape (phase-04-video-channel-management
@@ -203,7 +204,14 @@ function VideoDashboardList({
               key={video.id}
               className="flex gap-4 border-b border-border py-4 first:pt-0 last:border-b-0"
             >
-              <div className="h-36 w-64 shrink-0 rounded-[var(--radius-2)] bg-muted" />
+              <div className="relative h-36 w-64 shrink-0 overflow-hidden rounded-[var(--radius-2)] bg-muted">
+                <VideoThumbnail
+                  publicId={video.publicId}
+                  thumbnailKey={video.thumbnailKey}
+                  alt={video.title}
+                  scope="owner"
+                />
+              </div>
 
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <div className="flex items-start justify-between gap-2">
