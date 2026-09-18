@@ -87,11 +87,21 @@ export async function proxyTusRequest(
     }
     headers.set("Authorization", `Bearer ${session.accessToken}`)
 
+    // Only PATCH (chunk upload) carries a body in the tus protocol — POST
+    // (create), HEAD (offset check), and DELETE (cancel) never do.
+    // Forwarding `request.body` unconditionally means attaching a real,
+    // if empty, ReadableStream (and `duplex: "half"`, only valid alongside
+    // an actual streamed body) to bodyless requests too, which is both
+    // unnecessary per the protocol and a plausible source of the streaming
+    // hang/error this proxy hits under load — this is a real fix, not just
+    // a debug narrowing.
+    const hasRequestBody = request.method === "PATCH"
     const upstreamResponse = await fetch(`${env.API_URL}${upstreamPath}`, {
       method: request.method,
       headers,
-      body: request.body,
-      duplex: "half",
+      ...(hasRequestBody
+        ? { body: request.body, duplex: "half" as const }
+        : {}),
     } as RequestInit)
 
     const responseHeaders = new Headers()
