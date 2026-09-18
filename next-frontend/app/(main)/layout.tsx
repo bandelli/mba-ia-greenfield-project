@@ -1,7 +1,8 @@
 import type { ReactNode } from "react"
+import { Suspense } from "react"
 
-import type { AppShellSubscriptions } from "@/components/layout/app-shell"
 import { AppShell } from "@/components/layout/app-shell"
+import { SidebarSubscriptionsSection } from "@/components/layout/sidebar-subscriptions-section"
 import { upstream } from "@/lib/api/upstream"
 import { getSession } from "@/lib/auth/session"
 
@@ -14,18 +15,27 @@ const SIDEBAR_SUBSCRIPTIONS_LIMIT = 5
 // header/sidebar chrome; the (auth) route group keeps its existing bare,
 // chrome-less layout.
 //
-// Server Component: fetches the sidebar's subscribed-channels section here
-// (RSC-direct against `upstream`, same pattern as app/(main)/subscriptions/
-// page.tsx) and passes the result down as a prop to AppShell — a Client
-// Component — keeping the server/client boundary as deep as possible per
-// this project's RSC-by-default rule.
-export default async function MainLayout({ children }: { children: ReactNode }) {
-  const subscriptions = await getSidebarSubscriptions()
-
-  return <AppShell subscriptions={subscriptions}>{children}</AppShell>
+// No top-level await here: the sidebar's subscribed-channels fetch is handed
+// to AppShell as a Suspense-wrapped slot instead of resolved data, so it
+// can't gate `children` (the routed page, with its own loading.tsx) behind
+// it. Without this, a route like /subscriptions — whose page makes the same
+// kind of upstream call — races its own loading skeleton against this
+// layout's fetch and can lose it entirely when both resolve close together.
+export default function MainLayout({ children }: { children: ReactNode }) {
+  return (
+    <AppShell
+      subscriptionsSlot={
+        <Suspense fallback={null}>
+          <SidebarSubscriptions />
+        </Suspense>
+      }
+    >
+      {children}
+    </AppShell>
+  )
 }
 
-async function getSidebarSubscriptions(): Promise<AppShellSubscriptions> {
+async function SidebarSubscriptions() {
   const session = await getSession()
 
   if (!session.isLoggedIn) {
@@ -46,12 +56,14 @@ async function getSidebarSubscriptions(): Promise<AppShellSubscriptions> {
     return null
   }
 
-  return {
-    items: (data.items ?? []).map((channel) => ({
-      nickname: channel.nickname ?? "",
-      name: channel.name ?? "",
-      avatarUrl: channel.avatarUrl ?? null,
-    })),
-    total: data.total ?? 0,
-  }
+  return (
+    <SidebarSubscriptionsSection
+      items={(data.items ?? []).map((channel) => ({
+        nickname: channel.nickname ?? "",
+        name: channel.name ?? "",
+        avatarUrl: channel.avatarUrl ?? null,
+      }))}
+      total={data.total ?? 0}
+    />
+  )
 }
