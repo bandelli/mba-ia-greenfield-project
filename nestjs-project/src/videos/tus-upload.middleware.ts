@@ -9,8 +9,9 @@ import { JwtPayload } from '../auth/auth.types';
 import { DomainException } from '../common/exceptions/domain.exception';
 import { UploadUnauthenticatedException } from '../common/exceptions/domain.exception';
 import storageConfig from '../config/storage.config';
+import type { Video } from './entities/video.entity';
 import { VideoUploadService } from './video-upload.service';
-import { TUS_UPLOAD_PATH } from './videos.constants';
+import { MAX_UPLOAD_SIZE_BYTES, TUS_UPLOAD_PATH } from './videos.constants';
 
 interface AuthenticatedRequest extends Request {
   user?: JwtPayload;
@@ -63,6 +64,12 @@ export class TusServerMiddleware implements NestMiddleware {
   ) {
     this.server = new Server({
       path: TUS_UPLOAD_PATH,
+      // Relative (path-only) Location header — the frontend's BFF proxy
+      // (next-frontend/app/api/videos/uploads) rewrites the path prefix to
+      // its own same-origin route; an absolute upstream host/port in the
+      // header would leak this service's internal address to the browser.
+      relativeLocation: true,
+      maxSize: MAX_UPLOAD_SIZE_BYTES,
       datastore: new S3Store({
         s3ClientConfig: {
           bucket: config.bucket,
@@ -94,13 +101,18 @@ export class TusServerMiddleware implements NestMiddleware {
         return {};
       },
       onUploadFinish: async (_req, upload) => {
+        let video: Video;
         try {
-          await this.videoUploadService.finalizeUpload(upload.id);
+          video = await this.videoUploadService.finalizeUpload(upload.id);
         } catch (error) {
           // eslint-disable-next-line @typescript-eslint/only-throw-error -- see onUploadCreate above.
           throw this.toTusError(error);
         }
-        return {};
+        // The tus protocol carries no response body/metadata back to the
+        // client on its own, so this is the only channel the uploading
+        // browser has to learn the video it just created — the BFF/frontend
+        // reads this header to redirect into the edit flow.
+        return { headers: { 'X-Video-Public-Id': video.public_id } };
       },
     });
   }

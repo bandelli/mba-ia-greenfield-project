@@ -85,6 +85,26 @@ jobs:
         working-directory: nestjs-project
         run: docker compose up -d db mailpit minio nestjs-api
 
+      # Root cause of the upload-to-watch spec's 500s, found via the real
+      # backend error echoed in a Playwright trace (server-log redirection
+      # isn't flushed in time for the diagnostic dump below to show it):
+      # "The specified bucket does not exist" — this job's MinIO starts
+      # with a fresh volume every run and nothing ever created the
+      # `streamtube` bucket `STORAGE_BUCKET` points at. `ci.yml`'s backend
+      # job already does this for its own separate MinIO instance; this job
+      # needs its own, since it's a different container. MinIO's port is
+      # published to the host (nestjs-project/compose.yaml), so `mc` can
+      # reach it the same way ci.yml's does.
+      - name: Create the storage bucket
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live > /dev/null && break
+            sleep 1
+          done
+          docker run --rm --network host \
+            -e MC_HOST_local=http://streamtube:streamtube123@localhost:9000 \
+            quay.io/minio/mc mb --ignore-existing local/streamtube
+
       - name: Install backend deps + migrate + seed
         working-directory: nestjs-project
         run: |
@@ -206,16 +226,11 @@ jobs:
           echo "next-frontend did not become ready in time (pass 2)" >&2
           exit 1
 
-      - name: "Pass 2: full-stack main-flow journeys (real stack) — signup-to-login, search-to-watch, social-interactions"
+      - name: "Pass 2: full-stack main-flow journeys (real stack) — signup-to-login, search-to-watch, social-interactions, upload-to-watch"
         working-directory: next-frontend
         env:
           CI: "true"
         run: npx playwright test --config=playwright.fullstack.config.ts
-
-      # upload-to-watch (upload→publish→watch) is intentionally NOT part of
-      # this job — /dashboard/videos/upload has no page yet (3 dangling UI
-      # links since Phase 04; backend tus upload exists, no frontend page or
-      # client). See this phase's progress.md § SI-07.7 for the flagged gap.
 
       # Both dev servers run detached (`docker compose exec -d`), so their
       # stdout/stderr never reaches this job's own log — only visible via
@@ -230,6 +245,20 @@ jobs:
           echo "── next-frontend (exec'd dev server, redirected to file) ──"
           cat next-frontend/next-dev.log || echo "(no next-dev.log)"
           cat next-frontend/next-dev-pass2.log || echo "(no next-dev-pass2.log)"
+
+      # The dev servers' redirected stdout above is not reliably flushed to
+      # disk before this job's containers get torn down — confirmed while
+      # debugging this job's first real failures, where neither `console
+      # .error` nor NestJS's own `Logger.error` ever showed up there despite
+      # genuinely firing. Playwright's trace.zip captures the actual HTTP
+      # request/response independent of that, so upload it as a fallback.
+      - name: Upload Playwright test-results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: next-frontend/test-results/
+          retention-days: 3
 
       - name: Tear down
         if: always()

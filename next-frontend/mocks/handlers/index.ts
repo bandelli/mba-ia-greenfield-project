@@ -3,6 +3,7 @@ import { handlers as channelsHandlers } from "./channels";
 import { handlers as reactionsHandlers } from "./reactions";
 import { handlers as subscriptionsHandlers } from "./subscriptions";
 import { handlers as videosHandlers } from "./videos";
+import { handlers as videosUploadsHandlers } from "./videos-uploads";
 import { handlers as seedHandlers } from "./_seed";
 
 export const handlers = [
@@ -11,5 +12,6 @@ export const handlers = [
   ...reactionsHandlers,
   ...subscriptionsHandlers,
   ...videosHandlers,
+  ...videosUploadsHandlers,
   ...seedHandlers,
 ];

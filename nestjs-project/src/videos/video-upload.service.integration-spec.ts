@@ -122,12 +122,14 @@ describe('VideoUploadService (integration)', () => {
         streams: [],
       });
 
-      await service.finalizeUpload('videos/valid-key.mp4');
+      const result = await service.finalizeUpload('videos/valid-key.mp4');
 
       expect(queueServiceMock.send).toHaveBeenCalledWith('video.uploaded', {
         videoId: video.id,
       });
       expect(storageServiceMock.deleteObject).not.toHaveBeenCalled();
+      expect(result.id).toBe(video.id);
+      expect(result.public_id).toBeDefined();
     });
 
     it('deletes the object and the draft, then throws, when ffprobe rejects the content', async () => {
