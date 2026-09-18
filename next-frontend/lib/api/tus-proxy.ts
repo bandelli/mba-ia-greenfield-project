@@ -83,12 +83,21 @@ export async function proxyTusRequest(
   }
   headers.set("Authorization", `Bearer ${session.accessToken}`)
 
-  const upstreamResponse = await fetch(`${env.API_URL}${upstreamPath}`, {
-    method: request.method,
-    headers,
-    body: request.body,
-    duplex: "half",
-  } as RequestInit)
+  let upstreamResponse: Response
+  try {
+    upstreamResponse = await fetch(`${env.API_URL}${upstreamPath}`, {
+      method: request.method,
+      headers,
+      body: request.body,
+      duplex: "half",
+    } as RequestInit)
+  } catch (error) {
+    // TEMP diagnostic — this proxy 500s with no visible stack in CI (works
+    // locally); logging the raw error to find the real cause before
+    // deciding a fix. Remove once root-caused.
+    console.error("[tus-proxy] fetch to upstream threw:", error)
+    throw error
+  }
 
   const responseHeaders = new Headers()
   for (const name of TUS_RESPONSE_HEADERS) {
