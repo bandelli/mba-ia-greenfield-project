@@ -246,10 +246,12 @@ jobs:
           cat next-frontend/next-dev.log || echo "(no next-dev.log)"
           cat next-frontend/next-dev-pass2.log || echo "(no next-dev-pass2.log)"
 
-      # TEMP — captures the actual HTTP request/response Playwright recorded
-      # (trace.zip), independent of whether the dev server's redirected
-      # stdout got flushed to disk before this job tears the containers
-      # down. Remove once the tus-proxy 500 is root-caused.
+      # The dev servers' redirected stdout above is not reliably flushed to
+      # disk before this job's containers get torn down — confirmed while
+      # debugging this job's first real failures, where neither `console
+      # .error` nor NestJS's own `Logger.error` ever showed up there despite
+      # genuinely firing. Playwright's trace.zip captures the actual HTTP
+      # request/response independent of that, so upload it as a fallback.
       - name: Upload Playwright test-results on failure
         if: failure()
         uses: actions/upload-artifact@v4
