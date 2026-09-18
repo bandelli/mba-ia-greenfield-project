@@ -191,4 +191,37 @@ describe("<ChannelPublicPage />", () => {
       screen.queryByRole("button", { name: /^Subscribe/ })
     ).not.toBeInTheDocument()
   })
+
+  it("renders the resolved thumbnail for a video card that has one", async () => {
+    server.use(
+      http.get("/api/videos/public/react19/thumbnail-url", () =>
+        HttpResponse.json({ url: "https://storage.example.com/react19-thumb.png" })
+      )
+    )
+    const videosWithThumbnail: PublicChannelVideoItem[] = [
+      { ...videos[0], thumbnailKey: "thumbnails/react19.png" },
+    ]
+
+    render(
+      <ChannelPublicPage
+        channel={channel}
+        videos={videosWithThumbnail}
+        total={1}
+        sort="latest"
+      />
+    )
+
+    await waitFor(() => expect(screen.getByRole("img")).toBeInTheDocument())
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://storage.example.com/react19-thumb.png"
+    )
+  })
+
+  it("renders no video-card image when no video has a thumbnail yet", () => {
+    render(
+      <ChannelPublicPage channel={channel} videos={videos} total={2} sort="latest" />
+    )
+    expect(screen.queryByRole("img")).not.toBeInTheDocument()
+  })
 })

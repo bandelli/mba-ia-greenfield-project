@@ -119,6 +119,12 @@ export class ThumbnailInvalidFileException extends DomainException {
   }
 }
 
+export class VideoThumbnailNotFoundException extends DomainException {
+  constructor() {
+    super('VIDEO_THUMBNAIL_NOT_FOUND', 404, 'Video has no thumbnail yet');
+  }
+}
+
 export class CommentNotFoundException extends DomainException {
   constructor() {
     super('COMMENT_NOT_FOUND', 404, 'Comment not found');

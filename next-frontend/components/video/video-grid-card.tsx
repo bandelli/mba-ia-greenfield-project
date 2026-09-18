@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { VideoThumbnail } from "@/components/video/video-thumbnail"
 import { formatDuration, formatRelativeTime, getInitials } from "@/lib/utils"
 
 // Mirrors GET /api/videos/public's `items[]` shape (home-search-launch/TD-01).
@@ -18,6 +19,7 @@ export type VideoGridCardProps = {
 function VideoGridCard({
   publicId,
   title,
+  thumbnailKey,
   durationSeconds,
   views,
   publishedAt,
@@ -26,6 +28,11 @@ function VideoGridCard({
   return (
     <Link href={`/watch/${publicId}`} className="flex w-[266px] flex-col gap-2">
       <div className="relative aspect-video w-[266px] overflow-hidden rounded-[var(--radius-3)] bg-card">
+        <VideoThumbnail
+          publicId={publicId}
+          thumbnailKey={thumbnailKey}
+          alt={title ?? ""}
+        />
         {durationSeconds !== null && (
           <Badge variant="duration" className="absolute right-2 bottom-2">
             {formatDuration(durationSeconds)}

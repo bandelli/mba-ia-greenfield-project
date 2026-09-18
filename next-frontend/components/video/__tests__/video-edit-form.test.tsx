@@ -22,6 +22,15 @@ vi.mock("sonner", () => ({
 beforeEach(() => {
   pushMock.mockClear()
   toastErrorMock.mockClear()
+  // `VideoEditForm` now resolves the existing persisted thumbnail via
+  // `VideoThumbnail` (owner scope) on every render — a default handler here
+  // keeps that fetch from being reported as "unhandled" by every test in
+  // this file, most of which aren't about the thumbnail at all.
+  server.use(
+    http.get("/api/videos/:id/thumbnail-url", () =>
+      HttpResponse.json({ url: "https://storage.example.com/existing-thumb.png" })
+    )
+  )
 })
 
 const baseVideo: Video = {
@@ -42,6 +51,20 @@ function envelope(error: string, message: string) {
 }
 
 describe("<VideoEditForm />", () => {
+  it("renders the persisted thumbnail when the video already has one", async () => {
+    render(<VideoEditForm video={baseVideo} />)
+
+    expect(
+      await screen.findByRole("img", { name: "Current thumbnail" })
+    ).toHaveAttribute("src", "https://storage.example.com/existing-thumb.png")
+  })
+
+  it("renders the placeholder icon (no image) for a video with no thumbnail yet", () => {
+    render(<VideoEditForm video={{ ...baseVideo, thumbnail_key: null }} />)
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument()
+  })
+
   it("submits the typed payload to PATCH /api/videos/:id and shows the Saved confirmation", async () => {
     const user = userEvent.setup()
     const received: Record<string, unknown>[] = []

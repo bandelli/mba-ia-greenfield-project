@@ -9,6 +9,7 @@ import { AuthService } from '../src/auth/auth.service';
 import { Channel } from '../src/channels/entities/channel.entity';
 import { DomainExceptionFilter } from '../src/common/filters/domain-exception.filter';
 import { ValidationExceptionFilter } from '../src/common/filters/validation-exception.filter';
+import { StorageService } from '../src/storage/storage.service';
 import { cleanAllTables } from '../src/test/create-test-data-source';
 import { User } from '../src/users/entities/user.entity';
 import {
@@ -29,6 +30,7 @@ describe('Public video watch endpoint (e2e)', () => {
   let channelRepository: Repository<Channel>;
   let videoRepository: Repository<Video>;
   let videoReactionRepository: Repository<VideoReaction>;
+  let storageService: StorageService;
   let throttlerStorage: ThrottlerStorageService;
 
   beforeAll(async () => {
@@ -55,6 +57,7 @@ describe('Public video watch endpoint (e2e)', () => {
     channelRepository = dataSource.getRepository(Channel);
     videoRepository = dataSource.getRepository(Video);
     videoReactionRepository = dataSource.getRepository(VideoReaction);
+    storageService = moduleFixture.get(StorageService);
     throttlerStorage =
       moduleFixture.get<ThrottlerStorageService>(ThrottlerStorage);
   });
@@ -286,6 +289,66 @@ describe('Public video watch endpoint (e2e)', () => {
 
     const reloaded = await videoRepository.findOneByOrFail({ id: video.id });
     expect(reloaded.views).toBe(5);
+  });
+
+  it('retorna 200 com URL pré-assinada para thumbnail-url de um vídeo ready+public com thumbnail', async () => {
+    const thumbnailKey = `thumbnails/e2e-public-watch-${Date.now()}.png`;
+    await storageService.putObject(
+      thumbnailKey,
+      Buffer.from('thumbnail bytes'),
+      'image/png',
+    );
+
+    try {
+      const video = await createVideo({
+        visibility: VideoVisibility.PUBLIC,
+        thumbnail_key: thumbnailKey,
+      });
+
+      const res = await request(app.getHttpServer()).get(
+        `/videos/public/${video.public_id}/thumbnail-url`,
+      );
+
+      expect(res.status).toBe(200);
+      expect(typeof res.body.url).toBe('string');
+      expect((res.body.url as string).length).toBeGreaterThan(0);
+    } finally {
+      await storageService.deleteObject(thumbnailKey);
+    }
+  });
+
+  it('retorna 404 VIDEO_THUMBNAIL_NOT_FOUND para thumbnail-url de um vídeo sem thumbnail', async () => {
+    const video = await createVideo({ thumbnail_key: null });
+
+    const res = await request(app.getHttpServer()).get(
+      `/videos/public/${video.public_id}/thumbnail-url`,
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('VIDEO_THUMBNAIL_NOT_FOUND');
+  });
+
+  it('retorna 404 VIDEO_NOT_FOUND para thumbnail-url de um vídeo draft', async () => {
+    const video = await createVideo({
+      status: VideoStatus.DRAFT,
+      thumbnail_key: 'thumbnails/irrelevant.png',
+    });
+
+    const res = await request(app.getHttpServer()).get(
+      `/videos/public/${video.public_id}/thumbnail-url`,
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('VIDEO_NOT_FOUND');
+  });
+
+  it('retorna 404 VIDEO_NOT_FOUND para thumbnail-url de um public_id inexistente', async () => {
+    const res = await request(app.getHttpServer()).get(
+      '/videos/public/does-not-exist/thumbnail-url',
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('VIDEO_NOT_FOUND');
   });
 
   it('retorna até 12 itens da mesma categoria do vídeo âncora, ready+public, sem o próprio âncora, ordenados por published_at desc', async () => {
