@@ -206,16 +206,11 @@ jobs:
           echo "next-frontend did not become ready in time (pass 2)" >&2
           exit 1
 
-      - name: "Pass 2: full-stack main-flow journeys (real stack) — signup-to-login, search-to-watch, social-interactions"
+      - name: "Pass 2: full-stack main-flow journeys (real stack) — signup-to-login, search-to-watch, social-interactions, upload-to-watch"
         working-directory: next-frontend
         env:
           CI: "true"
         run: npx playwright test --config=playwright.fullstack.config.ts
-
-      # upload-to-watch (upload→publish→watch) is intentionally NOT part of
-      # this job — /dashboard/videos/upload has no page yet (3 dangling UI
-      # links since Phase 04; backend tus upload exists, no frontend page or
-      # client). See this phase's progress.md § SI-07.7 for the flagged gap.
 
       # Both dev servers run detached (`docker compose exec -d`), so their
       # stdout/stderr never reaches this job's own log — only visible via

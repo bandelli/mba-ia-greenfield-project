@@ -64,7 +64,7 @@ export class VideoUploadService {
   // both the S3 object and the draft row. On pass, transitions the video to
   // `processing` and enqueues the job the worker consumes (per
   // phase-03-videos/TD-10).
-  async finalizeUpload(storageKey: string): Promise<void> {
+  async finalizeUpload(storageKey: string): Promise<Video> {
     const video = await this.videoRepository.findOneByOrFail({
       storage_key: storageKey,
     });
@@ -79,5 +79,7 @@ export class VideoUploadService {
 
     await this.videoStatusService.markProcessing(video.id);
     await this.queueService.send(VIDEO_UPLOADED_QUEUE, { videoId: video.id });
+
+    return video;
   }
 }

@@ -422,7 +422,10 @@ function VideoEditForm({ video }: { video: Video }) {
               <p className="text-helper font-weight-700 text-muted-foreground">
                 Status
               </p>
-              <p className="text-caption text-muted-foreground">
+              <p
+                data-testid="video-status"
+                className="text-caption text-muted-foreground"
+              >
                 {video.status}
               </p>
             </div>

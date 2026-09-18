@@ -241,6 +241,27 @@ describe('Video upload (e2e)', () => {
 
       const found = await videoRepository.findOneByOrFail({ id: video.id });
       expect(found.status).toBe('processing');
+      expect(patchRes.headers['x-video-public-id']).toBe(found.public_id);
     }, 30000);
+  });
+
+  describe('3. Limite de tamanho declarado (maxSize)', () => {
+    it('upload-declarando-tamanho-acima-do-limite-413', async () => {
+      const token = await registerConfirmAndLogin('upload5@example.com');
+      const oneByteOverLimit = 10 * 1024 ** 3 + 1;
+
+      const res = await request(app.getHttpServer())
+        .post(UPLOAD_PATH)
+        .set('Authorization', `Bearer ${token}`)
+        .set('Tus-Resumable', TUS_RESUMABLE)
+        .set('Upload-Length', String(oneByteOverLimit))
+        .set(
+          'Upload-Metadata',
+          encodeMetadata({ filetype: 'video/mp4', filename: 'video.mp4' }),
+        );
+
+      expect(res.status).toBe(413);
+      expect(await videoRepository.count()).toBe(0);
+    });
   });
 });
