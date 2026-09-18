@@ -14,6 +14,11 @@ import { MailService } from './mail.service';
         transport: {
           host: mail.host,
           port: mail.port,
+          // Omit `auth` entirely when unset (Mailpit dev) — nodemailer treats a
+          // present-but-empty auth object differently from an absent one.
+          ...(mail.user && mail.pass
+            ? { auth: { user: mail.user, pass: mail.pass } }
+            : {}),
         },
         defaults: {
           from: mail.from,

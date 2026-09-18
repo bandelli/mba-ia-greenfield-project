@@ -138,15 +138,16 @@ UI/secrets manager, never committed to this repository.
 | `JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION` | `15m` / `7d` | same (not secrets) |
 | `CONFIRMATION_TOKEN_EXPIRATION_HOURS`, `PASSWORD_RESET_TOKEN_EXPIRATION_HOURS` | `1` / `1` | same (not secrets) |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` | `mailpit` / `1025` / `StreamTube <noreply@streamtube.com>` | a real SMTP relay's host/port + a real `From` address |
+| `MAIL_USER`, `MAIL_PASS` | unset (Mailpit accepts unauthenticated connections) | credentials (or API key as username) issued by the SMTP provider, platform secret store |
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_FORCE_PATH_STYLE` | MinIO values | R2 values (see § Cloudflare R2 above) |
 
-**Known gap, flagged rather than silently fixed:** `nestjs-project/src/config/mail.config.ts`
-only reads `MAIL_HOST`/`MAIL_PORT`/`MAIL_FROM` — there is no `MAIL_USER`/`MAIL_PASS` (or
-equivalent) support for an authenticated SMTP relay. Mailpit (dev) accepts unauthenticated
-connections, so this has never mattered before. Most production SMTP providers (SendGrid,
-Postmark, etc.) require auth. Adding that support is a `nestjs-project` mail-module code
-change, out of scope for this infra/config-only SI — flagging for the user to route to a
-follow-up task before actually cutting over production email.
+**Gap closed:** `nestjs-project/src/config/mail.config.ts` now also reads optional
+`MAIL_USER`/`MAIL_PASS` env vars, wired into nodemailer's `transport.auth` in
+`nestjs-project/src/mail/mail.module.ts`. When both are set, the mailer authenticates
+against the SMTP relay; when either is unset (the Mailpit dev default), `auth` is omitted
+entirely rather than sent as an empty object. Set `MAIL_USER`/`MAIL_PASS` in the platform's
+environment-variable UI when cutting over to a real SMTP provider (SendGrid, Postmark,
+SES, etc.) that requires authentication.
 
 ### `next-frontend`
 
