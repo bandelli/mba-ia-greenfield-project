@@ -71,52 +71,59 @@ export async function proxyTusRequest(
   request: Request,
   upstreamPath: string
 ): Promise<Response> {
-  const session = await getSession()
-  if (!session.isLoggedIn) {
-    return unauthenticatedResponse()
-  }
-
-  const headers = new Headers()
-  for (const name of TUS_REQUEST_HEADERS) {
-    const value = request.headers.get(name)
-    if (value !== null) headers.set(name, value)
-  }
-  headers.set("Authorization", `Bearer ${session.accessToken}`)
-
-  let upstreamResponse: Response
+  // TEMP diagnostic wrap — this proxy 500s in CI with no visible stack
+  // anywhere (works locally); catching everything and echoing the real
+  // error in the response body to find the cause. Remove once root-caused.
   try {
-    upstreamResponse = await fetch(`${env.API_URL}${upstreamPath}`, {
+    const session = await getSession()
+    if (!session.isLoggedIn) {
+      return unauthenticatedResponse()
+    }
+
+    const headers = new Headers()
+    for (const name of TUS_REQUEST_HEADERS) {
+      const value = request.headers.get(name)
+      if (value !== null) headers.set(name, value)
+    }
+    headers.set("Authorization", `Bearer ${session.accessToken}`)
+
+    const upstreamResponse = await fetch(`${env.API_URL}${upstreamPath}`, {
       method: request.method,
       headers,
       body: request.body,
       duplex: "half",
     } as RequestInit)
+
+    const responseHeaders = new Headers()
+    for (const name of TUS_RESPONSE_HEADERS) {
+      const value = upstreamResponse.headers.get(name)
+      if (value !== null) responseHeaders.set(name, value)
+    }
+
+    const location = responseHeaders.get("location")
+    if (location) {
+      responseHeaders.set(
+        "location",
+        location.replace("/videos/uploads/", "/api/videos/uploads/")
+      )
+    }
+
+    const hasBody = !BODYLESS_STATUSES.has(upstreamResponse.status)
+    return new Response(hasBody ? upstreamResponse.body : null, {
+      status: upstreamResponse.status,
+      statusText: upstreamResponse.statusText,
+      headers: responseHeaders,
+    })
   } catch (error) {
-    // TEMP diagnostic — this proxy 500s with no visible stack in CI (works
-    // locally); logging the raw error to find the real cause before
-    // deciding a fix. Remove once root-caused.
-    console.error("[tus-proxy] fetch to upstream threw:", error)
-    throw error
-  }
-
-  const responseHeaders = new Headers()
-  for (const name of TUS_RESPONSE_HEADERS) {
-    const value = upstreamResponse.headers.get(name)
-    if (value !== null) responseHeaders.set(name, value)
-  }
-
-  const location = responseHeaders.get("location")
-  if (location) {
-    responseHeaders.set(
-      "location",
-      location.replace("/videos/uploads/", "/api/videos/uploads/")
+    console.error("[tus-proxy] threw:", error)
+    return Response.json(
+      {
+        tusProxyDebug: true,
+        name: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 }
     )
   }
-
-  const hasBody = !BODYLESS_STATUSES.has(upstreamResponse.status)
-  return new Response(hasBody ? upstreamResponse.body : null, {
-    status: upstreamResponse.status,
-    statusText: upstreamResponse.statusText,
-    headers: responseHeaders,
-  })
 }
