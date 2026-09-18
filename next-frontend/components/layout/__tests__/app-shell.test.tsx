@@ -11,9 +11,9 @@ vi.mock("next/navigation", () => ({
 import { AppShell } from "../app-shell"
 
 describe("AppShell", () => {
-  it("always renders the 3 static nav items regardless of the subscriptions prop", () => {
+  it("always renders the 3 static nav items regardless of subscriptionsSlot", () => {
     render(
-      <AppShell subscriptions={null}>
+      <AppShell subscriptionsSlot={null}>
         <div>page content</div>
       </AppShell>
     )
@@ -25,7 +25,7 @@ describe("AppShell", () => {
 
   it("renders its children in the main content area", () => {
     render(
-      <AppShell subscriptions={null}>
+      <AppShell subscriptionsSlot={null}>
         <div>page content</div>
       </AppShell>
     )
@@ -33,9 +33,9 @@ describe("AppShell", () => {
     expect(screen.getByText("page content")).toBeInTheDocument()
   })
 
-  it("renders no subscribed-channels section for an anonymous visitor (subscriptions=null)", () => {
+  it("renders nothing extra in the sidebar when subscriptionsSlot is null (anonymous visitor)", () => {
     render(
-      <AppShell subscriptions={null}>
+      <AppShell subscriptionsSlot={null}>
         <div>page content</div>
       </AppShell>
     )
@@ -43,33 +43,19 @@ describe("AppShell", () => {
     expect(screen.queryByText("Subscribed channels")).not.toBeInTheDocument()
   })
 
-  it("renders the subscribed-channels section with rows for a logged-in visitor", () => {
+  it("renders whatever subscriptionsSlot it's given in the sidebar", () => {
+    // What actually fills this slot in production (the subscribed-channels
+    // section's rows/empty-state rendering) is covered by
+    // sidebar-subscriptions-section.test.tsx — this only verifies AppShell
+    // places the slot content in the sidebar, since app/(main)/layout.tsx
+    // now hands it a Suspense-wrapped async component rather than resolved
+    // data (keeping that fetch from gating `children`'s own render).
     render(
-      <AppShell
-        subscriptions={{
-          items: [{ nickname: "techreviews", name: "Tech Reviews", avatarUrl: null }],
-          total: 1,
-        }}
-      >
+      <AppShell subscriptionsSlot={<div>sidebar subscriptions slot</div>}>
         <div>page content</div>
       </AppShell>
     )
 
-    expect(screen.getByText("Subscribed channels")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Tech Reviews" })).toHaveAttribute(
-      "href",
-      "/channel/techreviews"
-    )
-  })
-
-  it("renders the section's own empty state for a logged-in visitor with zero subscriptions", () => {
-    render(
-      <AppShell subscriptions={{ items: [], total: 0 }}>
-        <div>page content</div>
-      </AppShell>
-    )
-
-    expect(screen.getByText("Subscribed channels")).toBeInTheDocument()
-    expect(screen.getByText("No subscriptions yet")).toBeInTheDocument()
+    expect(screen.getByText("sidebar subscriptions slot")).toBeInTheDocument()
   })
 })
