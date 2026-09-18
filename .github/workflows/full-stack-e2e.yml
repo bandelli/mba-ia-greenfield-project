@@ -226,6 +226,18 @@ jobs:
           cat next-frontend/next-dev.log || echo "(no next-dev.log)"
           cat next-frontend/next-dev-pass2.log || echo "(no next-dev-pass2.log)"
 
+      # TEMP — captures the actual HTTP request/response Playwright recorded
+      # (trace.zip), independent of whether the dev server's redirected
+      # stdout got flushed to disk before this job tears the containers
+      # down. Remove once the tus-proxy 500 is root-caused.
+      - name: Upload Playwright test-results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: next-frontend/test-results/
+          retention-days: 3
+
       - name: Tear down
         if: always()
         run: |
