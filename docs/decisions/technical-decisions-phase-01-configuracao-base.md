@@ -19,7 +19,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Projeto Next.js (frontend) (será criado depois, não agora) e Nest.js (backend) inicializados
+**Capability:** Next.js project (frontend) (to be created later, not now) and Nest.js project (backend) initialized
 
 **Context:** The application reads environment variables via `process.env` with inline fallback defaults in three files (`app.module.ts`, `data-source.ts`, `main.ts`). There is no centralized configuration layer. As the project grows (auth, email, S3, queues), a structured configuration system is needed. The choice must account for the TypeORM CLI constraint: `data-source.ts` runs outside the NestJS DI context.
 
@@ -56,7 +56,7 @@ Alternative config packages from the community.
 
 **Scope:** Backend
 
-**Capability:** Ambiente de desenvolvimento local com todos os serviços via Docker Compose
+**Capability:** Local development environment with all services via Docker Compose
 
 **Context:** Environment variables are untyped strings. Missing or malformed values cause runtime errors that surface late. Validation at startup guarantees fail-fast behavior with clear error messages.
 
@@ -93,7 +93,7 @@ TypeScript-first schema validation. Defines schemas and infers TypeScript types:
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Projeto Next.js (frontend) (será criado depois, não agora) e Nest.js (backend) inicializados", "Ambiente de desenvolvimento local com todos os serviços via Docker Compose"
+**Capability:** Transversal — covers: "Next.js project (frontend) (to be created later, not now) and Nest.js project (backend) initialized", "Local development environment with all services via Docker Compose"
 
 **Context:** Currently 6 environment variables (5 DB + 1 PORT). Phase 02 adds JWT secrets and email SMTP. Future phases add S3, queue config, etc. The structure must scale.
 
@@ -134,7 +134,7 @@ Initial files for Phase 01:
 
 **Scope:** Backend
 
-**Capability:** Estrutura inicial do banco de dados PostgreSQL (schema, migrations e seeds) (sem tabelas ainda)
+**Capability:** Initial PostgreSQL database structure (schema, migrations, and seeds) (no tables yet)
 
 **Context:** Database config is duplicated between `app.module.ts` (NestJS runtime) and `data-source.ts` (TypeORM CLI for migrations). TypeORM CLI runs outside NestJS DI — it cannot use `ConfigService`. Both must use identical connection parameters.
 

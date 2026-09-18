@@ -23,6 +23,7 @@ import { UsersModule } from '../users/users.module';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { clearMailpitMessages } from '../test/mailpit';
 import { AuthService } from './auth.service';
@@ -32,10 +33,8 @@ import {
   VerificationTokenType,
 } from './entities/verification-token.entity';
 
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken];
-
 async function createAuthTestModule(): Promise<TestingModule> {
-  const ds = createTestDataSource(ALL_ENTITIES);
+  const ds = createTestDataSource(ALL_APP_ENTITIES);
   return Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({
@@ -68,9 +67,10 @@ function captureConfirmationToken(authService: AuthService): Promise<string> {
     const mailServiceInstance = (authService as any).mailService;
     jest
       .spyOn(mailServiceInstance, 'sendConfirmationEmail')
-      .mockImplementationOnce(async (_e: string, _n: string, t: string) =>
-        resolve(t),
-      );
+      .mockImplementationOnce((_e: string, _n: string, t: string) => {
+        resolve(t);
+        return Promise.resolve();
+      });
   });
 }
 
@@ -231,7 +231,7 @@ describe('AuthService — confirm (integration)', () => {
 
   it('throws TokenExpiredException for an expired token', async () => {
     const capturePromise = captureConfirmationToken(authService);
-    const { id: userId } = await authService.register({
+    await authService.register({
       email: 'expired@example.com',
       password: 'password123',
     });
@@ -565,9 +565,10 @@ function capturePasswordResetToken(authService: AuthService): Promise<string> {
     const mailServiceInstance = (authService as any).mailService;
     jest
       .spyOn(mailServiceInstance, 'sendPasswordResetEmail')
-      .mockImplementationOnce(async (_e: string, _n: string, t: string) =>
-        resolve(t),
-      );
+      .mockImplementationOnce((_e: string, _n: string, t: string) => {
+        resolve(t);
+        return Promise.resolve();
+      });
   });
 }
 

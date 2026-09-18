@@ -17,36 +17,36 @@ sources_mtime:
 
 ## Scope
 
-**Phase name:** Cadastro, Login e Gerenciamento de Conta
+**Phase name:** Registration, Login, and Account Management
 
 **Capabilities** (literal, `docs/project-plan.md`):
 
-- Serviço de envio de e-mails transacionais
-- Cadastro de usuário com e-mail e senha
-- Criação automática do canal do usuário a partir do prefixo do e-mail
-- Confirmação de conta via e-mail com link de ativação
-- Login e controle de sessão do usuário
+- Transactional email sending service
+- User registration with email and password
+- Automatic creation of the user's channel from the email prefix
+- Account confirmation via email with an activation link
+- Login and user session control
 - Logout
-- Recuperação de senha: solicitação via e-mail → link com token → redefinição
-- Telas de cadastro, login, confirmação de conta e recuperação de senha
+- Password recovery: request via email → link with token → reset
+- Registration, login, account confirmation, and password recovery screens
 
 **Out of scope:** _Not specified._
 
-**Deliverables:** fluxo completo de cadastro → confirmação → login → recuperação de senha funcionando. Canal criado automaticamente para cada usuário.
+**Deliverables:** complete registration → confirmation → login → password recovery flow working. Channel automatically created for each user.
 
 **Affected subprojects:**
 
-- `nestjs-project` — no specific note (in scope: cadastro/login/sessão, e-mails transacionais, criação automática de canal, tokens de confirmação e recuperação)
-- `nextjs-project` — no specific note (in scope: telas de cadastro, login, confirmação de conta e recuperação de senha)
+- `nestjs-project` — no specific note (in scope: registration/login/session, transactional emails, automatic channel creation, confirmation and recovery tokens)
+- `nextjs-project` — no specific note (in scope: registration, login, account confirmation, and password recovery screens)
 
 **Deferred subprojects:** _None._
 
-**Sequencing notes:** Depende de: Fase 01.
+**Sequencing notes:** Depends on: Phase 01.
 
 **Neighbors (for boundary detection only):**
 
-- **Phase 01:** Preparação de toda a fundação do projeto: repositório, ambiente de desenvolvimento, projetos Next.js e Nest.js, banco de dados PostgreSQL e serviços auxiliares.
-- **Phase 03:** Upload e Processamento de Vídeos — Depende de: Fase 01, Fase 02.
+- **Phase 01:** Preparation of the entire project foundation: repository, development environment, Next.js and Nest.js projects, PostgreSQL database, and supporting services.
+- **Phase 03:** Video Upload and Processing — Depends on: Phase 01, Phase 02.
 
 ## Decisions Index
 
@@ -68,14 +68,14 @@ _Source files:_
 
 | Capability (from project-plan.md) | Covered by |
 |-----------------------------------|------------|
-| Serviço de envio de e-mails transacionais | — _(no TD yet — plan-validate will flag as MD)_ |
-| Cadastro de usuário com e-mail e senha | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-05 |
-| Criação automática do canal do usuário a partir do prefixo do e-mail | — _(no TD yet — plan-validate will flag as MD)_ |
-| Confirmação de conta via e-mail com link de ativação | phase-02-auth-frontend/TD-07 |
-| Login e controle de sessão do usuário | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-02, phase-02-auth-frontend/TD-03, phase-02-auth-frontend/TD-05, phase-02-auth-frontend/TD-06 |
+| Transactional email sending service | — _(no TD yet — plan-validate will flag as MD)_ |
+| User registration with email and password | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-05 |
+| Automatic creation of the user's channel from the email prefix | — _(no TD yet — plan-validate will flag as MD)_ |
+| Account confirmation via email with an activation link | phase-02-auth-frontend/TD-07 |
+| Login and user session control | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-02, phase-02-auth-frontend/TD-03, phase-02-auth-frontend/TD-05, phase-02-auth-frontend/TD-06 |
 | Logout | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-05 |
-| Recuperação de senha: solicitação via e-mail → link com token → redefinição | phase-02-auth-frontend/TD-05, phase-02-auth-frontend/TD-07 |
-| Telas de cadastro, login, confirmação de conta e recuperação de senha | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-04 |
+| Password recovery: request via email → link with token → reset | phase-02-auth-frontend/TD-05, phase-02-auth-frontend/TD-07 |
+| Registration, login, account confirmation, and password recovery screens | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-04 |
 
 ## Decisions Detail
 
@@ -214,19 +214,19 @@ _Source files:_
 
 ### openapi-docs-nestjs/TD-01
 
-**Recommendation:** **Option A (`@nestjs/swagger`)** — é a única opção que preserva as decisões anteriores (`class-validator` em TD-06 de phase-02-auth) sem re-platform; o CLI plugin com `classValidatorShim: true` aproveita os decoradores `class-validator` existentes para inferir schemas, mantendo o boilerplate baixo. Nestia tem mérito técnico real mas o custo de migração do stack de validação inviabiliza-a sem uma decisão upstream de supersede de TD-06. Manual authoring é descartado.
+**Recommendation:** **Option A (`@nestjs/swagger`)** — it is the only option that preserves prior decisions (`class-validator` in TD-06 of phase-02-auth) without a re-platform; the CLI plugin with `classValidatorShim: true` leverages the existing `class-validator` decorators to infer schemas, keeping boilerplate low. Nestia has real technical merit, but the validation-stack migration cost makes it unviable without an upstream decision to supersede TD-06. Manual authoring is ruled out.
 
 **Libraries:** @nestjs/swagger
 
 ### openapi-docs-nestjs/TD-02
 
-**Recommendation:** **Option C (Ambos)** — o custo marginal sobre Option A é apenas um npm script (~15 linhas) e o benefício é uma fundação correta para futura integração FE (codegen offline) sem perder a UI interativa que dev/QA usam. Option B sozinho pune a experiência de desenvolvimento em dev/local; Option A sozinho compromete o pipeline de codegen futuro. Combinar é dominante.
+**Recommendation:** **Option C (Both)** — the marginal cost over Option A is just one npm script (~15 lines), and the benefit is a correct foundation for future FE integration (offline codegen) without losing the interactive UI that dev/QA use. Option B alone penalizes the dev/local development experience; Option A alone compromises the future codegen pipeline. Combining the two is dominant.
 
 **Libraries:** —
 
 ### openapi-docs-nestjs/TD-03
 
-**Recommendation:** **Option B (Apenas em dev/staging)** — alinha com a postura defensiva já estabelecida em phase 02 e não compromete consumidores legítimos (o `openapi.json` commitado em TD-02 cumpre o papel de "spec consultável fora da UI"). Re-abrir como Option A ou C é trivial no futuro se um caso de uso de API pública aparecer.
+**Recommendation:** **Option B (Dev/staging only)** — aligns with the defensive posture already established in phase 02 and does not compromise legitimate consumers (the `openapi.json` committed in TD-02 fulfills the role of "spec queryable outside the UI"). Reopening as Option A or C is trivial in the future if a public-API use case emerges.
 
 **Libraries:** —
 
@@ -238,7 +238,7 @@ _No inherited conventions from prior phases._
 
 | Capability | Status | Origin phase | Rationale |
 |-----------|--------|--------------|-----------|
-| Telas de frontend | deferred | phase-01-configuracao-base | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
+| Frontend screens | deferred | phase-01-configuracao-base | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
 
 ## UI Inventory
 
@@ -249,38 +249,38 @@ _No inherited conventions from prior phases._
 
 | Screen | Route | Verb | Capability | Covering Component |
 |--------|-------|------|------------|-------------------|
-| Tela de cadastro | /signup | Cadastrar novo usuário com e-mail e senha | "Cadastro de usuário com e-mail e senha" | SignupForm + SubmitButton |
-| Tela de login | /login | Autenticar usuário com e-mail e senha e iniciar sessão | "Login e controle de sessão do usuário" | LoginForm + SubmitButton |
-| Tela de solicitação de recuperação de senha | /forgot-password | Solicitar envio de e-mail com link de redefinição de senha | "Recuperação de senha: solicitação via e-mail → link com token → redefinição" | ForgotPasswordForm + SubmitButton |
+| Signup screen | /signup | Register a new user with email and password | "User registration with email and password" | SignupForm + SubmitButton |
+| Login screen | /login | Authenticate user with email and password and start a session | "Login and user session control" | LoginForm + SubmitButton |
+| Password recovery request screen | /forgot-password | Request sending of an email with a password reset link | "Password recovery: request via email → link with token → reset" | ForgotPasswordForm + SubmitButton |
 
 ### Server-connected Components
 
-- `SignupForm` (Tela de cadastro) — `Reuse?: new`
-- `SubmitButton` (Tela de cadastro) — `Reuse?: components/ui/button.tsx`
-- `LoginForm` (Tela de login) — `Reuse?: new`
-- `SubmitButton` (Tela de login) — `Reuse?: components/ui/button.tsx`
-- `ForgotPasswordForm` (Tela de solicitação de recuperação de senha) — `Reuse?: new`
-- `SubmitButton` (Tela de solicitação de recuperação de senha) — `Reuse?: components/ui/button.tsx`
+- `SignupForm` (Signup screen) — `Reuse?: new`
+- `SubmitButton` (Signup screen) — `Reuse?: components/ui/button.tsx`
+- `LoginForm` (Login screen) — `Reuse?: new`
+- `SubmitButton` (Login screen) — `Reuse?: components/ui/button.tsx`
+- `ForgotPasswordForm` (Password recovery request screen) — `Reuse?: new`
+- `SubmitButton` (Password recovery request screen) — `Reuse?: components/ui/button.tsx`
 
 ### Open Questions from Inventory
 
-- Capability "Confirmação de conta via e-mail com link de ativação" não tem tela inventariada — de-scoped pelo usuário em 2026-05-14 ("o restante não iremos implementar agora"). O fluxo end-to-end de cadastro depende desta tela para fechar (após signup → e-mail com link → tela de confirmação); precisará ser retomada em uma fase posterior. TD-07 (Email-Link Landing Pattern) prevê RSC processando o token server-side; recomenda-se gerar o inventory da tela antes de implementar.
-- Capability "Logout" não tem UI inventariada nesta fase. A "tela" de logout é, na prática, um botão dentro do chrome autenticado (avatar/menu); seu local depende de fases posteriores que introduzam o chrome (provavelmente Fase 04 — "Painel de gerenciamento" / chrome autenticado). Confirmar com `plan-validate` se logout fica fora desta fase intencionalmente.
-- Tela de redefinição de senha (set new password — destino do link enviado por e-mail) NÃO existe no Figma atual. A capability "Recuperação de senha…" só está parcialmente coberta; a etapa de redefinição precisa ser desenhada (novo node Figma) e inventariada antes do implement do fluxo completo. Até lá, `/forgot-password` envia o e-mail mas o destino do link é uma rota inexistente.
-- Tela de signup: links "Terms of Service" e "Privacy Policy" (node 143:2439) apontam para rotas (`/terms`, `/privacy`) fora do escopo da Fase 02. Decidir se: (a) renderizar como links inertes/placeholders até as rotas existirem; (b) abrir issue para criar páginas estáticas mínimas; (c) outra estratégia.
-- Tela de signup + Tela de login: nenhuma surface de erro/feedback de form-level (alert pós-submit, loading state, inline field errors) está presente no Figma. TD-04 + envelope `{ statusCode, error, message }` (phase-02-auth/TD-07) implicam que estados precisam ser exibidos. Decidir se: (a) inferir o design no implement seguindo padrão shadcn `FormMessage` + `Alert`; (b) solicitar variants de erro/loading ao designer antes do implement.
-- Tela de forgot-password: AuthFooter exibe link "Sign up" no Figma, mas a UX usual numa tela de recuperação seria "Sign in" (voltar ao login). Confirmar com o designer qual link/texto é correto; alternativa: implementar como "Sign in" baseado em UX comum.
-- Tela de forgot-password: estado de sucesso inline (após submit) não foi extraído como variant separada do Figma. O design precisa de uma variant de success-state OU o implement infere o estilo (caixa de confirmação dentro do mesmo Card).
-- Componentes planejados-mas-não-existentes detectados (`Reuse?` com sufixo ` (new)`) e que servirão de gatilho para `phase-b.md` § B2.6 (bootstrap SI synthesis): `components/auth/signup-form.tsx`, `components/auth/login-form.tsx`, `components/auth/forgot-password-form.tsx`, `components/auth/back-link.tsx`, `components/auth/password-visibility-toggle.tsx`, `components/auth/password-strength-meter.tsx`, `components/auth/terms-checkbox.tsx`, `components/ui/checkbox.tsx`, `components/ui/icon-button.tsx`. Confirmar com `plan-build` que todos serão materializados nesta fase OU diferidos para fases posteriores conforme decisão.
+- Capability "Account confirmation via email with an activation link" has no inventoried screen — de-scoped by the user on 2026-05-14 ("the rest we will not implement now"). The end-to-end registration flow depends on this screen to close (after signup → email with link → confirmation screen); it will need to be picked up in a later phase. TD-07 (Email-Link Landing Pattern) anticipates the RSC processing the token server-side; it is recommended to generate the screen's inventory before implementing.
+- Capability "Logout" has no UI inventoried in this phase. The logout "screen" is, in practice, a button inside the authenticated chrome (avatar/menu); its location depends on later phases that introduce the chrome (probably Phase 04 — "Management dashboard" / authenticated chrome). Confirm with `plan-validate` whether logout is intentionally out of scope for this phase.
+- The password reset screen (set new password — destination of the link sent by email) does NOT exist in the current Figma. The "Password recovery…" capability is only partially covered; the reset step needs to be designed (new Figma node) and inventoried before implementing the full flow. Until then, `/forgot-password` sends the email but the link's destination is a nonexistent route.
+- Signup screen: "Terms of Service" and "Privacy Policy" links (node 143:2439) point to routes (`/terms`, `/privacy`) out of Phase 02's scope. Decide whether to: (a) render them as inert/placeholder links until the routes exist; (b) open an issue to create minimal static pages; (c) another strategy.
+- Signup screen + Login screen: no form-level error/feedback surface (post-submit alert, loading state, inline field errors) is present in Figma. TD-04 + the `{ statusCode, error, message }` envelope (phase-02-auth/TD-07) imply these states need to be displayed. Decide whether to: (a) infer the design during implementation following the shadcn `FormMessage` + `Alert` pattern; (b) request error/loading variants from the designer before implementing.
+- Forgot-password screen: AuthFooter shows a "Sign up" link in Figma, but the usual UX on a recovery screen would be "Sign in" (back to login). Confirm with the designer which link/text is correct; alternative: implement it as "Sign in" based on common UX.
+- Forgot-password screen: the inline success state (after submit) was not extracted as a separate variant from Figma. The design needs a success-state variant OR the implementation infers the style (a confirmation box within the same Card).
+- Planned-but-not-existing components detected (`Reuse?` with an ` (new)` suffix) that will serve as the trigger for `phase-b.md` § B2.6 (bootstrap SI synthesis): `components/auth/signup-form.tsx`, `components/auth/login-form.tsx`, `components/auth/forgot-password-form.tsx`, `components/auth/back-link.tsx`, `components/auth/password-visibility-toggle.tsx`, `components/auth/password-strength-meter.tsx`, `components/auth/terms-checkbox.tsx`, `components/ui/checkbox.tsx`, `components/ui/icon-button.tsx`. Confirm with `plan-build` that all of them will be materialized in this phase OR deferred to later phases per the decision.
 
 ## Non-UI / Deferred Capabilities
 
 | Capability | Status | Rationale | TD refs |
 |-----------|--------|-----------|---------|
-| "Confirmação de conta via e-mail com link de ativação" | deferred | deferred_to_next_phase — UI landing screen de-scoped 2026-05-14; FE confirmation flow (TD-07) picked up by a future phase. BE side unchanged in `phase-02-auth`. | phase-02-auth-frontend/TD-07 |
+| "Account confirmation via email with an activation link" | deferred | deferred_to_next_phase — UI landing screen de-scoped 2026-05-14; FE confirmation flow (TD-07) picked up by a future phase. BE side unchanged in `phase-02-auth`. | phase-02-auth-frontend/TD-07 |
 | "Logout" | deferred | deferred_to_next_phase — logout button lives inside authenticated chrome (typically Phase 04). Phase 02 still implements POST `/api/auth/logout` (BFF route handler + `session.destroy()`) so the contract is ready when the chrome lands. | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-05 |
-| "Recuperação de senha (destination screen / set-new-password)" | deferred | deferred_to_next_phase — `/forgot-password` ships this phase sending the e-mail; the reset-password destination screen is absent from Figma → link destination remains a 404 until a later phase delivers the screen via `/screen-inventory` extension run. Documented as a known gap. | phase-02-auth-frontend/TD-07 |
-| "Telas de cadastro, login, confirmação de conta e recuperação de senha" | deferred | a tela de confirmação da conta não será implementada nesta fase corrente, será adiada — the umbrella bullet's full coverage requires the confirmação and reset-password destination screens; both are deferred per Non-UI rows above. The 3 ship-this-phase telas (signup, login, forgot-password) are inventoried and covered by their own verbs; the umbrella bullet itself is deferred to the phase that lands the missing screens. | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-04 |
+| "Password recovery (destination screen / set-new-password)" | deferred | deferred_to_next_phase — `/forgot-password` ships this phase sending the email; the reset-password destination screen is absent from Figma → link destination remains a 404 until a later phase delivers the screen via `/screen-inventory` extension run. Documented as a known gap. | phase-02-auth-frontend/TD-07 |
+| "Registration, login, account confirmation, and password recovery screens" | deferred | the account confirmation screen will not be implemented in the current phase, it will be postponed — the umbrella bullet's full coverage requires the confirmation and reset-password destination screens; both are deferred per Non-UI rows above. The 3 ship-this-phase screens (signup, login, forgot-password) are inventoried and covered by their own verbs; the umbrella bullet itself is deferred to the phase that lands the missing screens. | phase-02-auth-frontend/TD-01, phase-02-auth-frontend/TD-04 |
 
 ## Testing Requirements
 

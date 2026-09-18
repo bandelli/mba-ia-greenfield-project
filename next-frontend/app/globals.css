@@ -256,6 +256,7 @@
   --color-secondary: var(--secondary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
+  --color-overlay: var(--overlay);
 }
 
 @media (prefers-color-scheme: dark) {

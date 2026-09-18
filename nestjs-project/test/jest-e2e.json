@@ -4,7 +4,11 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.(t|j)s$": "ts-jest",
+    "^.+\\.mjs$": "<rootDir>/../jest-esm-transform.js"
   },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(@tus|srvx)/)"
+  ],
   "setupFiles": ["dotenv/config"]
 }

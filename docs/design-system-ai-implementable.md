@@ -1,145 +1,145 @@
-# AI-implementável como propriedade emergente
+# AI-implementable as an emergent property
 
 ---
 
-Doc complementar a `design-system-pillars.md`. Lá, os 6 pilares são apresentados como critérios de avaliação de um DS para humanos. Aqui, o ângulo é diferente: **um DS que cumpre os 6 pilares é, por construção, implementável por agente** — sem precisar de mais regras explícitas. AI-implementável não é um pilar à parte. É propriedade emergente.
+Companion doc to `design-system-pillars.md`. There, the 6 pillars are presented as evaluation criteria for a DS aimed at humans. Here, the angle is different: **a DS that fulfills the 6 pillars is, by construction, implementable by an agent** — without needing more explicit rules. AI-implementable is not a separate pillar. It's an emergent property.
 
-Pré-requisito de leitura: você precisa conhecer o vocabulário e os 6 pilares de `design-system-pillars.md` (ou um equivalente). Este doc não redefine os termos.
-
----
-
-## Tese
-
-Os 6 pilares foram desenhados para problemas humanos: rebrand barato, dark mode sem refactor, drift detectável, contrato auditável. **A surpresa é que esses mesmos pilares são exatamente o que um agente de IA precisa para gerar código consistente a partir de um design.** Não é coincidência: ambos os "consumidores" (dev humano e agente) precisam dos mesmos invariantes — nomes que carregam intenção, camadas que isolam mudança, contrato 1:1, decisões consultáveis.
-
-Por isso, "AI-implementável" não é meta separada. É **diagnóstico** de uma qualidade que sempre foi importante. A diferença é que IA torna esse diagnóstico mais visível, mais rápido, mais barato.
+Reading prerequisite: you need to know the vocabulary and the 6 pillars from `design-system-pillars.md` (or an equivalent). This doc doesn't redefine the terms.
 
 ---
 
-## O que um agente precisa, em ordem
+## Thesis
 
-Agente de IA gerando código a partir de Figma precisa, em sequência:
+The 6 pillars were designed for human problems: cheap rebranding, dark mode without a refactor, detectable drift, an auditable contract. **The surprise is that those same pillars are exactly what an AI agent needs to generate consistent code from a design.** It's not a coincidence: both "consumers" (human dev and agent) need the same invariants — names that carry intent, layers that isolate change, a 1:1 contract, queryable decisions.
 
-1. Identificar qual componente do código corresponde ao componente Figma. **(resolvido por: pilar 4 — Code Connect mapping)**
-2. Saber qual valor usar onde — texto na cor do quê? **(resolvido por: pilar 1 — camadas, e pilar 2 — nomes semânticos)**
-3. Não sobrescrever variants existentes nem inventar novas. **(resolvido por: pilar 3 — contrato)**
-4. Saber se uma cor responde a Light/Dark. **(resolvido por: pilar 5 — política de theming)**
-5. Não recriar tokens já existentes. **(resolvido por: pilar 4 — drift detection acusa hardcoded)**
-6. Saber por que um token existe quando precisa decidir manter ou substituir. **(resolvido por: pilar 6 — decisões)**
-
-Cada item abaixo destrincha como o pilar correspondente entrega isso.
+That's why "AI-implementable" isn't a separate goal. It's a **diagnostic** of a quality that has always mattered. The difference is that AI makes that diagnostic more visible, faster, cheaper.
 
 ---
 
-## Pilar 1 — Tokens em camadas → agente sabe qual camada bindar
+## What an agent needs, in order
 
-Sem camadas, o agente vê `#EF4444` no Figma e tem três escolhas: bindar `red-500` no componente, criar uma classe ad-hoc, ou hardcodar. Todas erradas.
+An AI agent generating code from Figma needs, in sequence:
 
-Com camadas, o agente vê o token bound (`theme.primary`) no Figma, encontra `theme.primary` no CSS, e bind-a no componente. Decisão mecânica.
+1. Identify which code component corresponds to the Figma component. **(solved by: pillar 4 — Code Connect mapping)**
+2. Know which value to use where — text in what color? **(solved by: pillar 1 — layers, and pillar 2 — semantic names)**
+3. Not overwrite existing variants or invent new ones. **(solved by: pillar 3 — contract)**
+4. Know whether a color responds to Light/Dark. **(solved by: pillar 5 — theming policy)**
+5. Not recreate tokens that already exist. **(solved by: pillar 4 — drift detection flags hardcodes)**
+6. Know why a token exists when it needs to decide whether to keep or replace it. **(solved by: pillar 6 — decisions)**
 
-Sem pilar 1, agentes geram código que "funciona visualmente" mas quebra o DS — multiplicando exatamente o trabalho que o DS deveria evitar.
-
----
-
-## Pilar 2 — Nomeação por intenção → agente não confunde aparência com propósito
-
-Agente lê "primary" e sabe que essa é a cor principal da brand, independente de matiz. Lê "destructive" e sabe que é ação destrutiva. Não confunde com "azul" — porque o nome não diz "azul".
-
-Quando o agente precisa decidir "esse botão é primary ou cta?", olha para o Figma, vê o token aplicado, replica. Sem inferência sobre matiz.
-
-Pilar 2 evita que o agente caia em armadilhas como "tem `error-red`, vou usar pra status de erro" — sem saber que o time usa `destructive` para isso e `error-red` é primitive.
+Each item below unpacks how the corresponding pillar delivers this.
 
 ---
 
-## Pilar 3 — Contrato de componente → agente gera variants corretos
+## Pillar 1 — Layered tokens → the agent knows which layer to bind to
 
-Agente vê `<Button variant="primary" size="md">` no Figma. Para gerar código, precisa que esse contrato exista 1:1 no React. Pilar 3 garante.
+Without layers, the agent sees `#EF4444` in Figma and has three choices: bind `red-500` in the component, create an ad-hoc class, or hardcode it. All wrong.
 
-Sem pilar 3, o agente vai: tentar `variant="primary"` (não existe no código), inferir `className="btn-primary"` (não convencional), ou gerar inline styles. Saída inconsistente.
+With layers, the agent sees the bound token (`theme.primary`) in Figma, finds `theme.primary` in the CSS, and binds it in the component. A mechanical decision.
 
-Com pilar 3, mapeamento é direto.
-
-A11y (acessibilidade) default é particularmente importante: agente raramente lembra de adicionar `:focus-visible` corretamente. Se o componente já tem por default, agente não precisa nem pensar.
+Without pillar 1, agents generate code that "works visually" but breaks the DS — multiplying exactly the work the DS was supposed to prevent.
 
 ---
 
-## Pilar 4 — Fonte única alinhada → agente detecta o próprio drift
+## Pillar 2 — Intent-based naming → the agent doesn't confuse appearance with purpose
 
-Agente recém-gerado: "vou usar `#FFFFFF` aqui". Hardcoded scanner no CI: "❌ hardcoded em componente". Agente reescreve usando `surface-default`. Auto-correção.
+The agent reads "primary" and knows it's the brand's main color, regardless of hue. It reads "destructive" and knows it's a destructive action. It doesn't confuse it with "blue" — because the name doesn't say "blue".
 
-Sem detector, o agente acumula hardcodes e ninguém percebe. O DS degrada lentamente.
+When the agent needs to decide "is this button primary or cta?", it looks at Figma, sees the applied token, and replicates it. No inference about hue.
 
-Mais sutil: Code Connect mapping permite que agente, ao ler um frame Figma, saiba qual componente do código corresponde — sem precisar inferir do nome (`Card.tsx` pode ser qualquer coisa). Saída determinística em vez de palpite.
-
----
-
-## Pilar 5 — Política explícita de theming → agente sabe quando aplicar theme
-
-Agente vê uma cor no Figma. É bound em `theme.surface-default`? Aplique theme. É hardcoded `#000`? Pode ser zona theme-independent (correto preservar como hardcoded) ou pode ser bug (deveria ser theme).
-
-Política explícita de theming dá ao agente a regra: "essa zona é theme-independent? consulte o doc. Sim? mantenha hardcoded. Não? bind theme."
-
-Sem política, o agente faz a coisa errada com igual confiança nos dois casos.
+Pillar 2 keeps the agent from falling into traps like "there's `error-red`, I'll use it for error status" — without knowing the team uses `destructive` for that and `error-red` is just a primitive.
 
 ---
 
-## Pilar 6 — Decisões versionadas → agente recupera contexto sem alucinar
+## Pillar 3 — Component contract → the agent generates correct variants
 
-Agente está mexendo num componente. Encontra um token estranho (`theme.cta-secondary`). Pergunta: por que esse token existe?
+The agent sees `<Button variant="primary" size="md">` in Figma. To generate code, it needs that contract to exist 1:1 in React. Pillar 3 guarantees it.
 
-Com decision log, agente lê: "TD-23: theme.cta-secondary criado em 2026-04-12 para suportar campanhas sazonais sem mexer em primary." Decisão mecânica: preservar.
+Without pillar 3, the agent will: try `variant="primary"` (doesn't exist in code), infer `className="btn-primary"` (not conventional), or generate inline styles. Inconsistent output.
 
-Sem decision log, agente: ou ignora (perpetua o token), ou alucina razão ("provavelmente é dark mode da brand"), ou sugere remoção ("parece duplicado de primary"). Errado em proporção variável.
+With pillar 3, the mapping is direct.
 
-Pilar 6 transforma "por que" de gambiarra em prosa lookup. Agente recupera contexto sem inventar.
+Default a11y (accessibility) is particularly important: the agent rarely remembers to add `:focus-visible` correctly. If the component already has it by default, the agent doesn't even need to think about it.
 
 ---
 
-## Síntese
+## Pillar 4 — Aligned single source → the agent detects its own drift
+
+Freshly generated agent code: "I'll use `#FFFFFF` here". Hardcoded scanner in CI: "❌ hardcoded in component". Agent rewrites using `surface-default`. Self-correction.
+
+Without a detector, the agent accumulates hardcodes and nobody notices. The DS degrades slowly.
+
+More subtly: Code Connect mapping lets the agent, when reading a Figma frame, know which code component corresponds to it — without needing to infer from the name (`Card.tsx` could be anything). Deterministic output instead of a guess.
+
+---
+
+## Pillar 5 — Explicit theming policy → the agent knows when to apply theme
+
+The agent sees a color in Figma. Is it bound to `theme.surface-default`? Apply theme. Is it hardcoded `#000`? It could be a theme-independent zone (correct to keep it hardcoded) or it could be a bug (should be theme).
+
+An explicit theming policy gives the agent the rule: "is this zone theme-independent? check the doc. Yes? keep it hardcoded. No? bind theme."
+
+Without a policy, the agent does the wrong thing with equal confidence in both cases.
+
+---
+
+## Pillar 6 — Versioned decisions → the agent retrieves context without hallucinating
+
+The agent is working on a component. It finds a strange token (`theme.cta-secondary`). It asks: why does this token exist?
+
+With a decision log, the agent reads: "TD-23: theme.cta-secondary created on 2026-04-12 to support seasonal campaigns without touching primary." Mechanical decision: preserve it.
+
+Without a decision log, the agent either: ignores it (perpetuating the token), hallucinates a reason ("probably the brand's dark mode"), or suggests removing it ("looks like a duplicate of primary"). Wrong in varying proportions.
+
+Pillar 6 turns "why" from guesswork into a prose lookup. The agent retrieves context without inventing it.
+
+---
+
+## Synthesis
 
 ```
-Pilar 1 → camada para bindar
-Pilar 2 → nome semântico não confunde
-Pilar 3 → contrato 1:1
-Pilar 4 → drift detectado e corrigido
-Pilar 5 → theme aplicado quando deve
-Pilar 6 → decisões consultáveis
+Pillar 1 → layer to bind to
+Pillar 2 → semantic name avoids confusion
+Pillar 3 → 1:1 contract
+Pillar 4 → drift detected and corrected
+Pillar 5 → theme applied when it should be
+Pillar 6 → queryable decisions
 ```
 
-Visualmente, a relação foundations → pilares → propriedade emergente:
+Visually, the relationship foundations → pillars → emergent property:
 
 ```mermaid
 flowchart LR
     subgraph FOUND["FOUNDATIONS"]
-        FCOR[Cor]
-        FTYPE[Tipografia]
-        FSHAPE[Forma]
-        FELEV[Elevação]
-        FMOT[Movimento]
+        FCOR[Color]
+        FTYPE[Typography]
+        FSHAPE[Shape]
+        FELEV[Elevation]
+        FMOT[Motion]
     end
 
-    subgraph PILLARS["6 PILARES AVALIATIVOS"]
-        P1["Pilar 1 - Tokens em camadas"]
-        P2["Pilar 2 - Nomeacao por intencao"]
-        P3["Pilar 3 - Contrato de componente"]
-        P4["Pilar 4 - Fonte unica alinhada"]
-        P5["Pilar 5 - Politica de theming"]
-        P6["Pilar 6 - Decisoes versionadas"]
+    subgraph PILLARS["6 EVALUATIVE PILLARS"]
+        P1["Pillar 1 - Layered tokens"]
+        P2["Pillar 2 - Intent-based naming"]
+        P3["Pillar 3 - Component contract"]
+        P4["Pillar 4 - Aligned single source"]
+        P5["Pillar 5 - Theming policy"]
+        P6["Pillar 6 - Versioned decisions"]
     end
 
-    subgraph EMERGE["PROPRIEDADE EMERGENTE"]
-        AI["AI-implementavel<br/>por construcao"]
+    subgraph EMERGE["EMERGENT PROPERTY"]
+        AI["AI-implementable<br/>by construction"]
     end
 
-    FOUND -.sao organizadas por.-> PILLARS
-    PILLARS -.cumpridos juntos produzem.-> EMERGE
+    FOUND -.are organized by.-> PILLARS
+    PILLARS -.fulfilled together produce.-> EMERGE
 
-    P1 -.implica.-> AI
-    P2 -.implica.-> AI
-    P3 -.implica.-> AI
-    P4 -.implica.-> AI
-    P5 -.implica.-> AI
-    P6 -.implica.-> AI
+    P1 -.implies.-> AI
+    P2 -.implies.-> AI
+    P3 -.implies.-> AI
+    P4 -.implies.-> AI
+    P5 -.implies.-> AI
+    P6 -.implies.-> AI
 
     classDef foundation fill:#FEF3C7,stroke:#92400E,color:#451A03
     classDef pillar fill:#DBEAFE,stroke:#1E40AF,color:#0C1E4F
@@ -152,20 +152,20 @@ flowchart LR
 
 ---
 
-## O teste último
+## The ultimate test
 
-**Dada apenas a documentação do DS (sem human-in-the-loop, sem onboarding presencial), um agente competente consegue implementar uma feature usando os componentes corretos, os tokens corretos, com estados corretos, e respeitando theming?**
+**Given only the DS documentation (no human-in-the-loop, no in-person onboarding), can a competent agent implement a feature using the correct components, the correct tokens, with the correct states, and respecting theming?**
 
-Se sim, o DS está cumprindo os 6 pilares. Se não, há pilar fraco — e é onde investir.
+If yes, the DS fulfills the 6 pillars. If not, there's a weak pillar — and that's where to invest.
 
-Esse teste vale **antes mesmo de pensar em IA**. Um DS que satisfaz esse critério é também um DS onde devs juniores produzem código consistente, designers novos usam tokens corretos, e o produto não diverge sob pressão de prazo. IA é o **caso extremo** do mesmo critério: zero contexto humano, pura leitura do DS.
+This test holds **even before thinking about AI**. A DS that satisfies this criterion is also a DS where junior devs produce consistent code, new designers use the correct tokens, and the product doesn't diverge under deadline pressure. AI is the **extreme case** of the same criterion: zero human context, pure reading of the DS.
 
-Por isso AI-implementável não é meta nova — é diagnóstico de uma qualidade que sempre foi importante. A diferença é que IA agora torna esse diagnóstico mais visível, mais rápido, mais barato.
+That's why AI-implementable isn't a new goal — it's a diagnostic of a quality that has always mattered. The difference is that AI now makes that diagnostic more visible, faster, cheaper.
 
 ---
 
-## Para onde ir depois
+## Where to go next
 
-- **`design-system-pillars.md`** — o doc-mãe, com os 6 pilares explicados em si.
-- **Code Connect (Figma)** — `figma.com/code-connect` — mecanismo declarativo Figma↔código que reduz fricção do pilar 4 quando IA é parte do fluxo.
-- **MCP servers para Figma** — ferramentas como o Figma Dev Mode MCP expõem `get_code_connect_map`, `get_design_context`, `get_screenshot`. Sem Code Connect explícito, o pipeline ainda funciona via naming consistente + esses contextos.
+- **`design-system-pillars.md`** — the parent doc, with the 6 pillars explained in depth.
+- **Code Connect (Figma)** — `figma.com/code-connect` — declarative Figma↔code mechanism that reduces pillar 4 friction when AI is part of the flow.
+- **MCP servers for Figma** — tools like the Figma Dev Mode MCP expose `get_code_connect_map`, `get_design_context`, `get_screenshot`. Without explicit Code Connect, the pipeline still works via consistent naming + these contexts.

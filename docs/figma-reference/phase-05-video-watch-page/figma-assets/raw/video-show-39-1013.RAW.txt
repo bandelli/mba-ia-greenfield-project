@@ -1,0 +1,508 @@
+const imgImg = "https://www.figma.com/api/mcp/asset/663c8973-a4fd-4f28-8b21-775fd59aa9c1.png";
+const imgImg1 = "https://www.figma.com/api/mcp/asset/fea052d3-ef94-433f-8cf9-7c9bd3925236.png";
+const imgImg2 = "https://www.figma.com/api/mcp/asset/ea437f22-294c-4924-a352-0b6298c8ef24.png";
+const imgImg3 = "https://www.figma.com/api/mcp/asset/3c0eb0da-5b4e-40b4-8442-8da3df27587c.png";
+const imgImg4 = "https://www.figma.com/api/mcp/asset/3ccb9011-6c4f-4236-8463-cd7705463149.png";
+const imgImg5 = "https://www.figma.com/api/mcp/asset/e25c91ab-866b-450f-8c36-dcad34bd709c.png";
+const imgImg6 = "https://www.figma.com/api/mcp/asset/60c73d85-2b9d-4f20-baa4-809735e5c89d.png";
+const imgImg7 = "https://www.figma.com/api/mcp/asset/59ba5304-c7aa-47a1-b1de-1744351c2def.png";
+const imgImg8 = "https://www.figma.com/api/mcp/asset/c041a7fc-ad1d-4e0e-8859-7f5279bf7b2d.png";
+const imgFrame = "https://www.figma.com/api/mcp/asset/daad5544-f5f5-404c-8ee2-d1e51d1c7964.svg";
+const imgFrame1 = "https://www.figma.com/api/mcp/asset/bdbd3dae-b544-452a-b330-daf54c2e6414.svg";
+const imgFrame2 = "https://www.figma.com/api/mcp/asset/bdd103ab-339b-4de6-8d90-307500426f02.svg";
+const imgFrame3 = "https://www.figma.com/api/mcp/asset/a4a1268f-69a0-41f7-a8f5-c3a7053ac65d.svg";
+const imgFrame4 = "https://www.figma.com/api/mcp/asset/2d7ada89-c02c-4360-bfb8-6d8bf2d2a4fb.svg";
+const imgFrame5 = "https://www.figma.com/api/mcp/asset/57aa06ac-bcfb-41d3-9c9f-a62334ba8134.svg";
+const imgFrame6 = "https://www.figma.com/api/mcp/asset/7d204224-30c4-437f-8c68-f6302c6d8289.svg";
+const imgFrame7 = "https://www.figma.com/api/mcp/asset/1c6614e1-ffd7-4973-af73-df796cf9b240.svg";
+const imgFrame8 = "https://www.figma.com/api/mcp/asset/71b8e92e-0818-4438-b2c6-cabe2006be32.svg";
+const imgFrame9 = "https://www.figma.com/api/mcp/asset/aca47b6d-c8d4-4a9a-80ab-c870a1776c4d.svg";
+const imgFrame10 = "https://www.figma.com/api/mcp/asset/728f12ed-99ae-40f9-b6d1-adbba07f9635.svg";
+const imgFrame11 = "https://www.figma.com/api/mcp/asset/8de0359d-a72e-4333-96a4-51f898b19e9b.svg";
+const imgFrame12 = "https://www.figma.com/api/mcp/asset/2436a697-97b7-4210-ac8a-db6b63eeb38b.svg";
+const imgFrame13 = "https://www.figma.com/api/mcp/asset/ad3c2a49-baa5-4e96-8520-0f2317cea9f6.svg";
+
+export default function VideoShow() {
+  return (
+    <div className="bg-white border-2 border-[#ced4da] border-solid content-stretch flex flex-col items-start overflow-clip relative rounded-[8px] size-full" data-node-id="39:1013" data-name="Video show">
+      <div className="bg-[#0f0f0f] border-0 border-[#e5e7eb] border-solid h-[1560.25px] overflow-clip relative shrink-0 w-[1440px]" data-node-id="39:1014" data-name="body">
+        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1560.25px] left-0 top-0 w-[1440px]" data-node-id="39:1015" data-name="div">
+          <div className="absolute bg-[#0f0f0f] border-0 border-[#e5e7eb] border-solid h-[1504.25px] left-0 top-[56px] w-[1440px]" data-node-id="39:1017" data-name="main">
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1456.25px] left-[24px] top-[24px] w-[968px]" data-node-id="39:1021" data-name="div">
+              <div className="absolute bg-black border-0 border-[#e5e7eb] border-solid h-[544.5px] left-0 overflow-clip rounded-[12px] shadow-[0px_4px_6px_0px_rgba(0,0,0,0.1),0px_10px_15px_0px_rgba(0,0,0,0.1)] top-0 w-[968px]" data-node-id="39:1028" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[544.5px] left-0 overflow-clip top-0 w-[968px]" data-node-id="39:1039" data-name="div">
+                  <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 opacity-80 size-[968px] top-[-211.75px]" data-node-id="39:1065" data-name="img">
+                    <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImg} />
+                  </div>
+                </div>
+              </div>
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[871.75px] left-0 top-[560.5px] w-[968px]" data-node-id="39:1029" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[60px] left-0 top-0 w-[968px]" data-node-id="39:1040" data-name="h1">
+                  <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-0 not-italic text-[#f1f1f1] text-[24px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1041">
+                    <p className="leading-[30px] mb-0 whitespace-pre">{`Building a Full Stack App from Scratch (React, Node, MongoDB) - Complete Course `}</p>
+                    <p className="leading-[30px] whitespace-pre">2024</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[48px] left-0 top-[72px] w-[968px]" data-node-id="39:1042" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[48px] left-0 top-0 w-[351.906px]" data-node-id="39:1066" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid left-0 overflow-clip size-[48px] top-0" data-node-id="39:1092" data-name="div">
+                      <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 rounded-[9999px] size-[48px] top-0" data-node-id="39:1139" data-name="img">
+                        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[9999px] size-full" src={imgImg1} />
+                      </div>
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[60px] top-[2px] w-[164.234px]" data-node-id="39:1093" data-name="div">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-0 top-0 w-[164.234px]" data-node-id="39:1140" data-name="div">
+                        <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[20px] left-0 not-italic text-[#f1f1f1] text-[16px] top-[2px] tracking-[-0.5px] w-[159.445px]" data-node-id="39:1179">{`WebDev Simplified `}</p>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[152.23px] top-0 w-[12px]" data-node-id="39:1180" data-name="i">
+                          <div className="absolute content-stretch flex items-center justify-center left-0 size-[12px] top-[5.5px]" data-node-id="39:1205" data-name="svg">
+                            <div className="relative shrink-0 size-[12px]" data-node-id="39:1206" data-name="Frame">
+                              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[20px] left-0 not-italic text-[#aaa] text-[14px] top-[25px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1141">
+                        1.2M subscribers
+                      </p>
+                    </div>
+                    <div className="absolute bg-[red] border-0 border-[#e5e7eb] border-solid h-[36px] left-[252.23px] rounded-[9999px] top-[6px] w-[99.672px]" data-node-id="39:1094" data-name="button">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[17px] left-[49.84px] not-italic text-[14px] text-center text-white top-[9px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1142">
+                        Subscribe
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[553.69px] top-[2px] w-[414.313px]" data-node-id="39:1067" data-name="div">
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[44px] left-0 overflow-clip rounded-[9999px] top-0 w-[136.672px]" data-node-id="39:1095" data-name="div">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-r border-solid h-[44px] left-0 top-0 w-[86.672px]" data-node-id="39:1143" data-name="button">
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[16px] top-[8px] w-[18px]" data-node-id="39:1181" data-name="i">
+                          <div className="absolute content-stretch flex items-center justify-center left-0 size-[18px] top-[4.25px]" data-node-id="39:1208" data-name="svg">
+                            <div className="relative shrink-0 size-[18px]" data-node-id="39:1209" data-name="Frame">
+                              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame1} />
+                            </div>
+                          </div>
+                        </div>
+                        <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[59.34px] not-italic text-[#f1f1f1] text-[14px] text-center top-[13px] tracking-[-0.5px] w-[42.672px]" data-node-id="39:1182">{` 24K`}</p>
+                      </div>
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[86.67px] top-0 w-[50px]" data-node-id="39:1144" data-name="button">
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[21px] left-[16px] top-[11px] w-[18px]" data-node-id="39:1183" data-name="i">
+                          <div className="absolute content-stretch flex items-center justify-center left-0 size-[18px] top-[1.25px]" data-node-id="39:1211" data-name="svg">
+                            <div className="relative shrink-0 size-[18px]" data-node-id="39:1212" data-name="Frame">
+                              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame2} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[44px] left-[144.67px] rounded-[9999px] top-0 w-[96.797px]" data-node-id="39:1096" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[16px] top-[8px] w-[18px]" data-node-id="39:1145" data-name="i">
+                        <div className="absolute content-stretch flex items-center justify-center left-0 size-[18px] top-[4.25px]" data-node-id="39:1184" data-name="svg">
+                          <div className="relative shrink-0 size-[18px]" data-node-id="39:1185" data-name="Frame">
+                            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame3} />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[17px] left-[64.9px] not-italic text-[#f1f1f1] text-[14px] text-center top-[13px] tracking-[-0.5px] w-[53.797px]" data-node-id="39:1146">{` Share`}</p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[44px] left-[249.47px] rounded-[9999px] top-0 w-[125.094px]" data-node-id="39:1097" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[16px] top-[8px] w-[18px]" data-node-id="39:1147" data-name="i">
+                        <div className="absolute content-stretch flex items-center justify-center left-0 size-[18px] top-[4.25px]" data-node-id="39:1187" data-name="svg">
+                          <div className="relative shrink-0 size-[18px]" data-node-id="39:1188" data-name="Frame">
+                            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame4} />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[17px] left-[79.05px] not-italic text-[#f1f1f1] text-[14px] text-center top-[13px] tracking-[-0.5px] w-[82.094px]" data-node-id="39:1148">{` Download`}</p>
+                    </div>
+                    <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[44px] left-[382.56px] rounded-[9999px] top-0 w-[31.75px]" data-node-id="39:1098" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[21px] left-[8px] top-[11px] w-[15.75px]" data-node-id="39:1149" data-name="i">
+                        <div className="absolute content-stretch flex h-[18px] items-center justify-center left-0 top-[1.25px] w-[15.75px]" data-node-id="39:1190" data-name="svg">
+                          <div className="h-[18px] relative shrink-0 w-[15.75px]" data-node-id="39:1191" data-name="Frame">
+                            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame5} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[497.5px] left-0 overflow-clip rounded-[12px] top-[136px] w-[968px]" data-node-id="39:1043" data-name="div">
+                  <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid font-['Inter:Bold'] font-bold h-[20px] leading-[20px] left-[16px] not-italic text-[#f1f1f1] text-[14px] top-[16px] tracking-[-0.5px] w-[936px] whitespace-nowrap" data-node-id="39:1068" data-name="div">
+                    <p className="absolute left-0 top-px" data-node-id="39:1099">
+                      1.2M views
+                    </p>
+                    <p className="absolute left-[83.98px] top-px" data-node-id="39:1100">
+                      •
+                    </p>
+                    <p className="absolute left-[98.63px] top-px" data-node-id="39:1101">
+                      Oct 15, 2023
+                    </p>
+                  </div>
+                  <div className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[0] left-[16px] not-italic text-[#f1f1f1] text-[14px] top-[46px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1069">
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`Learn how to build a complete full-stack application from scratch using the MERN stack (MongoDB, Express, React, Node.js). This `}</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">comprehensive tutorial covers everything from setting up the backend API to creating a responsive frontend UI.</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">Topics covered:</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`0:00 - Introduction & Project Setup`}</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`15:30 - Backend: Node.js & Express API`}</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">45:00 - Database: MongoDB Integration</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`1:10:00 - Frontend: React Setup & Routing`}</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">1:45:00 - State Management with Redux</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`2:30:00 - Authentication & Authorization`}</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">3:15:00 - Deployment strategies</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">Resources:</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`GitHub Repo: https://github.com/example/fullstack-app`}</p>
+                    <p className="leading-[23px] mb-0 whitespace-pre">{`Join our Discord community: https://discord.gg/example`}</p>
+                    <p className="leading-[23px] whitespace-pre">{`Don't forget to like, subscribe, and hit the notification bell for more web development tutorials!`}</p>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[16px] top-[438.75px] w-[76.563px]" data-node-id="39:1070" data-name="button">
+                    <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[17px] left-[38.28px] not-italic text-[#f1f1f1] text-[14px] text-center top-px tracking-[-0.5px] w-[84.563px]" data-node-id="39:1102">
+                      Show more
+                    </p>
+                  </div>
+                  <div className="absolute bg-gradient-to-b border-0 border-[#e5e7eb] border-solid from-[rgba(0,0,0,0)] h-[40px] left-0 to-[#272727] top-[457.5px] w-[968px]" data-node-id="39:1071" data-name="::after" />
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[214.25px] left-0 top-[634.75px] w-[968px]" data-node-id="39:1044" data-name="div">
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 top-0 w-[968px]" data-node-id="39:1072" data-name="div">
+                    <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[28px] left-0 not-italic text-[#f1f1f1] text-[20px] top-[6px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1103">
+                      4,256 Comments
+                    </p>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-[192.61px] rounded-[8px] top-0 w-[105.578px]" data-node-id="39:1104" data-name="button">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[12px] top-[6px] w-[18px]" data-node-id="39:1150" data-name="i">
+                        <div className="absolute content-stretch flex h-[16px] items-center justify-center left-0 top-[4px] w-[18px]" data-node-id="39:1193" data-name="svg">
+                          <div className="h-[16px] relative shrink-0 w-[18px]" data-node-id="39:1194" data-name="Frame">
+                            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame6} />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[20px] left-[69.29px] not-italic text-[#f1f1f1] text-[16px] text-center top-[8px] tracking-[-0.5px] w-[70.578px]" data-node-id="39:1151">{` Sort by`}</p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-0 overflow-clip top-[60px] w-[968px]" data-node-id="39:1073" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 rounded-[9999px] size-[40px] top-0" data-node-id="39:1105" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[9999px] size-full" src={imgImg2} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-[56px] top-0 w-[912px]" data-node-id="39:1106" data-name="div">
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-[#3f3f3f] border-b border-solid h-[33px] left-0 top-0 w-[912px]" data-node-id="39:1152" data-name="input">
+                        <div className="-translate-y-1/2 [word-break:break-word] absolute flex flex-col font-['Inter:Medium'] font-medium h-[33px] justify-center leading-[0] left-0 not-italic text-[16px] text-[rgba(241,241,241,0.5)] top-[16.5px] tracking-[-0.5px] w-[912px]" data-node-id="39:1196">
+                          <p className="leading-[24px]">Add a comment...</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[82.25px] left-0 overflow-clip top-[132px] w-[968px]" data-node-id="39:1074" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 rounded-[9999px] size-[40px] top-0" data-node-id="39:1107" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[9999px] size-full" src={imgImg3} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[82.25px] left-[56px] top-0 w-[884.5px]" data-node-id="39:1108" data-name="div">
+                      <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[19.5px] left-0 not-italic top-0 tracking-[-0.5px] w-[884.5px] whitespace-nowrap" data-node-id="39:1153" data-name="div">
+                        <p className="absolute font-['Inter:Bold'] font-bold leading-[20px] left-0 text-[#f1f1f1] text-[13px] top-px" data-node-id="39:1197">
+                          @DevStudent99
+                        </p>
+                        <p className="absolute font-['Inter:Medium'] font-medium leading-[16px] left-[112.95px] text-[#aaa] text-[12px] top-[1.75px]" data-node-id="39:1198">
+                          2 weeks ago
+                        </p>
+                      </div>
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[22.75px] left-0 top-[23.5px] w-[884.5px]" data-node-id="39:1154" data-name="p">
+                        <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[23px] left-0 not-italic text-[#f1f1f1] text-[14px] top-[2px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1155">
+                          This is exactly what I needed for my final year project. The explanation on Redux state management was incredibly clear. Thank you!
+                        </p>
+                      </div>
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-0 top-[54.25px] w-[884.5px]" data-node-id="39:1156" data-name="div">
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-0 top-[2px] w-[42.016px]" data-node-id="39:1199" data-name="button">
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-0 top-0 w-[16px]" data-node-id="39:1214" data-name="i">
+                            <div className="absolute content-stretch flex items-center justify-center left-0 size-[16px] top-[4px]" data-node-id="39:1218" data-name="svg">
+                              <div className="relative shrink-0 size-[16px]" data-node-id="39:1219" data-name="Frame">
+                                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame7} />
+                              </div>
+                            </div>
+                          </div>
+                          <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[31.01px] not-italic text-[#aaa] text-[12px] text-center top-[4px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1215">
+                            245
+                          </p>
+                        </div>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[58.02px] top-[2px] w-[16px]" data-node-id="39:1200" data-name="button">
+                          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-0 top-[2px] w-[16px]" data-node-id="39:1216" data-name="i">
+                            <div className="absolute content-stretch flex items-center justify-center left-0 size-[16px] top-[2px]" data-node-id="39:1221" data-name="svg">
+                              <div className="relative shrink-0 size-[16px]" data-node-id="39:1222" data-name="Frame">
+                                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame8} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[28px] left-[90.02px] rounded-[9999px] top-0 w-[57.063px]" data-node-id="39:1201" data-name="button">
+                          <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[28.53px] not-italic text-[#aaa] text-[12px] text-center top-[6px] tracking-[-0.5px] w-[65.063px]" data-node-id="39:1217">
+                            Reply
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[1456px] left-[1016px] top-[24px] w-[400px]" data-node-id="39:1022" data-name="div">
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-0 overflow-clip top-0 w-[400px]" data-node-id="39:1030" data-name="div">
+                <div className="absolute bg-[#f1f1f1] border-0 border-[#e5e7eb] border-solid h-[32px] left-0 rounded-[8px] top-0 w-[41.516px]" data-node-id="39:1045" data-name="button">
+                  <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[20.76px] not-italic text-[#0f0f0f] text-[14px] text-center top-[7px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1075">
+                    All
+                  </p>
+                </div>
+                <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[32px] left-[49.52px] rounded-[8px] top-0 w-[189.938px]" data-node-id="39:1046" data-name="button">
+                  <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[94.97px] not-italic text-[#f1f1f1] text-[14px] text-center top-[7px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1076">
+                    From WebDev Simplified
+                  </p>
+                </div>
+                <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[32px] left-[247.45px] rounded-[8px] top-0 w-[62.516px]" data-node-id="39:1047" data-name="button">
+                  <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[31.26px] not-italic text-[#f1f1f1] text-[14px] text-center top-[7px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1077">
+                    React
+                  </p>
+                </div>
+                <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[32px] left-[317.97px] rounded-[8px] top-0 w-[76px]" data-node-id="39:1048" data-name="button">
+                  <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Semi_Bold'] font-semibold leading-[17px] left-[38px] not-italic text-[#f1f1f1] text-[14px] text-center top-[7px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1078">
+                    Node.js
+                  </p>
+                </div>
+              </div>
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[528px] left-0 top-[60px] w-[400px]" data-node-id="39:1031" data-name="div">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 top-0 w-[400px]" data-node-id="39:1049" data-name="video list">
+                  <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 overflow-clip rounded-[8px] top-0 w-[160px]" data-node-id="39:1079" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid h-[106.797px] left-0 top-0 w-[160px]" data-node-id="39:1109" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImg4} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0.8)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[115.42px] rounded-[4px] top-[72px] w-[40.578px]" data-node-id="39:1110" data-name="div">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[20.29px] not-italic text-[12px] text-center text-white top-[2px] tracking-[-0.5px] w-[48.578px]" data-node-id="39:1157">
+                        18:45
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-[168px] top-0 w-[232px]" data-node-id="39:1080" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[35px] left-0 overflow-clip top-0 w-[208px]" data-node-id="39:1111" data-name="h3">
+                      <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-0 not-italic text-[#f1f1f1] text-[14px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1112">
+                        <p className="leading-[18px] mb-0 whitespace-pre">{`Advanced React Patterns You `}</p>
+                        <p className="leading-[18px] whitespace-pre">Need to Know in 2024</p>
+                      </div>
+                    </div>
+                    <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-0 not-italic text-[#aaa] text-[12px] top-[39px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1113">
+                      WebDev Simplified
+                    </p>
+                    <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid font-['Inter:Medium'] font-medium h-[16px] leading-[16px] left-0 not-italic text-[#aaa] top-[55px] tracking-[-0.5px] w-[208px] whitespace-nowrap" data-node-id="39:1114" data-name="div">
+                      <p className="absolute left-0 text-[12px] top-0" data-node-id="39:1158">
+                        850K views
+                      </p>
+                      <p className="absolute left-[71.17px] text-[8px] top-[3px]" data-node-id="39:1159">
+                        •
+                      </p>
+                      <p className="absolute left-[79.44px] text-[12px] top-0" data-node-id="39:1160">
+                        1 month ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 top-[108px] w-[400px]" data-node-id="39:1050" data-name="div">
+                  <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 overflow-clip rounded-[8px] top-0 w-[160px]" data-node-id="39:1081" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid h-[120px] left-0 top-0 w-[160px]" data-node-id="39:1115" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImg5} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0.8)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[115.42px] rounded-[4px] top-[72px] w-[40.578px]" data-node-id="39:1116" data-name="div">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[20.29px] not-italic text-[12px] text-center text-white top-[2px] tracking-[-0.5px] w-[48.578px]" data-node-id="39:1161">
+                        32:10
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-[168px] top-0 w-[232px]" data-node-id="39:1082" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[35px] left-0 overflow-clip top-0 w-[208px]" data-node-id="39:1117" data-name="h3">
+                      <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-0 not-italic text-[#f1f1f1] text-[14px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1118">
+                        <p className="leading-[18px] mb-0 whitespace-pre">{`Mastering CSS Grid & Flexbox `}</p>
+                        <p className="leading-[18px] whitespace-pre">- Visual Guide</p>
+                      </div>
+                    </div>
+                    <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-0 not-italic text-[#aaa] text-[12px] top-[39px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1119">
+                      Design Course
+                    </p>
+                    <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid font-['Inter:Medium'] font-medium h-[16px] leading-[16px] left-0 not-italic text-[#aaa] top-[55px] tracking-[-0.5px] w-[208px] whitespace-nowrap" data-node-id="39:1120" data-name="div">
+                      <p className="absolute left-0 text-[12px] top-0" data-node-id="39:1162">
+                        2.4M views
+                      </p>
+                      <p className="absolute left-[70.25px] text-[8px] top-[3px]" data-node-id="39:1163">
+                        •
+                      </p>
+                      <p className="absolute left-[78.52px] text-[12px] top-0" data-node-id="39:1164">
+                        8 months ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 top-[216px] w-[400px]" data-node-id="39:1051" data-name="div">
+                  <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 overflow-clip rounded-[8px] top-0 w-[160px]" data-node-id="39:1083" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid h-[106.797px] left-0 top-0 w-[160px]" data-node-id="39:1121" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImg6} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0.8)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[104.13px] rounded-[4px] top-[72px] w-[51.875px]" data-node-id="39:1122" data-name="div">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[25.94px] not-italic text-[12px] text-center text-white top-[2px] tracking-[-0.5px] w-[59.875px]" data-node-id="39:1165">
+                        1:05:22
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-[168px] top-0 w-[232px]" data-node-id="39:1084" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[35px] left-0 overflow-clip top-0 w-[208px]" data-node-id="39:1123" data-name="h3">
+                      <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-0 not-italic text-[#f1f1f1] text-[14px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1124">
+                        <p className="leading-[18px] mb-0 whitespace-pre">{`Build a Realtime Chat App `}</p>
+                        <p className="leading-[18px] whitespace-pre">with Socket.io</p>
+                      </div>
+                    </div>
+                    <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-0 not-italic text-[#aaa] text-[12px] top-[39px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1125">
+                      Traversy Media
+                    </p>
+                    <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid font-['Inter:Medium'] font-medium h-[16px] leading-[16px] left-0 not-italic text-[#aaa] top-[55px] tracking-[-0.5px] w-[208px] whitespace-nowrap" data-node-id="39:1126" data-name="div">
+                      <p className="absolute left-0 text-[12px] top-0" data-node-id="39:1166">
+                        650K views
+                      </p>
+                      <p className="absolute left-[71.19px] text-[8px] top-[3px]" data-node-id="39:1167">
+                        •
+                      </p>
+                      <p className="absolute left-[79.45px] text-[12px] top-0" data-node-id="39:1168">
+                        3 weeks ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 top-[324px] w-[400px]" data-node-id="39:1052" data-name="div">
+                  <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 overflow-clip rounded-[8px] top-0 w-[160px]" data-node-id="39:1085" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid h-[106.391px] left-0 top-0 w-[160px]" data-node-id="39:1127" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImg7} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0.8)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[112.94px] rounded-[4px] top-[72px] w-[43.063px]" data-node-id="39:1128" data-name="div">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[21.53px] not-italic text-[12px] text-center text-white top-[2px] tracking-[-0.5px] w-[51.063px]" data-node-id="39:1169">
+                        24:50
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-[168px] top-0 w-[232px]" data-node-id="39:1086" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[35px] left-0 overflow-clip top-0 w-[208px]" data-node-id="39:1129" data-name="h3">
+                      <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-0 not-italic text-[#f1f1f1] text-[14px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1130">
+                        <p className="leading-[18px] mb-0 whitespace-pre">{`10 TypeScript Features You `}</p>
+                        <p className="leading-[18px] whitespace-pre">{`Aren't Using`}</p>
+                      </div>
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[16px] left-0 top-[39px] w-[208px]" data-node-id="39:1131" data-name="span">
+                      <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[15px] left-0 not-italic text-[#aaa] text-[12px] top-0 tracking-[-0.5px] w-[57.488px]" data-node-id="39:1170">{`Fireship `}</p>
+                      <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[16px] left-[49.69px] top-0 w-[10px]" data-node-id="39:1171" data-name="i">
+                        <div className="absolute content-stretch flex items-center justify-center left-0 size-[10px] top-[3.25px]" data-node-id="39:1202" data-name="svg">
+                          <div className="relative shrink-0 size-[10px]" data-node-id="39:1203" data-name="Frame">
+                            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame9} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid font-['Inter:Medium'] font-medium h-[16px] leading-[16px] left-0 not-italic text-[#aaa] top-[55px] tracking-[-0.5px] w-[208px] whitespace-nowrap" data-node-id="39:1132" data-name="div">
+                      <p className="absolute left-0 text-[12px] top-0" data-node-id="39:1172">
+                        1.1M views
+                      </p>
+                      <p className="absolute left-[63.89px] text-[8px] top-[3px]" data-node-id="39:1173">
+                        •
+                      </p>
+                      <p className="absolute left-[72.16px] text-[12px] top-0" data-node-id="39:1174">
+                        5 months ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 top-[432px] w-[400px]" data-node-id="39:1053" data-name="div">
+                  <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[96px] left-0 overflow-clip rounded-[8px] top-0 w-[160px]" data-node-id="39:1087" data-name="div">
+                    <div className="absolute border-0 border-[#e5e7eb] border-solid h-[106.797px] left-0 top-0 w-[160px]" data-node-id="39:1133" data-name="img">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImg8} />
+                    </div>
+                    <div className="absolute bg-[rgba(0,0,0,0.8)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[115.67px] rounded-[4px] top-[72px] w-[40.328px]" data-node-id="39:1134" data-name="div">
+                      <p className="-translate-x-1/2 [word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[15px] left-[20.16px] not-italic text-[12px] text-center text-white top-[2px] tracking-[-0.5px] w-[48.328px]" data-node-id="39:1175">
+                        42:15
+                      </p>
+                    </div>
+                  </div>
+                  <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[96px] left-[168px] top-0 w-[232px]" data-node-id="39:1088" data-name="div">
+                    <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[35px] left-0 overflow-clip top-0 w-[208px]" data-node-id="39:1135" data-name="h3">
+                      <div className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[0] left-0 not-italic text-[#f1f1f1] text-[14px] top-0 tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1136">
+                        <p className="leading-[18px] mb-0 whitespace-pre">{`Next.js 14 Full Course 2024 | `}</p>
+                        <p className="leading-[18px] whitespace-pre">Build and Deploy</p>
+                      </div>
+                    </div>
+                    <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-0 not-italic text-[#aaa] text-[12px] top-[39px] tracking-[-0.5px] whitespace-nowrap" data-node-id="39:1137">
+                      JavaScript Mastery
+                    </p>
+                    <div className="[word-break:break-word] absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid font-['Inter:Medium'] font-medium h-[16px] leading-[16px] left-0 not-italic text-[#aaa] top-[55px] tracking-[-0.5px] w-[208px] whitespace-nowrap" data-node-id="39:1138" data-name="div">
+                      <p className="absolute left-0 text-[12px] top-0" data-node-id="39:1176">
+                        920K views
+                      </p>
+                      <p className="absolute left-[71.34px] text-[8px] top-[3px]" data-node-id="39:1177">
+                        •
+                      </p>
+                      <p className="absolute left-[79.61px] text-[12px] top-0" data-node-id="39:1178">
+                        2 months ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="absolute bg-[#0f0f0f] border-[#3f3f3f] border-b border-solid h-[56px] left-0 top-0 w-[1440px]" data-node-id="39:1016" data-name="header">
+          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-[16px] top-[5.5px] w-[203.734px]" data-node-id="39:1018" data-name="div">
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[44px] left-0 rounded-[9999px] top-0 w-[33.5px]" data-node-id="39:1023" data-name="button">
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[8px] top-[10px] w-[17.5px]" data-node-id="39:1032" data-name="i">
+                <div className="absolute content-stretch flex h-[20px] items-center justify-center left-0 top-[1.5px] w-[17.5px]" data-node-id="39:1054" data-name="svg">
+                  <div className="h-[20px] relative shrink-0 w-[17.5px]" data-node-id="39:1055" data-name="Frame">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame10} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-[49.5px] top-[4px] w-[154.234px]" data-node-id="39:1024" data-name="div">
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[36px] left-0 top-0 w-[33.75px]" data-node-id="39:1033" data-name="i">
+                <div className="absolute content-stretch flex h-[30px] items-center justify-center left-0 top-[2.75px] w-[33.75px]" data-node-id="39:1057" data-name="svg">
+                  <div className="h-[30px] relative shrink-0 w-[33.75px]" data-node-id="39:1058" data-name="Frame">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame11} />
+                  </div>
+                </div>
+              </div>
+              <p className="[word-break:break-word] absolute font-['Inter:Bold'] font-bold leading-[28px] left-[41.75px] not-italic text-[#f1f1f1] text-[20px] top-[6px] tracking-[-0.7px] whitespace-nowrap" data-node-id="39:1034">
+                StreamTube
+              </p>
+            </div>
+          </div>
+          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[42px] left-[436.88px] top-[6.5px] w-[672px]" data-node-id="39:1019" data-name="div">
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[42px] left-0 top-0 w-[672px]" data-node-id="39:1025" data-name="div">
+              <div className="absolute bg-[#0f0f0f] border border-[#3f3f3f] border-solid h-[42px] left-0 rounded-bl-[9999px] rounded-tl-[9999px] top-0 w-[607px]" data-node-id="39:1035" data-name="input">
+                <div className="-translate-y-1/2 [word-break:break-word] absolute flex flex-col font-['Inter:Regular'] font-normal h-[42px] justify-center leading-[0] left-[23px] not-italic text-[16px] text-[rgba(241,241,241,0.5)] top-[20px] tracking-[-0.5px] w-[559px]" data-node-id="39:1060">
+                  <p className="leading-[24px]">Search</p>
+                </div>
+              </div>
+              <div className="absolute bg-[#272727] border-[#3f3f3f] border-b border-r border-solid border-t h-[42px] left-[607px] rounded-br-[9999px] rounded-tr-[9999px] top-0 w-[65px]" data-node-id="39:1036" data-name="button">
+                <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[20px] left-[24px] top-[10px] w-[16px]" data-node-id="39:1061" data-name="i">
+                  <div className="absolute content-stretch flex items-center justify-center left-0 size-[16px] top-[2px]" data-node-id="39:1089" data-name="svg">
+                    <div className="relative shrink-0 size-[16px]" data-node-id="39:1090" data-name="Frame">
+                      <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame12} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[40px] left-[1326px] top-[7.5px] w-[98px]" data-node-id="39:1020" data-name="div">
+            <div className="absolute bg-[#272727] border-0 border-[#e5e7eb] border-solid h-[40px] left-0 rounded-[9999px] top-0 w-[50px]" data-node-id="39:1026" data-name="button">
+              <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid h-[24px] left-[16px] top-[8px] w-[18px]" data-node-id="39:1037" data-name="i">
+                <div className="absolute content-stretch flex h-[16px] items-center justify-center left-0 top-[4px] w-[18px]" data-node-id="39:1062" data-name="svg">
+                  <div className="h-[16px] relative shrink-0 w-[18px]" data-node-id="39:1063" data-name="Frame">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame13} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute bg-[rgba(0,0,0,0)] border-0 border-[#e5e7eb] border-solid left-[66px] overflow-clip size-[32px] top-[4px]" data-node-id="39:1027" data-name="button">
+              <div className="absolute border-0 border-[#e5e7eb] border-solid left-0 rounded-[9999px] size-[32px] top-0" data-node-id="39:1038" data-name="img">
+                <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[9999px] size-full" src={imgImg2} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

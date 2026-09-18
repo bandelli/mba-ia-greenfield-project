@@ -55,3 +55,90 @@ export type RefreshTokenPair =
 // Shared error envelope (all auth 4xx responses)
 export type ApiErrorEnvelope =
   paths["/auth/register"]["post"]["responses"][400]["content"]["application/json"];
+
+// ─── Videos (phase-04-video-channel-management) ───────────────────────────────
+
+export type UpdateVideoDto =
+  paths["/videos/{id}"]["patch"]["requestBody"]["content"]["application/json"];
+
+export type Video =
+  paths["/videos/{id}"]["patch"]["responses"][200]["content"]["application/json"];
+
+export type VideoThumbnailResponse =
+  paths["/videos/{id}/thumbnail"]["patch"]["responses"][200]["content"]["application/json"];
+
+export type VideoThumbnailUrlResponse =
+  paths["/videos/{id}/thumbnail-url"]["get"]["responses"][200]["content"]["application/json"];
+
+// ─── Channels (phase-04-video-channel-management) ─────────────────────────────
+
+export type UpdateChannelDto =
+  paths["/channels/me"]["patch"]["requestBody"]["content"]["application/json"];
+
+export type Channel =
+  paths["/channels/me"]["get"]["responses"][200]["content"]["application/json"];
+
+export type PublicChannelInfo =
+  paths["/channels/{nickname}"]["get"]["responses"][200]["content"]["application/json"];
+
+export type OwnerVideoListResponse =
+  paths["/channels/me/videos"]["get"]["responses"][200]["content"]["application/json"];
+
+export type PublicVideoListResponse =
+  paths["/channels/{nickname}/videos"]["get"]["responses"][200]["content"]["application/json"];
+
+// ─── Video watch page (phase-05-video-watch-page) ─────────────────────────────
+
+export type PublicVideoDetail =
+  paths["/videos/public/{publicId}"]["get"]["responses"][200]["content"]["application/json"];
+
+export type VideoStreamUrlResponse =
+  paths["/videos/public/{publicId}/stream-url"]["get"]["responses"][200]["content"]["application/json"];
+
+export type VideoDownloadUrlResponse =
+  paths["/videos/public/{publicId}/download-url"]["get"]["responses"][200]["content"]["application/json"];
+
+export type PublicVideoThumbnailUrlResponse =
+  paths["/videos/public/{publicId}/thumbnail-url"]["get"]["responses"][200]["content"]["application/json"];
+
+export type SuggestedVideosResponse =
+  paths["/videos/public/{publicId}/suggested"]["get"]["responses"][200]["content"]["application/json"];
+
+export type HomeFeedResponse =
+  paths["/videos/public"]["get"]["responses"][200]["content"]["application/json"];
+
+// ─── Social interactions (phase-06-social-interactions) ───────────────────────
+
+// Shared request body shape — the upstream reuses the same `SetReactionDto`
+// class for both the video- and comment-reaction endpoints.
+export type SetReactionDto =
+  paths["/videos/{publicId}/reaction"]["put"]["requestBody"]["content"]["application/json"];
+
+export type VideoReactionResponse =
+  paths["/videos/{publicId}/reaction"]["put"]["responses"][200]["content"]["application/json"];
+
+export type CommentReactionResponse =
+  paths["/comments/{commentId}/reaction"]["put"]["responses"][200]["content"]["application/json"];
+
+export type FindCommentsResponse =
+  paths["/videos/{publicId}/comments"]["get"]["responses"][200]["content"]["application/json"];
+
+export type CreateCommentDto =
+  paths["/videos/{publicId}/comments"]["post"]["requestBody"]["content"]["application/json"];
+
+export type CreateCommentResponse =
+  paths["/videos/{publicId}/comments"]["post"]["responses"][201]["content"]["application/json"];
+
+// Reuses the same `CreateCommentDto` request shape (body: string) — the
+// upstream's `createReply` reuses `CreateCommentDto` for its request body.
+export type CreateReplyResponse =
+  paths["/videos/{publicId}/comments/{commentId}/replies"]["post"]["responses"][201]["content"]["application/json"];
+
+export type SetSubscriptionDto =
+  paths["/channels/{nickname}/subscription"]["put"]["requestBody"]["content"]["application/json"];
+
+export type SubscriptionResponse =
+  paths["/channels/{nickname}/subscription"]["put"]["responses"][200]["content"]["application/json"];
+
+export type MySubscriptionsResponse =
+  paths["/users/me/subscriptions"]["get"]["responses"][200]["content"]["application/json"];

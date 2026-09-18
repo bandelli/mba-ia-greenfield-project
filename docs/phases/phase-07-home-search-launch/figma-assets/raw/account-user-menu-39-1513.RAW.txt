@@ -1,0 +1,35 @@
+RAW get_design_context output — fileKey 40c57EfcNjN6u5St7n5SlG, nodeId 39:1513
+Frame name: "Account User Menu" — the avatar dropdown/slide-over panel, open state.
+Captured 2026-09-13. Belongs to Phase 07 (Home Page, Search, and Wrap-up) — general navigation chrome,
+same header/avatar button shared across every authenticated screen in every phase.
+
+New icons (downloaded to ../icons/):
+  imgFrame8  (39:1580, close "X" button top-right of panel)     -> account-menu-close-icon.svg
+  imgFrame9  (39:1585, "Edit Channel" menu item icon)            -> account-menu-edit-channel-icon.svg
+  imgFrame10 (39:1589, "Sign Out" menu item icon)                -> account-menu-signout-icon.svg
+imgFrame0-7 are the same shared header/sidebar icons already downloaded for phase-04/phase-07
+(hamburger, Home/Subscriptions/Your videos/Liked videos nav, logo, header search) — do not re-fetch.
+imgImg (avatar photo) is Figma mock content.
+
+Structure: clicking the header avatar button opens a right-side slide-over panel (320px wide, full
+viewport height, `bg-[#272727]`, left border `border-l border-[#e5e7eb]`... — actually a drop-shadow-only
+edge, no visible border color that matters — `drop-shadow-[-4px_0px_12px_rgba(0,0,0,0.5)]`) OVER a
+semi-transparent backdrop (`bg-[rgba(0,0,0,0.7)]` covering the full viewport, node 39:1517) that dims
+the rest of the page. This is a NEW UI pattern not seen in phases 01-04 (a right-anchored drawer/sheet,
+not a simple corner dropdown) — check next-frontend's shadcn primitives for an existing `sheet.tsx` or
+`drawer.tsx` before hand-rolling one; if absent, `npx shadcn@latest add sheet` is the likely fit
+(radix-ui Dialog-based side panel), not a plain absolutely-positioned div.
+
+Panel contents (top to bottom):
+1. Header row: "Account" (h2, semibold 18px) + close "X" button (top-right, 15x20px hit area)
+2. Identity block: 64px circular avatar + channel name (bold 16px) + "@handle" (14px, muted) — same
+   data shape as the Channel Settings screen's identity block (phase 04), just smaller avatar
+3. Menu list (each row 57px tall, border-b divider between rows, 16px icon + 16px label, left-aligned):
+   - "Edit Channel" → presumably navigates to /dashboard/channel (the phase-04 Channel Settings screen)
+   - "Sign Out" → presumably calls the existing auth logout flow (phase-02, `/auth/logout` via BFF)
+
+No "My videos"/"Your channel" link shown in this menu specifically (that's already in the persistent
+left sidebar, not duplicated here). Only 2 actionable items are visible in this frame — if the real
+implementation needs more (e.g. "View channel", per typical account menus), that would be a product
+decision beyond what this Figma frame shows, not a data gap — flag to the user if it comes up rather
+than inventing extra menu items.

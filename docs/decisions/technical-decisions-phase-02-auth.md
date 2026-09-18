@@ -6,12 +6,12 @@ date: 2026-04-07
 scope_description: "Backend foundation for account lifecycle: password hashing, JWT auth, refresh-token rotation, email-confirmation/reset tokens, transactional email, request validation, error contract, rate limiting, and nickname generation."
 ---
 
-# Technical Decisions — Phase 02: Cadastro, Login e Gerenciamento de Conta
+# Technical Decisions — Phase 02: Registration, Login, and Account Management
 
 _Subprojects in scope:_
 
 - `nestjs-project/` — backend that delivers all account-lifecycle endpoints (register, confirm, login, refresh, logout, password reset) plus transactional email, request validation, error filter, throttling, and channel-handle generation.
-- `next-frontend/` — Frontend deferred: registration, login, confirmation and password-recovery screens (`Telas de cadastro, login, confirmação de conta e recuperação de senha`) will be addressed in a future phase when `next-frontend/` is initialized. No open decision in this document.
+- `next-frontend/` — Frontend deferred: registration, login, confirmation and password-recovery screens (`Registration, login, account confirmation, and password recovery screens`) will be addressed in a future phase when `next-frontend/` is initialized. No open decision in this document.
 
 ---
 
@@ -19,7 +19,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Cadastro de usuário com e-mail e senha
+**Capability:** User registration with email and password
 
 **Context:** User registration requires securely storing passwords. The choice of hashing algorithm impacts security against brute-force/GPU attacks and runtime performance.
 
@@ -45,7 +45,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** NestJS offers two main paths for implementing JWT authentication: using the Passport.js integration (`@nestjs/passport`) or building custom guards directly with `@nestjs/jwt`. This affects code complexity, extensibility, and how auth strategies are organized.
 
@@ -73,7 +73,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** JWT access tokens should be short-lived (15min). A refresh token strategy is needed to maintain sessions without forcing re-login. The choice affects security, database load, and complexity. Depends on TD-02 (auth approach).
 
@@ -104,7 +104,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Confirmação de conta via e-mail com link de ativação", "Recuperação de senha: solicitação via e-mail → link com token → redefinição"
+**Capability:** Transversal — covers: "Account confirmation via email with an activation link", "Password recovery: request via email → link with token → reset"
 
 **Context:** Two flows require tokens sent via email: account confirmation and password reset. The choice is between stateless JWT-based tokens (self-contained, verified by signature) and stateful random tokens stored in the database.
 
@@ -130,7 +130,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Serviço de envio de e-mails transacionais
+**Capability:** Transactional email sending service
 
 **Context:** Phase 02 requires sending transactional emails: account confirmation and password recovery. The project needs an email sending solution compatible with NestJS. The architecture diagram mentions "Email Service (SMTP)" as a container.
 
@@ -161,7 +161,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Transversal — covers: "Cadastro de usuário com e-mail e senha", "Login e controle de sessão do usuário", "Recuperação de senha: solicitação via e-mail → link com token → redefinição"
+**Capability:** Transversal — covers: "User registration with email and password", "Login and user session control", "Password recovery: request via email → link with token → reset"
 
 **Context:** Phase 02 introduces the first HTTP endpoints with user input (registration, login, password reset). A runtime validation library is needed to validate DTOs — rejecting invalid payloads before they reach the service layer. NestJS supports multiple approaches through its `ValidationPipe` and custom pipes.
 
@@ -187,7 +187,7 @@ _Subprojects in scope:_
 
 **Scope:** Cross-layer
 
-**Capability:** Transversal — covers: "Cadastro de usuário com e-mail e senha", "Login e controle de sessão do usuário", "Recuperação de senha: solicitação via e-mail → link com token → redefinição"
+**Capability:** Transversal — covers: "User registration with email and password", "Login and user session control", "Password recovery: request via email → link with token → reset"
 
 **Context:** Phase 02 is the first phase introducing public HTTP endpoints. The error response format defined here becomes the contract for all subsequent phases. Consistent error responses are essential for frontend consumption and API usability. The choice affects how domain exceptions, validation errors, and framework errors are presented to clients.
 
@@ -218,7 +218,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** Auth endpoints (login, register, password reset) are prime targets for brute-force attacks. A rate limiting mechanism is needed to restrict the number of requests per IP within a time window. The project uses NestJS 11 with Express as the HTTP adapter.
 
@@ -244,7 +244,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** TD-03 defined the refresh token strategy (rotation with family-based theft detection), but not the token format. Since every refresh operation requires a DB lookup (for rotation and reuse detection), the format choice is about what information the token carries, not whether DB access can be skipped. Depends on TD-02 (auth approach) and TD-03 (refresh strategy).
 
@@ -272,7 +272,7 @@ _Subprojects in scope:_
 
 **Scope:** Backend
 
-**Capability:** Criação automática do canal do usuário a partir do prefixo do e-mail
+**Capability:** Automatic creation of the user's channel from the email prefix
 
 **Context:** On registration, a default nickname (channel handle) must be generated automatically from the user's email prefix (the part before `@`). This handle is used as the user's public identifier and must be URL-safe, unique, and reproducible even when the email prefix contains only non-ASCII or special characters.
 

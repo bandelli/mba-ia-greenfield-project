@@ -15,11 +15,11 @@ sources_mtime:
   docs/inventories/screen-inventory-phase-02-auth-frontend.md: "2026-05-14T10:00:23-03:00"
 ---
 
-# Phase 02 — Cadastro, Login e Gerenciamento de Conta (Frontend Slice)
+# Phase 02 — Registration, Login, and Account Management (Frontend Slice)
 
 ## Objective
 
-Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicitação de recuperação de senha (`/signup`, `/login`, `/forgot-password`) com a camada BFF que as faz funcionar (Route Handlers sob `app/api/auth/**` que proxiam o NestJS, sessão por cookie iron-session encriptado, refresh transparente no 401, forms react-hook-form + Zod, propagação de sessão para Client Components via RSC) — de modo que o fluxo cadastro → login → solicitação de recuperação de senha funcione contra o backend de auth já consolidado em `phase-02-auth`.
+Deliver the frontend slice of Phase 02 — the registration, login, and password recovery request screens (`/signup`, `/login`, `/forgot-password`) along with the BFF layer that makes them work (Route Handlers under `app/api/auth/**` that proxy NestJS, an encrypted iron-session cookie session, transparent refresh on 401, react-hook-form + Zod forms, session propagation to Client Components via RSC) — so that the registration → login → password recovery request flow works against the auth backend already consolidated in `phase-02-auth`.
 
 ---
 
@@ -27,12 +27,12 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 ### SI-02.0.1 — Infra: install batch shadcn primitives
 
-**Description:** Instalar o shadcn primitive `checkbox` via CLI registry e commitar o arquivo gerado em `components/ui/`.
+**Description:** Install the shadcn primitive `checkbox` via the CLI registry and commit the generated file to `components/ui/`.
 
 **Technical actions:**
 
-1. Rodar `docker compose exec next-frontend npx shadcn@latest add checkbox` — gera `components/ui/checkbox.tsx`.
-2. Commitar `components/ui/checkbox.tsx`.
+1. Run `docker compose exec next-frontend npx shadcn@latest add checkbox` — generates `components/ui/checkbox.tsx`.
+2. Commit `components/ui/checkbox.tsx`.
 
 **Tests:** _(empty — Infra)_
 
@@ -40,14 +40,14 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 **Acceptance criteria:**
 
-- `components/ui/checkbox.tsx` existe.
-- Arquivo gerado compila per `docker compose exec next-frontend npx tsc --noEmit`.
+- `components/ui/checkbox.tsx` exists.
+- The generated file compiles per `docker compose exec next-frontend npx tsc --noEmit`.
 
 ---
 
 ### SI-02.0.2 — Tests shadcn batch (checkbox)
 
-**Description:** Unit test para o shadcn primitive `checkbox` instalado em SI-02.0.1 — variants, a11y, data-slot, event handlers.
+**Description:** Unit test for the shadcn primitive `checkbox` installed in SI-02.0.1 — variants, a11y, data-slot, event handlers.
 
 **Technical actions:**
 
@@ -63,45 +63,45 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 **Acceptance criteria:**
 
-- O teste cobre estados checked/unchecked/indeterminate, atributos ARIA e o handler `onCheckedChange`.
-- Suite passa per `docker compose exec next-frontend npm test -- components/ui/__tests__/checkbox.test.tsx`.
+- The test covers checked/unchecked/indeterminate states, ARIA attributes, and the `onCheckedChange` handler.
+- Suite passes per `docker compose exec next-frontend npm test -- components/ui/__tests__/checkbox.test.tsx`.
 
 ---
 
 ### SI-02.0.3 — Custom-ui: icon-button.tsx
 
-**Description:** Author `components/ui/icon-button.tsx` per UI Contract — primitive sob `components/ui/` não disponível no shadcn registry (usado como `arrow_back` na tela de forgot-password).
+**Description:** Author `components/ui/icon-button.tsx` per UI Contract — a primitive under `components/ui/` not available in the shadcn registry (used as `arrow_back` on the forgot-password screen).
 
 **Technical actions:**
 
-1. Author `components/ui/icon-button.tsx` per UI Contract specs (botão icon-only acessível, baseado em `components/ui/button.tsx` + slot de ícone de `components/icons/`).
+1. Author `components/ui/icon-button.tsx` per UI Contract specs (accessible icon-only button, based on `components/ui/button.tsx` + an icon slot from `components/icons/`).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `icon-button.tsx` | Unit per testing-guide-next-frontend § "UI Primitives" + custom-logic — variants, a11y (`aria-label` obrigatório), data-slot, `onClick` | `components/ui/__tests__/icon-button.test.tsx` |
+| `icon-button.tsx` | Unit per testing-guide-next-frontend § "UI Primitives" + custom-logic — variants, a11y (`aria-label` required), data-slot, `onClick` | `components/ui/__tests__/icon-button.test.tsx` |
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- `components/ui/icon-button.tsx` existe e corresponde ao UI Contract (botão icon-only com `aria-label`).
-- Unit test exercita variants + branch de a11y (falha/aviso quando `aria-label` ausente) + `onClick`.
+- `components/ui/icon-button.tsx` exists and matches the UI Contract (icon-only button with `aria-label`).
+- Unit test exercises variants + the a11y branch (failure/warning when `aria-label` is missing) + `onClick`.
 
 ---
 
 ### SI-02.0.4 — Custom-business simple group: back-link + forgot-password-form + login-form + password-strength-meter + signup-form
 
-**Description:** Author os business components base sem lógica de scoring/estado complexa sinalizada nas Notes do inventory — esqueletos presentational/estruturais consumidos pelas telas; a lógica & wiring fina é aplicada nos respectivos SI-Xb.
+**Description:** Author the base business components without the complex scoring/state logic flagged in the inventory Notes — presentational/structural skeletons consumed by the screens; the fine-grained logic & wiring is applied in the respective SI-Xb steps.
 
 **Technical actions:**
 
-1. Author `components/auth/back-link.tsx` per UI Contract (link de navegação client-side via Next.js `<Link>`).
-2. Author `components/auth/forgot-password-form.tsx` per UI Contract (Email field group + Button; shell do form, wiring em SI-02.12b).
-3. Author `components/auth/login-form.tsx` per UI Contract (campos email/password + Button; shell do form, wiring em SI-02.11b).
-4. Author `components/auth/password-strength-meter.tsx` per UI Contract (indicador derivado do input de senha client-side).
-5. Author `components/auth/signup-form.tsx` per UI Contract (campos do cadastro + Button; shell do form, wiring em SI-02.10b).
+1. Author `components/auth/back-link.tsx` per UI Contract (client-side navigation link via Next.js `<Link>`).
+2. Author `components/auth/forgot-password-form.tsx` per UI Contract (Email field group + Button; form shell, wiring in SI-02.12b).
+3. Author `components/auth/login-form.tsx` per UI Contract (email/password fields + Button; form shell, wiring in SI-02.11b).
+4. Author `components/auth/password-strength-meter.tsx` per UI Contract (indicator derived from the password input, client-side).
+5. Author `components/auth/signup-form.tsx` per UI Contract (registration fields + Button; form shell, wiring in SI-02.10b).
 
 **Tests:**
 
@@ -110,158 +110,158 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 | `back-link.tsx` | Unit per testing-guide-next-frontend § "Client Components" — render + href | `components/auth/__tests__/back-link.test.tsx` |
 | `forgot-password-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — render + props | `components/auth/__tests__/forgot-password-form.test.tsx` |
 | `login-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — render + props | `components/auth/__tests__/login-form.test.tsx` |
-| `password-strength-meter.tsx` | Unit per testing-guide-next-frontend § "Client Components" — render + reflexo do valor | `components/auth/__tests__/password-strength-meter.test.tsx` |
+| `password-strength-meter.tsx` | Unit per testing-guide-next-frontend § "Client Components" — render + value reflection | `components/auth/__tests__/password-strength-meter.test.tsx` |
 | `signup-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — render + props | `components/auth/__tests__/signup-form.test.tsx` |
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- Cada componente existe no path declarado e corresponde ao seu UI Contract.
-- Unit tests exercitam rendering + props de cada componente.
-- Suite passa per `docker compose exec next-frontend npm test -- components/auth/__tests__`.
+- Each component exists at the declared path and matches its UI Contract.
+- Unit tests exercise rendering + props of each component.
+- Suite passes per `docker compose exec next-frontend npm test -- components/auth/__tests__`.
 
 ---
 
 ### SI-02.0.5 — Custom-business complex: password-visibility-toggle
 
-**Description:** Author `components/auth/password-visibility-toggle.tsx` — business component com toggle state per Notes "Toggle de `type` password/text client-side".
+**Description:** Author `components/auth/password-visibility-toggle.tsx` — business component with toggle state per Notes "Toggle of `type` password/text client-side".
 
 **Technical actions:**
 
-1. Author `components/auth/password-visibility-toggle.tsx` per UI Contract (botão que alterna o `type` do input password/text, controlado client-side).
+1. Author `components/auth/password-visibility-toggle.tsx` per UI Contract (a button that toggles the input `type` between password/text, controlled client-side).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
 | `password-visibility-toggle.tsx` | Unit per testing-guide-next-frontend § "Client Components" baseline | `components/auth/__tests__/password-visibility-toggle.test.tsx` |
-| `password-visibility-toggle.tsx` | Unit: toggle assertions per Notes signal ("Toggle de `type` password/text") | (same file) |
+| `password-visibility-toggle.tsx` | Unit: toggle assertions per Notes signal ("Toggle of `type` password/text") | (same file) |
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- `components/auth/password-visibility-toggle.tsx` existe e corresponde ao UI Contract.
-- Unit tests cobrem rendering baseline + a transição de estado (clicar alterna `type` de `password` para `text` e de volta, com `aria-pressed`/`aria-label` coerentes).
+- `components/auth/password-visibility-toggle.tsx` exists and matches the UI Contract.
+- Unit tests cover baseline rendering + the state transition (clicking toggles `type` from `password` to `text` and back, with consistent `aria-pressed`/`aria-label`).
 
 ---
 
 ### SI-02.0.6 — Custom-business complex: terms-checkbox
 
-**Description:** Author `components/auth/terms-checkbox.tsx` — business component com estado local per Notes "Estado checkbox local; validado por Zod (TD-04)".
+**Description:** Author `components/auth/terms-checkbox.tsx` — business component with local state per Notes "Local checkbox state; validated by Zod (TD-04)".
 
 **Technical actions:**
 
-1. Author `components/auth/terms-checkbox.tsx` per UI Contract (linha de checkbox de aceite dos termos + links inline; estado local, integrável ao react-hook-form do signup).
+1. Author `components/auth/terms-checkbox.tsx` per UI Contract (terms-acceptance checkbox row + inline links; local state, integrable with the signup's react-hook-form).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
 | `terms-checkbox.tsx` | Unit per testing-guide-next-frontend § "Client Components" baseline | `components/auth/__tests__/terms-checkbox.test.tsx` |
-| `terms-checkbox.tsx` | Unit: local-state assertions per Notes signal ("Estado checkbox local") | (same file) |
+| `terms-checkbox.tsx` | Unit: local-state assertions per Notes signal ("Local checkbox state") | (same file) |
 
 **Dependencies:** SI-02.0.1
 
 **Acceptance criteria:**
 
-- `components/auth/terms-checkbox.tsx` existe e corresponde ao UI Contract (consome `components/ui/checkbox.tsx`).
-- Unit tests cobrem rendering baseline + transições do estado local de aceite (marcado/desmarcado) e exposição do valor para validação.
+- `components/auth/terms-checkbox.tsx` exists and matches the UI Contract (consumes `components/ui/checkbox.tsx`).
+- Unit tests cover baseline rendering + transitions of the local acceptance state (checked/unchecked) and exposing the value for validation.
 
 ---
 
-### SI-02.1 — Auth contract aliases em `lib/api/contracts.ts`
+### SI-02.1 — Auth contract aliases in `lib/api/contracts.ts`
 
-**Description:** Definir os aliases tipados do contrato auth que o BFF e os componentes consomem, derivados de `paths` (single grep target para "o que o BFF expõe").
+**Description:** Define the typed auth contract aliases that the BFF and components consume, derived from `paths` (single grep target for "what the BFF exposes").
 
 **Technical actions:**
 
-1. Criar/estender `lib/api/contracts.ts` — único arquivo que importa `paths` de `lib/api/types.gen.ts`; exportar aliases explícitos para `RegisterDto`, `LoginDto`, `ForgotPasswordDto`, as respostas `POST /auth/register` (`{ id, email }`), `POST /auth/login` (`{ access_token, refresh_token }`), e `ApiErrorEnvelope` (`{ statusCode, error, message, code }`) (per `next-frontend-openapi-typing/TD-04`; shapes per `### API Contracts` → BFF tier).
-2. Garantir que nenhum outro consumidor importe `paths` diretamente — todos importam de `@/lib/api/contracts` (per `next-frontend-openapi-typing/TD-04`).
+1. Create/extend `lib/api/contracts.ts` — the single file that imports `paths` from `lib/api/types.gen.ts`; export explicit aliases for `RegisterDto`, `LoginDto`, `ForgotPasswordDto`, the `POST /auth/register` (`{ id, email }`) and `POST /auth/login` (`{ access_token, refresh_token }`) responses, and `ApiErrorEnvelope` (`{ statusCode, error, message, code }`) (per `next-frontend-openapi-typing/TD-04`; shapes per `### API Contracts` → BFF tier).
+2. Ensure no other consumer imports `paths` directly — everyone imports from `@/lib/api/contracts` (per `next-frontend-openapi-typing/TD-04`).
 
-**Tests:** _(empty — type-only aliases; compile-gated por `npx tsc --noEmit`)_
+**Tests:** _(empty — type-only aliases; compile-gated by `npx tsc --noEmit`)_
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- `lib/api/contracts.ts` exporta aliases para `RegisterDto`, `LoginDto`, `ForgotPasswordDto`, as respostas de register/login, e `ApiErrorEnvelope`.
-- `docker compose exec next-frontend npx tsc --noEmit` sai com código 0 com os aliases em uso.
+- `lib/api/contracts.ts` exports aliases for `RegisterDto`, `LoginDto`, `ForgotPasswordDto`, the register/login responses, and `ApiErrorEnvelope`.
+- `docker compose exec next-frontend npx tsc --noEmit` exits with code 0 with the aliases in use.
 
 ---
 
-### SI-02.2 — Módulo de sessão iron-session (`lib/auth/session.ts`)
+### SI-02.2 — iron-session session module (`lib/auth/session.ts`)
 
-**Description:** Criar o helper de sessão por cookie encriptado — container único que carrega tokens + fingerprint mínimo do usuário, base do modelo strict-BFF cookie-based.
+**Description:** Create the encrypted cookie session helper — a single container that carries tokens + a minimal user fingerprint, the basis of the cookie-based strict-BFF model.
 
 **Technical actions:**
 
-1. Instalar `iron-session` (per `phase-02-auth-frontend/TD-02`; library-refs.md → seção iron-session).
-2. Criar `lib/auth/session.ts` — `getSession()`/`setSession()`/`destroySession()` sobre `next/headers` `cookies()`, cookie `httpOnly` encriptado carregando `access_token` + `refresh_token` + `userId` + `email` + `channelSlug` (per `phase-02-auth-frontend/TD-02`); senha de sessão lida de `lib/env.ts` (per `next-frontend-config-base/TD-02`).
-3. Expor a interface BFF do helper de modo que login/logout/refresh sejam um único `setSession`/`destroySession` (per `phase-02-auth-frontend/TD-01` — custom BFF cookie-based session; ~50-LOC, grep-friendly).
+1. Install `iron-session` (per `phase-02-auth-frontend/TD-02`; library-refs.md → iron-session section).
+2. Create `lib/auth/session.ts` — `getSession()`/`setSession()`/`destroySession()` over `next/headers` `cookies()`, an encrypted `httpOnly` cookie carrying `access_token` + `refresh_token` + `userId` + `email` + `channelSlug` (per `phase-02-auth-frontend/TD-02`); session password read from `lib/env.ts` (per `next-frontend-config-base/TD-02`).
+3. Expose the helper's BFF interface so that login/logout/refresh are a single `setSession`/`destroySession` call (per `phase-02-auth-frontend/TD-01` — custom BFF cookie-based session; ~50-LOC, grep-friendly).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `lib/auth/session.ts` | Unit per testing-guide-next-frontend § "`lib/` utility" — set/get/destroy round-trip, ausência de cookie → sessão vazia | `lib/auth/__tests__/session.test.ts` |
+| `lib/auth/session.ts` | Unit per testing-guide-next-frontend § "`lib/` utility" — set/get/destroy round-trip, absence of cookie → empty session | `lib/auth/__tests__/session.test.ts` |
 
 **Dependencies:** none
 
 **Acceptance criteria:**
 
-- `setSession` seguido de `getSession` devolve `userId`, `email`, `channelSlug` e os tokens; `destroySession` zera a sessão.
-- `getSession` sem cookie presente retorna sessão vazia sem lançar.
-- O cookie emitido é `httpOnly` e encriptado (conteúdo não legível em claro).
+- `setSession` followed by `getSession` returns `userId`, `email`, `channelSlug`, and the tokens; `destroySession` clears the session.
+- `getSession` with no cookie present returns an empty session without throwing.
+- The issued cookie is `httpOnly` and encrypted (content not readable in plaintext).
 
 ---
 
-### SI-02.3 — Handlers MSW de auth (`mocks/handlers/auth.ts`)
+### SI-02.3 — Auth MSW handlers (`mocks/handlers/auth.ts`)
 
-**Description:** Adicionar o domain file MSW de auth com handlers tipados off `paths`, consumidos pelos testes de integração das Route Handlers BFF (Vitest) e pelo E2E server-side (instrumentation).
+**Description:** Add the auth MSW domain file with handlers typed off `paths`, consumed by the BFF Route Handlers' integration tests (Vitest) and by the server-side E2E (instrumentation).
 
 **Technical actions:**
 
-1. Criar `mocks/handlers/auth.ts` — handlers para upstream `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/forgot-password`, `POST /auth/refresh`, tipados via os aliases de `@/lib/api/contracts` (per `next-frontend-openapi-typing/TD-05` — hand-written, typed via `paths`).
-2. Registrar o módulo no barrel de handlers (um arquivo novo + uma linha no barrel) (per `next-frontend-msw-foundation/TD-01` — per-domain modules + barrel).
-3. Embutir reserved trigger fixtures no handler set compartilhado: `email: "conflict@example.com"` → 409, `"badrequest@example.com"` → 400, senão sucesso (per `next-frontend/CLAUDE.md` § E2E architecture; fixtures determinísticas hand-written per `next-frontend-msw-foundation/TD-03`).
+1. Create `mocks/handlers/auth.ts` — handlers for the upstream `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/forgot-password`, `POST /auth/refresh`, typed via the aliases from `@/lib/api/contracts` (per `next-frontend-openapi-typing/TD-05` — hand-written, typed via `paths`).
+2. Register the module in the handlers barrel (one new file + one line in the barrel) (per `next-frontend-msw-foundation/TD-01` — per-domain modules + barrel).
+3. Embed reserved trigger fixtures in the shared handler set: `email: "conflict@example.com"` → 409, `"badrequest@example.com"` → 400, otherwise success (per `next-frontend/CLAUDE.md` § E2E architecture; deterministic hand-written fixtures per `next-frontend-msw-foundation/TD-03`).
 
-**Tests:** _(empty — MSW handler set é test-infra; exercitado pelos testes de integração de SI-02.5..SI-02.8 e pelo E2E)_
+**Tests:** _(empty — MSW handler set is test-infra; exercised by the integration tests of SI-02.5..SI-02.8 and by the E2E)_
 
 **Dependencies:** SI-02.1
 
 **Acceptance criteria:**
 
-- `mocks/handlers/auth.ts` exporta handlers para os 5 endpoints upstream de auth e está registrado no barrel.
-- Os trigger fixtures (`conflict@example.com` → 409, `badrequest@example.com` → 400) produzem o status esperado; demais entradas retornam sucesso.
-- Os tipos de retorno dos resolvers derivam de `@/lib/api/contracts` (sem DTO duplicado à mão).
+- `mocks/handlers/auth.ts` exports handlers for the 5 upstream auth endpoints and is registered in the barrel.
+- The trigger fixtures (`conflict@example.com` → 409, `badrequest@example.com` → 400) produce the expected status; other inputs return success.
+- The resolvers' return types derive from `@/lib/api/contracts` (no hand-duplicated DTO).
 
 ---
 
-### SI-02.4 — Helper de refresh de token single-flight (`lib/auth/refresh.ts`)
+### SI-02.4 — Single-flight token refresh helper (`lib/auth/refresh.ts`)
 
-**Description:** Implementar o refresh transparente no BFF quando o upstream responde 401, com single-flight para deduplicar chamadas concorrentes.
+**Description:** Implement transparent refresh in the BFF when the upstream responds 401, with single-flight to deduplicate concurrent calls.
 
 **Technical actions:**
 
-1. Criar `lib/auth/refresh.ts` — em upstream 401, chamar `POST /auth/refresh` com o `refresh_token` da sessão, re-selar a sessão com o novo par e reexecutar a chamada original (per `phase-02-auth-frontend/TD-03`).
-2. Implementar single-flight: duas chamadas upstream interceptadas concorrentes disparam exatamente **um** refresh; ambas aguardam a mesma promise (per `phase-02-auth-frontend/TD-03` — desenhado no helper desde o dia 1).
-3. Em falha do refresh (401/expirado/reusado em `POST /auth/refresh`), destruir a sessão e propagar 401 para o chamador (per `phase-02-auth-frontend/TD-03`).
+1. Create `lib/auth/refresh.ts` — on an upstream 401, call `POST /auth/refresh` with the session's `refresh_token`, re-seal the session with the new pair, and re-execute the original call (per `phase-02-auth-frontend/TD-03`).
+2. Implement single-flight: two concurrent intercepted upstream calls trigger exactly **one** refresh; both await the same promise (per `phase-02-auth-frontend/TD-03` — designed into the helper from day one).
+3. On refresh failure (401/expired/reused on `POST /auth/refresh`), destroy the session and propagate 401 to the caller (per `phase-02-auth-frontend/TD-03`).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `lib/auth/refresh.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler/helper" — refresh em 401, single-flight (duas chamadas → um refresh), falha de refresh destrói sessão | `lib/auth/__tests__/refresh.integration.test.ts` |
+| `lib/auth/refresh.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler/helper" — refresh on 401, single-flight (two calls → one refresh), refresh failure destroys the session | `lib/auth/__tests__/refresh.integration.test.ts` |
 
 **Dependencies:** SI-02.2, SI-02.3
 
 **Acceptance criteria:**
 
-- Uma chamada upstream que responde 401 dispara um refresh e a chamada original é reexecutada com o novo `access_token`.
-- Duas chamadas upstream concorrentes que recebem 401 resultam em exatamente uma chamada a `POST /auth/refresh`.
-- Refresh inválido/expirado destrói a sessão e o helper propaga 401 sem reexecutar.
+- An upstream call that responds 401 triggers a refresh, and the original call is re-executed with the new `access_token`.
+- Two concurrent upstream calls that receive 401 result in exactly one call to `POST /auth/refresh`.
+- An invalid/expired refresh destroys the session and the helper propagates 401 without re-executing.
 
 ---
 
@@ -270,27 +270,27 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 **Route:** POST /api/auth/signup
 **API Contract:** see `## Technical Specifications` → `### API Contracts` → BFF tier → `#### POST /api/auth/signup`
 
-**Description:** Route Handler same-origin que proxia o cadastro para o upstream NestJS, mantendo o modelo strict-BFF.
+**Description:** Same-origin Route Handler that proxies registration to the upstream NestJS, maintaining the strict-BFF model.
 
 **Technical actions:**
 
-1. Criar `app/api/auth/signup/route.ts` — `POST` que encaminha para `POST /auth/register` via `openapi-fetch` server-side lendo `env.API_URL` (per `phase-02-auth-frontend/TD-05` — Route Handler POST + client fetch; per `next-frontend-openapi-typing/TD-01`).
-2. Tipar request/response pelos aliases de `@/lib/api/contracts` (`RegisterDto` → `{ id, email }`); 201 pass-through, **sem** cookie de sessão (per `### API Contracts` → BFF tier `#### POST /api/auth/signup`; per `phase-02-auth-frontend/TD-01`).
-3. Repassar erros upstream verbatim no envelope `ApiErrorEnvelope`: 409 (e-mail já registrado) e 400 (validação) pass-through (per `### API Contracts` → BFF tier).
+1. Create `app/api/auth/signup/route.ts` — a `POST` that forwards to `POST /auth/register` via `openapi-fetch` server-side, reading `env.API_URL` (per `phase-02-auth-frontend/TD-05` — Route Handler POST + client fetch; per `next-frontend-openapi-typing/TD-01`).
+2. Type the request/response via the `@/lib/api/contracts` aliases (`RegisterDto` → `{ id, email }`); 201 pass-through, **no** session cookie (per `### API Contracts` → BFF tier `#### POST /api/auth/signup`; per `phase-02-auth-frontend/TD-01`).
+3. Pass upstream errors through verbatim in the `ApiErrorEnvelope`: 409 (email already registered) and 400 (validation) pass-through (per `### API Contracts` → BFF tier).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `app/api/auth/signup/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler (simple proxy)" — 201 pass-through; 409/400 pass-through; nenhum cookie setado | `app/api/auth/signup/__tests__/route.integration.test.ts` |
+| `app/api/auth/signup/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler (simple proxy)" — 201 pass-through; 409/400 pass-through; no cookie set | `app/api/auth/signup/__tests__/route.integration.test.ts` |
 
 **Dependencies:** SI-02.1, SI-02.3
 
 **Acceptance criteria:**
 
-- `POST /api/auth/signup` com payload válido retorna `201` com `{ id, email }` e **não** seta cookie de sessão.
-- `POST /api/auth/signup` com e-mail já registrado retorna `409` com o envelope `{ statusCode, error, message }` repassado do upstream.
-- `POST /api/auth/signup` com corpo inválido retorna `400` com o envelope de validação repassado.
+- `POST /api/auth/signup` with a valid payload returns `201` with `{ id, email }` and **does not** set a session cookie.
+- `POST /api/auth/signup` with an already-registered email returns `409` with the `{ statusCode, error, message }` envelope passed through from upstream.
+- `POST /api/auth/signup` with an invalid body returns `400` with the validation envelope passed through.
 
 ---
 
@@ -299,27 +299,27 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 **Route:** POST /api/auth/login
 **API Contract:** see `## Technical Specifications` → `### API Contracts` → BFF tier → `#### POST /api/auth/login`
 
-**Description:** Route Handler de login que proxia o upstream, retira os tokens do corpo FE-facing e os sela no cookie iron-session.
+**Description:** Login Route Handler that proxies the upstream, strips the tokens from the FE-facing body, and seals them into the iron-session cookie.
 
 **Technical actions:**
 
-1. Criar `app/api/auth/login/route.ts` — `POST` que encaminha para `POST /auth/login` server-side via `openapi-fetch` (per `phase-02-auth-frontend/TD-05`; per `next-frontend-openapi-typing/TD-01`).
-2. Em 200 upstream, **omitir** `access_token`/`refresh_token` do corpo FE-facing e selar a sessão via `setSession()` carregando tokens + `userId`/`email`/`channelSlug` (per `### API Contracts` → BFF tier `#### POST /api/auth/login`; per `phase-02-auth-frontend/TD-02`).
-3. Repassar erros upstream verbatim: 401 (credenciais inválidas), 403 (e-mail não confirmado), 400 (validação) no envelope `ApiErrorEnvelope` (per `### API Contracts` → BFF tier).
+1. Create `app/api/auth/login/route.ts` — a `POST` that forwards to `POST /auth/login` server-side via `openapi-fetch` (per `phase-02-auth-frontend/TD-05`; per `next-frontend-openapi-typing/TD-01`).
+2. On an upstream 200, **omit** `access_token`/`refresh_token` from the FE-facing body and seal the session via `setSession()` carrying the tokens + `userId`/`email`/`channelSlug` (per `### API Contracts` → BFF tier `#### POST /api/auth/login`; per `phase-02-auth-frontend/TD-02`).
+3. Pass upstream errors through verbatim: 401 (invalid credentials), 403 (email not confirmed), 400 (validation) in the `ApiErrorEnvelope` (per `### API Contracts` → BFF tier).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `app/api/auth/login/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler" — corpo FE-facing sem tokens; `Set-Cookie` iron-session presente; 401/403/400 pass-through | `app/api/auth/login/__tests__/route.integration.test.ts` |
+| `app/api/auth/login/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler" — FE-facing body without tokens; `Set-Cookie` iron-session present; 401/403/400 pass-through | `app/api/auth/login/__tests__/route.integration.test.ts` |
 
 **Dependencies:** SI-02.1, SI-02.2, SI-02.3
 
 **Acceptance criteria:**
 
-- `POST /api/auth/login` com credenciais válidas retorna `200` cujo corpo **não** contém `access_token` nem `refresh_token` e responde com um cookie `iron-session` `httpOnly` setado.
-- `POST /api/auth/login` com credenciais inválidas retorna `401` com o envelope upstream repassado e **sem** setar cookie.
-- `POST /api/auth/login` com e-mail não confirmado retorna `403` com o envelope upstream repassado.
+- `POST /api/auth/login` with valid credentials returns `200` whose body **does not** contain `access_token` or `refresh_token`, and responds with an `httpOnly` `iron-session` cookie set.
+- `POST /api/auth/login` with invalid credentials returns `401` with the upstream envelope passed through and **without** setting a cookie.
+- `POST /api/auth/login` with an unconfirmed email returns `403` with the upstream envelope passed through.
 
 ---
 
@@ -327,27 +327,27 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 **Route:** POST /api/auth/logout
 
-**Description:** Route Handler de logout — revoga os refresh tokens no upstream e destrói o cookie de sessão. A capability "Logout" não tem UI nesta fase (botão vive no chrome autenticado, Fase posterior); o contrato BFF é entregue agora para estar pronto quando o chrome chegar (per `## Non-UI / Deferred Capabilities`).
+**Description:** Logout Route Handler — revokes the refresh tokens upstream and destroys the session cookie. The "Logout" capability has no UI in this phase (the button lives in the authenticated chrome, a later phase); the BFF contract is delivered now so it's ready when the chrome arrives (per `## Non-UI / Deferred Capabilities`).
 
 **Technical actions:**
 
-1. Criar `app/api/auth/logout/route.ts` — `POST` que lê o `access_token` da sessão e chama upstream `POST /auth/logout` com `Authorization: Bearer` server-side (per `phase-02-auth-frontend/TD-05`; per `next-frontend-openapi-typing/TD-01`).
-2. Após a chamada upstream (sucesso ou 401), invocar `destroySession()` — single `session.destroy()` (per `phase-02-auth-frontend/TD-02` — cookie único; per `phase-02-auth-frontend/TD-01`).
-3. Responder `204` ao cliente independentemente do resultado upstream (idempotência do logout local).
+1. Create `app/api/auth/logout/route.ts` — a `POST` that reads the `access_token` from the session and calls the upstream `POST /auth/logout` with `Authorization: Bearer` server-side (per `phase-02-auth-frontend/TD-05`; per `next-frontend-openapi-typing/TD-01`).
+2. After the upstream call (success or 401), invoke `destroySession()` — a single `session.destroy()` (per `phase-02-auth-frontend/TD-02` — single cookie; per `phase-02-auth-frontend/TD-01`).
+3. Respond `204` to the client regardless of the upstream result (idempotency of local logout).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `app/api/auth/logout/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler" — sessão destruída; `204`; upstream 401 ainda destrói sessão | `app/api/auth/logout/__tests__/route.integration.test.ts` |
+| `app/api/auth/logout/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler" — session destroyed; `204`; upstream 401 still destroys the session | `app/api/auth/logout/__tests__/route.integration.test.ts` |
 
 **Dependencies:** SI-02.2, SI-02.3
 
 **Acceptance criteria:**
 
-- `POST /api/auth/logout` com sessão ativa retorna `204` e o cookie de sessão é invalidado na resposta.
-- `POST /api/auth/logout` quando o upstream responde `401` ainda destrói a sessão local e retorna `204`.
-- Uma requisição autenticada subsequente após o logout não enxerga a sessão anterior.
+- `POST /api/auth/logout` with an active session returns `204` and the session cookie is invalidated in the response.
+- `POST /api/auth/logout` when the upstream responds `401` still destroys the local session and returns `204`.
+- A subsequent authenticated request after logout does not see the previous session.
 
 ---
 
@@ -356,61 +356,61 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 **Route:** POST /api/auth/forgot-password
 **API Contract:** see `## Technical Specifications` → `### API Contracts` → BFF tier → `#### POST /api/auth/forgot-password`
 
-**Description:** Route Handler que proxia a solicitação de recuperação de senha; resposta 204 pass-through, preservando o no-op anti-enumeration do upstream.
+**Description:** Route Handler that proxies the password recovery request; 204 pass-through response, preserving the upstream's anti-enumeration no-op.
 
 **Technical actions:**
 
-1. Criar `app/api/auth/forgot-password/route.ts` — `POST` que encaminha para `POST /auth/forgot-password` server-side via `openapi-fetch` (per `phase-02-auth-frontend/TD-05`; per `next-frontend-openapi-typing/TD-01`).
-2. Tipar request por `ForgotPasswordDto` de `@/lib/api/contracts`; `204` pass-through esteja o e-mail registrado ou não (anti-enumeration upstream); sem cookie de sessão (per `### API Contracts` → BFF tier `#### POST /api/auth/forgot-password`).
-3. Repassar `400` (validação) verbatim no envelope `ApiErrorEnvelope` (per `### API Contracts` → BFF tier).
+1. Create `app/api/auth/forgot-password/route.ts` — a `POST` that forwards to `POST /auth/forgot-password` server-side via `openapi-fetch` (per `phase-02-auth-frontend/TD-05`; per `next-frontend-openapi-typing/TD-01`).
+2. Type the request via `ForgotPasswordDto` from `@/lib/api/contracts`; `204` pass-through whether the email is registered or not (upstream anti-enumeration); no session cookie (per `### API Contracts` → BFF tier `#### POST /api/auth/forgot-password`).
+3. Pass `400` (validation) through verbatim in the `ApiErrorEnvelope` (per `### API Contracts` → BFF tier).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `app/api/auth/forgot-password/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler (simple proxy)" — 204 pass-through (e-mail conhecido e desconhecido); 400 pass-through; nenhum cookie | `app/api/auth/forgot-password/__tests__/route.integration.test.ts` |
+| `app/api/auth/forgot-password/route.ts` | Integration (MSW) per testing-guide-next-frontend § "Route handler (simple proxy)" — 204 pass-through (known and unknown email); 400 pass-through; no cookie | `app/api/auth/forgot-password/__tests__/route.integration.test.ts` |
 
 **Dependencies:** SI-02.1, SI-02.3
 
 **Acceptance criteria:**
 
-- `POST /api/auth/forgot-password` com e-mail válido retorna `204` sem corpo e sem cookie.
-- `POST /api/auth/forgot-password` com e-mail não registrado retorna o mesmo `204` (resposta indistinguível — anti-enumeration).
-- `POST /api/auth/forgot-password` com corpo inválido retorna `400` com o envelope de validação repassado.
+- `POST /api/auth/forgot-password` with a valid email returns `204` with no body and no cookie.
+- `POST /api/auth/forgot-password` with an unregistered email returns the same `204` (indistinguishable response — anti-enumeration).
+- `POST /api/auth/forgot-password` with an invalid body returns `400` with the validation envelope passed through.
 
 ---
 
-### SI-02.9 — Propagação de sessão para Client Components (RSC + Context Provider)
+### SI-02.9 — Session propagation to Client Components (RSC + Context Provider)
 
-**Description:** Entregar a sessão server-rendered na mesma resposta do HTML e hidratar um Context Provider client — sem flicker, sem round-trip extra.
+**Description:** Deliver the server-rendered session in the same HTML response and hydrate a client Context Provider — no flicker, no extra round-trip.
 
 **Technical actions:**
 
-1. No RSC raiz (`app/layout.tsx` ou layout de área), ler `getSession()` e passar o estado inicial para um Client Provider (per `phase-02-auth-frontend/TD-06` — server-rendered session + RSC Context Provider).
-2. Criar `components/auth/session-provider.tsx` (`"use client"`) que recebe a sessão inicial via props e a expõe por contexto (per `phase-02-auth-frontend/TD-06`).
-3. Criar `hooks/use-session.ts` — hook de leitura do contexto de sessão para Client Components (per `phase-02-auth-frontend/TD-06`).
-4. Documentar a convenção `router.refresh()` após mutations mid-session (uma linha no handler relevante) para re-render do chrome com a sessão atualizada (per `phase-02-auth-frontend/TD-06`).
+1. In the root RSC (`app/layout.tsx` or an area layout), read `getSession()` and pass the initial state to a Client Provider (per `phase-02-auth-frontend/TD-06` — server-rendered session + RSC Context Provider).
+2. Create `components/auth/session-provider.tsx` (`"use client"`) that receives the initial session via props and exposes it through context (per `phase-02-auth-frontend/TD-06`).
+3. Create `hooks/use-session.ts` — a hook for reading the session context in Client Components (per `phase-02-auth-frontend/TD-06`).
+4. Document the `router.refresh()` convention after mid-session mutations (one line in the relevant handler) to re-render the chrome with the updated session (per `phase-02-auth-frontend/TD-06`).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `components/auth/session-provider.tsx` | Unit per testing-guide-next-frontend § "Client Components" — hidrata com sessão inicial; expõe valor por contexto | `components/auth/__tests__/session-provider.test.tsx` |
-| `hooks/use-session.ts` | Unit per testing-guide-next-frontend § "Custom hook" (`renderHook`) — retorna a sessão do provider; estado não-autenticado quando vazio | `hooks/__tests__/use-session.test.ts` |
+| `components/auth/session-provider.tsx` | Unit per testing-guide-next-frontend § "Client Components" — hydrates with the initial session; exposes the value through context | `components/auth/__tests__/session-provider.test.tsx` |
+| `hooks/use-session.ts` | Unit per testing-guide-next-frontend § "Custom hook" (`renderHook`) — returns the session from the provider; unauthenticated state when empty | `hooks/__tests__/use-session.test.ts` |
 
 **Dependencies:** SI-02.2
 
 **Acceptance criteria:**
 
-- Um Client Component dentro do provider lê, no primeiro paint, a sessão correta (autenticado vs não-autenticado) sem round-trip adicional.
-- `use-session` retorna `userId`/`email`/`channelSlug` quando há sessão e estado não-autenticado quando o cookie está ausente.
+- A Client Component inside the provider reads the correct session (authenticated vs. unauthenticated) on the first paint, with no additional round-trip.
+- `use-session` returns `userId`/`email`/`channelSlug` when a session exists and an unauthenticated state when the cookie is absent.
 
 ---
 
-### SI-02.10.0 — Drift audit: Tela de cadastro
+### SI-02.10.0 — Drift audit: Registration screen
 
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-333
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de cadastro`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Registration screen`
 
 **Technical actions:**
 
@@ -420,7 +420,7 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
    - Server-connected component names: [`SignupForm`, `SubmitButton`]
    - Target paths (read-only context; no writes here): `app/(auth)/signup/page.tsx` + `components/auth/signup-form.tsx`
 
-   Para cada componente da Reused DS list, fazer value-level diff contra o arquivo em disco e classificar per o enum de 4 valores (`alinhado` / `drift menor` / `drift relevante` / `componente ausente`); compor Decision per default policy; escrever a seção `## Screen: signup — audited at SI-02.10.0 ({YYYY-MM-DD})` em `frontend-drift-report.md`. **Sem edits de código.**
+   For each component in the Reused DS list, perform a value-level diff against the on-disk file and classify per the 4-value enum (`alinhado` / `drift menor` / `drift relevante` / `componente ausente`); compose the Decision per default policy; write the `## Screen: signup — audited at SI-02.10.0 ({YYYY-MM-DD})` section in `frontend-drift-report.md`. **No code edits.**
 
 **Dependencies:** SI-02.0.1, SI-02.0.4, SI-02.0.5, SI-02.0.6
 
@@ -428,26 +428,26 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 **Acceptance criteria:**
 
-- `frontend-drift-report.md` contém a seção `## Screen: signup` com a data do run no heading.
-- Todo componente da Reused DS list tem exatamente uma linha com a coluna Decision preenchida per o enum de status.
-- Todo `exception` carrega justificativa de uma linha.
-- `git diff --name-only HEAD -- next-frontend` após o SI está vazio.
+- `frontend-drift-report.md` contains the `## Screen: signup` section with the run date in the heading.
+- Every component in the Reused DS list has exactly one row with the Decision column filled in per the status enum.
+- Every `exception` carries a one-line justification.
+- `git diff --name-only HEAD -- next-frontend` is empty after the SI.
 
 ---
 
-### SI-02.10a — Tela de cadastro (visual shell)
+### SI-02.10a — Registration screen (visual shell)
 
 **Route:** /signup
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-333
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de cadastro`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Registration screen`
 **Drift Report:** see `frontend-drift-report.md` → `## Screen: signup`
 
 **Technical actions:**
 
-1. **Apply drift decisions** — ler a seção do Drift Report desta tela; para cada linha aplicar o verbo (`auto-Edit "<specifics>"` → Edit no arquivo DS; `create` → criar arquivo; `exception`/`skip` → no-op; `CONFLICT:` → tirar o prefixo e aplicar o verbo). Sem detecção/julgamento de drift aqui.
+1. **Apply drift decisions** — read this screen's Drift Report section; for each row apply the verb (`auto-Edit "<specifics>"` → Edit the DS file; `create` → create the file; `exception`/`skip` → no-op; `CONFLICT:` → strip the prefix and apply the verb). No drift detection/judgment here.
 2. **Visual shell generation** — invoke `figma:figma-implement-design` (narrow handoff) with:
    - Figma URL: https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-333
-   - Reused DS components: lista do UI Contract _(refletindo edits da ação 1)_
+   - Reused DS components: the UI Contract list _(reflecting the edits from action 1)_
    - Server-connected component names: [`SignupForm`, `SubmitButton`]
    - Target paths: `app/(auth)/signup/page.tsx` + `components/auth/signup-form.tsx`
 
@@ -457,24 +457,24 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 **Acceptance criteria:**
 
-- `app/(auth)/signup/page.tsx` e `components/auth/signup-form.tsx` existem, exportam os componentes esperados e compilam per `docker compose exec next-frontend npx tsc --noEmit`.
-- Renderização corresponde à fidelidade do node Figma dentro da tolerância do DS set.
-- Sem imports de runtime além da Reused DS list (escopo visual preservado).
+- `app/(auth)/signup/page.tsx` and `components/auth/signup-form.tsx` exist, export the expected components, and compile per `docker compose exec next-frontend npx tsc --noEmit`.
+- Rendering matches the Figma node's fidelity within the DS set's tolerance.
+- No runtime imports beyond the Reused DS list (visual scope preserved).
 
 ---
 
-### SI-02.10b — Tela de cadastro (lógica & wiring)
+### SI-02.10b — Registration screen (logic & wiring)
 
 **Test Specs:** see `next-frontend/specs/signup.plan.md`
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de cadastro`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Registration screen`
 
 **Technical actions:**
 
-1. **Rendering strategy** — `app/(auth)/signup/page.tsx` como RSC shell compondo `components/auth/signup-form.tsx` marcado `"use client"` (per UI Contract `**Rendering strategy:**`; per `phase-02-auth-frontend/TD-05`). Rota `Anonymous` — sem guard de auth (per UI Contract `**Auth requirement:**`).
-2. **Form + validação** — montar `signup-form.tsx` com `react-hook-form` + `zodResolver` (per `phase-02-auth-frontend/TD-04`; library-refs.md → react-hook-form/@hookform/resolvers), schema Zod espelhando o contrato (autorado agora, alinhável quando `RegisterDto` expandir per UI Contract `**Client-side validation mirror:**`).
-3. **Endpoint wiring** — submit via `fetch("/api/auth/signup")` com tipos de `@/lib/api/contracts` (per `phase-02-auth-frontend/TD-05`; endpoint per `### API Contracts` → BFF tier `#### POST /api/auth/signup`).
-4. **Error mapping** — mapear o envelope `ApiErrorEnvelope`: `409` → hint inline no campo e-mail + CTA "fazer login"; `400` → `FormMessage` inline no campo ofensor (per UI Contract `**Error Catalog → UX mapping:**`; padrão shadcn `FormMessage`/`Alert` inferido — design gap registrado nas Open questions).
-5. **Sucesso** — em `201`, exibir confirmação (conta criada; e-mail de confirmação enviado pelo backend); sem sessão nesta etapa (per `### API Contracts` → BFF tier note).
+1. **Rendering strategy** — `app/(auth)/signup/page.tsx` as an RSC shell composing `components/auth/signup-form.tsx` marked `"use client"` (per UI Contract `**Rendering strategy:**`; per `phase-02-auth-frontend/TD-05`). `Anonymous` route — no auth guard (per UI Contract `**Auth requirement:**`).
+2. **Form + validation** — assemble `signup-form.tsx` with `react-hook-form` + `zodResolver` (per `phase-02-auth-frontend/TD-04`; library-refs.md → react-hook-form/@hookform/resolvers), a Zod schema mirroring the contract (authored now, alignable once `RegisterDto` expands, per UI Contract `**Client-side validation mirror:**`).
+3. **Endpoint wiring** — submit via `fetch("/api/auth/signup")` with types from `@/lib/api/contracts` (per `phase-02-auth-frontend/TD-05`; endpoint per `### API Contracts` → BFF tier `#### POST /api/auth/signup`).
+4. **Error mapping** — map the `ApiErrorEnvelope`: `409` → inline hint on the email field + "Sign in" CTA; `400` → inline `FormMessage` on the offending field (per UI Contract `**Error Catalog → UX mapping:**`; shadcn `FormMessage`/`Alert` pattern inferred — design gap recorded in Open questions).
+5. **Success** — on `201`, show a confirmation (account created; confirmation email sent by the backend); no session at this stage (per `### API Contracts` → BFF tier note).
 
 **Dependencies:** SI-02.10a, SI-02.5, SI-02.1
 
@@ -482,22 +482,22 @@ Entregar o slice de frontend da Fase 02 — telas de cadastro, login e solicita�
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `components/auth/signup-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — submit happy path, mapeamento de erro 409/400 por linha, validação client-side pré-submit | `components/auth/__tests__/signup-form.wiring.test.tsx` |
+| `components/auth/signup-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — happy-path submit, 409/400 error mapping per row, pre-submit client-side validation | `components/auth/__tests__/signup-form.wiring.test.tsx` |
 
-E2E da página (routing, fluxo completo de cadastro) é autorado externamente por `/plan-test-specs` no spec referenciado em `**Test Specs:**` e consumido JIT por `/implement`. /plan-build não emite linha E2E aqui.
+The page's E2E (routing, complete registration flow) is authored externally by `/plan-test-specs` in the spec referenced in `**Test Specs:**` and consumed JIT by `/implement`. /plan-build does not emit an E2E row here.
 
 **Acceptance criteria:**
 
-- Submeter o form com dados válidos chama `POST /api/auth/signup` com payload tipado e, em `201`, exibe o estado de sucesso de conta criada.
-- Resposta `409` renderiza o hint inline no campo de e-mail com CTA "fazer login"; resposta `400` renderiza erro inline no campo ofensor.
-- A validação client-side bloqueia o submit e espelha as regras do backend 1:1 (sem divergência).
+- Submitting the form with valid data calls `POST /api/auth/signup` with a typed payload and, on `201`, shows the account-created success state.
+- A `409` response renders the inline hint on the email field with the "Sign in" CTA; a `400` response renders an inline error on the offending field.
+- Client-side validation blocks submission and mirrors the backend rules 1:1 (no divergence).
 
 ---
 
-### SI-02.11.0 — Drift audit: Tela de login
+### SI-02.11.0 — Drift audit: Login screen
 
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=138-179
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de login`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Login screen`
 
 **Technical actions:**
 
@@ -507,7 +507,7 @@ E2E da página (routing, fluxo completo de cadastro) é autorado externamente po
    - Server-connected component names: [`LoginForm`, `SubmitButton`]
    - Target paths (read-only context; no writes here): `app/(auth)/login/page.tsx` + `components/auth/login-form.tsx`
 
-   Value-level diff por componente contra o disco, classificação per o enum de 4 valores, Decision per default policy; escrever `## Screen: login — audited at SI-02.11.0 ({YYYY-MM-DD})` em `frontend-drift-report.md`. **Sem edits de código.**
+   Value-level diff per component against disk, classification per the 4-value enum, Decision per default policy; write `## Screen: login — audited at SI-02.11.0 ({YYYY-MM-DD})` in `frontend-drift-report.md`. **No code edits.**
 
 **Dependencies:** SI-02.0.4
 
@@ -515,26 +515,26 @@ E2E da página (routing, fluxo completo de cadastro) é autorado externamente po
 
 **Acceptance criteria:**
 
-- `frontend-drift-report.md` contém a seção `## Screen: login` com a data do run no heading.
-- Todo componente da Reused DS list tem exatamente uma linha com Decision preenchida per o enum.
-- Todo `exception` carrega justificativa de uma linha.
-- `git diff --name-only HEAD -- next-frontend` após o SI está vazio.
+- `frontend-drift-report.md` contains the `## Screen: login` section with the run date in the heading.
+- Every component in the Reused DS list has exactly one row with Decision filled in per the enum.
+- Every `exception` carries a one-line justification.
+- `git diff --name-only HEAD -- next-frontend` is empty after the SI.
 
 ---
 
-### SI-02.11a — Tela de login (visual shell)
+### SI-02.11a — Login screen (visual shell)
 
 **Route:** /login
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=138-179
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de login`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Login screen`
 **Drift Report:** see `frontend-drift-report.md` → `## Screen: login`
 
 **Technical actions:**
 
-1. **Apply drift decisions** — ler a seção do Drift Report desta tela; aplicar o verbo de cada linha (`auto-Edit`/`create`/`exception`/`skip`/`CONFLICT:` strip+apply). Sem detecção/julgamento aqui.
+1. **Apply drift decisions** — read this screen's Drift Report section; apply the verb for each row (`auto-Edit`/`create`/`exception`/`skip`/`CONFLICT:` strip+apply). No detection/judgment here.
 2. **Visual shell generation** — invoke `figma:figma-implement-design` (narrow handoff) with:
    - Figma URL: https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=138-179
-   - Reused DS components: lista do UI Contract _(refletindo edits da ação 1)_
+   - Reused DS components: the UI Contract list _(reflecting the edits from action 1)_
    - Server-connected component names: [`LoginForm`, `SubmitButton`]
    - Target paths: `app/(auth)/login/page.tsx` + `components/auth/login-form.tsx`
 
@@ -544,23 +544,23 @@ E2E da página (routing, fluxo completo de cadastro) é autorado externamente po
 
 **Acceptance criteria:**
 
-- `app/(auth)/login/page.tsx` e `components/auth/login-form.tsx` existem, exportam os componentes esperados e compilam per `docker compose exec next-frontend npx tsc --noEmit`.
-- Renderização corresponde à fidelidade do node Figma dentro da tolerância do DS set.
-- Sem imports de runtime além da Reused DS list.
+- `app/(auth)/login/page.tsx` and `components/auth/login-form.tsx` exist, export the expected components, and compile per `docker compose exec next-frontend npx tsc --noEmit`.
+- Rendering matches the Figma node's fidelity within the DS set's tolerance.
+- No runtime imports beyond the Reused DS list.
 
 ---
 
-### SI-02.11b — Tela de login (lógica & wiring)
+### SI-02.11b — Login screen (logic & wiring)
 
 **Test Specs:** see `next-frontend/specs/login.plan.md`
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de login`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Login screen`
 
 **Technical actions:**
 
-1. **Rendering strategy** — `app/(auth)/login/page.tsx` como RSC shell compondo `components/auth/login-form.tsx` `"use client"` (per UI Contract `**Rendering strategy:**`; per `phase-02-auth-frontend/TD-05`). Rota `Anonymous` — sem guard (per UI Contract `**Auth requirement:**`).
-2. **Form + validação** — `react-hook-form` + `zodResolver` (per `phase-02-auth-frontend/TD-04`), schema Zod espelhando o contrato `LoginDto` (alinhável quando expandir, per UI Contract `**Client-side validation mirror:**`).
-3. **Endpoint wiring** — submit via `fetch("/api/auth/login")` tipado por `@/lib/api/contracts` (per `phase-02-auth-frontend/TD-05`; endpoint per `### API Contracts` → BFF tier `#### POST /api/auth/login`). Em `200`, a sessão já foi selada no cookie pelo BFF; disparar `router.refresh()` para o chrome refletir a sessão (per `phase-02-auth-frontend/TD-06`).
-4. **Error mapping** — `401` → `Alert` form-level "credenciais inválidas"; `403` → `Alert` com CTA de reenvio de confirmação; `400` → `FormMessage` inline (per UI Contract `**Error Catalog → UX mapping:**`; padrão shadcn inferido — design gap registrado).
+1. **Rendering strategy** — `app/(auth)/login/page.tsx` as an RSC shell composing `components/auth/login-form.tsx` `"use client"` (per UI Contract `**Rendering strategy:**`; per `phase-02-auth-frontend/TD-05`). `Anonymous` route — no guard (per UI Contract `**Auth requirement:**`).
+2. **Form + validation** — `react-hook-form` + `zodResolver` (per `phase-02-auth-frontend/TD-04`), a Zod schema mirroring the `LoginDto` contract (alignable once it expands, per UI Contract `**Client-side validation mirror:**`).
+3. **Endpoint wiring** — submit via `fetch("/api/auth/login")` typed by `@/lib/api/contracts` (per `phase-02-auth-frontend/TD-05`; endpoint per `### API Contracts` → BFF tier `#### POST /api/auth/login`). On `200`, the session has already been sealed into the cookie by the BFF; trigger `router.refresh()` so the chrome reflects the session (per `phase-02-auth-frontend/TD-06`).
+4. **Error mapping** — `401` → form-level `Alert` "invalid credentials"; `403` → `Alert` with a resend-confirmation CTA; `400` → inline `FormMessage` (per UI Contract `**Error Catalog → UX mapping:**`; shadcn pattern inferred — design gap recorded).
 
 **Dependencies:** SI-02.11a, SI-02.6, SI-02.9, SI-02.1
 
@@ -568,22 +568,22 @@ E2E da página (routing, fluxo completo de cadastro) é autorado externamente po
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `components/auth/login-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — submit happy path, mapeamento 401/403/400, validação client-side pré-submit | `components/auth/__tests__/login-form.wiring.test.tsx` |
+| `components/auth/login-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — happy-path submit, 401/403/400 mapping, pre-submit client-side validation | `components/auth/__tests__/login-form.wiring.test.tsx` |
 
-E2E da página (login → sessão → redirect, guards) é autorado externamente por `/plan-test-specs` no spec referenciado em `**Test Specs:**` e consumido JIT por `/implement`. /plan-build não emite linha E2E aqui.
+The page's E2E (login → session → redirect, guards) is authored externally by `/plan-test-specs` in the spec referenced in `**Test Specs:**` and consumed JIT by `/implement`. /plan-build does not emit an E2E row here.
 
 **Acceptance criteria:**
 
-- Submeter o form com credenciais válidas chama `POST /api/auth/login`, e após `200` a UI reflete o estado autenticado (chrome via `router.refresh()`), sem tokens visíveis no client.
-- Resposta `401` renderiza alerta form-level de credenciais inválidas; `403` renderiza alerta de e-mail não confirmado; `400` renderiza erro inline.
-- A validação client-side bloqueia o submit e espelha as regras do backend 1:1.
+- Submitting the form with valid credentials calls `POST /api/auth/login`, and after `200` the UI reflects the authenticated state (chrome via `router.refresh()`), with no tokens visible on the client.
+- A `401` response renders a form-level invalid-credentials alert; `403` renders an unconfirmed-email alert; `400` renders an inline error.
+- Client-side validation blocks submission and mirrors the backend rules 1:1.
 
 ---
 
-### SI-02.12.0 — Drift audit: Tela de solicitação de recuperação de senha
+### SI-02.12.0 — Drift audit: Password recovery request screen
 
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-289
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de solicitação de recuperação de senha`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Password recovery request screen`
 
 **Technical actions:**
 
@@ -593,7 +593,7 @@ E2E da página (login → sessão → redirect, guards) é autorado externamente
    - Server-connected component names: [`ForgotPasswordForm`, `SubmitButton`]
    - Target paths (read-only context; no writes here): `app/(auth)/forgot-password/page.tsx` + `components/auth/forgot-password-form.tsx`
 
-   Value-level diff por componente contra o disco, classificação per o enum de 4 valores, Decision per default policy; escrever `## Screen: forgot-password — audited at SI-02.12.0 ({YYYY-MM-DD})` em `frontend-drift-report.md`. **Sem edits de código.**
+   Value-level diff per component against disk, classification per the 4-value enum, Decision per default policy; write `## Screen: forgot-password — audited at SI-02.12.0 ({YYYY-MM-DD})` in `frontend-drift-report.md`. **No code edits.**
 
 **Dependencies:** SI-02.0.3, SI-02.0.4
 
@@ -601,26 +601,26 @@ E2E da página (login → sessão → redirect, guards) é autorado externamente
 
 **Acceptance criteria:**
 
-- `frontend-drift-report.md` contém a seção `## Screen: forgot-password` com a data do run no heading.
-- Todo componente da Reused DS list tem exatamente uma linha com Decision preenchida per o enum.
-- Todo `exception` carrega justificativa de uma linha.
-- `git diff --name-only HEAD -- next-frontend` após o SI está vazio.
+- `frontend-drift-report.md` contains the `## Screen: forgot-password` section with the run date in the heading.
+- Every component in the Reused DS list has exactly one row with Decision filled in per the enum.
+- Every `exception` carries a one-line justification.
+- `git diff --name-only HEAD -- next-frontend` is empty after the SI.
 
 ---
 
-### SI-02.12a — Tela de solicitação de recuperação de senha (visual shell)
+### SI-02.12a — Password recovery request screen (visual shell)
 
 **Route:** /forgot-password
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-289
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de solicitação de recuperação de senha`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Password recovery request screen`
 **Drift Report:** see `frontend-drift-report.md` → `## Screen: forgot-password`
 
 **Technical actions:**
 
-1. **Apply drift decisions** — ler a seção do Drift Report desta tela; aplicar o verbo de cada linha (`auto-Edit`/`create`/`exception`/`skip`/`CONFLICT:` strip+apply). Sem detecção/julgamento aqui.
+1. **Apply drift decisions** — read this screen's Drift Report section; apply the verb for each row (`auto-Edit`/`create`/`exception`/`skip`/`CONFLICT:` strip+apply). No detection/judgment here.
 2. **Visual shell generation** — invoke `figma:figma-implement-design` (narrow handoff) with:
    - Figma URL: https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-289
-   - Reused DS components: lista do UI Contract _(refletindo edits da ação 1)_
+   - Reused DS components: the UI Contract list _(reflecting the edits from action 1)_
    - Server-connected component names: [`ForgotPasswordForm`, `SubmitButton`]
    - Target paths: `app/(auth)/forgot-password/page.tsx` + `components/auth/forgot-password-form.tsx`
 
@@ -630,24 +630,24 @@ E2E da página (login → sessão → redirect, guards) é autorado externamente
 
 **Acceptance criteria:**
 
-- `app/(auth)/forgot-password/page.tsx` e `components/auth/forgot-password-form.tsx` existem, exportam os componentes esperados e compilam per `docker compose exec next-frontend npx tsc --noEmit`.
-- Renderização corresponde à fidelidade do node Figma dentro da tolerância do DS set.
-- Sem imports de runtime além da Reused DS list.
+- `app/(auth)/forgot-password/page.tsx` and `components/auth/forgot-password-form.tsx` exist, export the expected components, and compile per `docker compose exec next-frontend npx tsc --noEmit`.
+- Rendering matches the Figma node's fidelity within the DS set's tolerance.
+- No runtime imports beyond the Reused DS list.
 
 ---
 
-### SI-02.12b — Tela de solicitação de recuperação de senha (lógica & wiring)
+### SI-02.12b — Password recovery request screen (logic & wiring)
 
 **Test Specs:** see `next-frontend/specs/forgot-password.plan.md`
-**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Tela de solicitação de recuperação de senha`
+**UI Contract:** see `## Technical Specifications` → `### UI Contracts` → `#### Screen: Password recovery request screen`
 
 **Technical actions:**
 
-1. **Rendering strategy** — `app/(auth)/forgot-password/page.tsx` como RSC shell compondo `components/auth/forgot-password-form.tsx` `"use client"` (per UI Contract `**Rendering strategy:**`; per `phase-02-auth-frontend/TD-05`/`TD-07`). Rota `Anonymous` — sem guard (per UI Contract `**Auth requirement:**`).
-2. **Form + validação** — `react-hook-form` + `zodResolver` (per `phase-02-auth-frontend/TD-04`), schema Zod do campo e-mail espelhando `ForgotPasswordDto` (alinhável quando expandir, per UI Contract `**Client-side validation mirror:**`).
-3. **Endpoint wiring** — submit via `fetch("/api/auth/forgot-password")` tipado por `@/lib/api/contracts` (per `phase-02-auth-frontend/TD-05`; endpoint per `### API Contracts` → BFF tier `#### POST /api/auth/forgot-password`).
-4. **Sucesso inline** — em `204`, substituir o form por uma caixa de confirmação inline dentro do mesmo `Card`, resposta idêntica esteja o e-mail registrado ou não (per UI Contract; per `phase-02-auth-frontend/TD-07` — landing inline, sem rota dedicada).
-5. **Error mapping** — `400` → `FormMessage` inline abaixo do campo de e-mail (per UI Contract `**Error Catalog → UX mapping:**`; padrão shadcn inferido — design gap registrado).
+1. **Rendering strategy** — `app/(auth)/forgot-password/page.tsx` as an RSC shell composing `components/auth/forgot-password-form.tsx` `"use client"` (per UI Contract `**Rendering strategy:**`; per `phase-02-auth-frontend/TD-05`/`TD-07`). `Anonymous` route — no guard (per UI Contract `**Auth requirement:**`).
+2. **Form + validation** — `react-hook-form` + `zodResolver` (per `phase-02-auth-frontend/TD-04`), a Zod schema for the email field mirroring `ForgotPasswordDto` (alignable once it expands, per UI Contract `**Client-side validation mirror:**`).
+3. **Endpoint wiring** — submit via `fetch("/api/auth/forgot-password")` typed by `@/lib/api/contracts` (per `phase-02-auth-frontend/TD-05`; endpoint per `### API Contracts` → BFF tier `#### POST /api/auth/forgot-password`).
+4. **Inline success** — on `204`, replace the form with an inline confirmation box within the same `Card`, an identical response whether or not the email is registered (per UI Contract; per `phase-02-auth-frontend/TD-07` — inline landing, no dedicated route).
+5. **Error mapping** — `400` → inline `FormMessage` below the email field (per UI Contract `**Error Catalog → UX mapping:**`; shadcn pattern inferred — design gap recorded).
 
 **Dependencies:** SI-02.12a, SI-02.8, SI-02.1
 
@@ -655,15 +655,15 @@ E2E da página (login → sessão → redirect, guards) é autorado externamente
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `components/auth/forgot-password-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — submit happy path → success inline, mapeamento de erro 400, validação client-side pré-submit | `components/auth/__tests__/forgot-password-form.wiring.test.tsx` |
+| `components/auth/forgot-password-form.tsx` | Unit per testing-guide-next-frontend § "Client Components" — happy-path submit → inline success, 400 error mapping, pre-submit client-side validation | `components/auth/__tests__/forgot-password-form.wiring.test.tsx` |
 
-E2E da página (solicitação → success inline) é autorado externamente por `/plan-test-specs` no spec referenciado em `**Test Specs:**` e consumido JIT por `/implement`. /plan-build não emite linha E2E aqui.
+The page's E2E (request → inline success) is authored externally by `/plan-test-specs` in the spec referenced in `**Test Specs:**` and consumed JIT by `/implement`. /plan-build does not emit an E2E row here.
 
 **Acceptance criteria:**
 
-- Submeter o form com e-mail válido chama `POST /api/auth/forgot-password` e, em `204`, renderiza a caixa de confirmação inline no mesmo `Card` (form substituído).
-- Um e-mail não registrado produz exatamente a mesma confirmação inline (sem revelar existência da conta).
-- Resposta `400` renderiza o erro inline abaixo do campo de e-mail; a validação client-side bloqueia o submit espelhando o backend 1:1.
+- Submitting the form with a valid email calls `POST /api/auth/forgot-password` and, on `204`, renders the inline confirmation box in the same `Card` (form replaced).
+- An unregistered email produces exactly the same inline confirmation (without revealing whether the account exists).
+- A `400` response renders the inline error below the email field; client-side validation blocks submission, mirroring the backend 1:1.
 
 ---
 
@@ -732,180 +732,180 @@ _Note: the upstream returns 204 whether or not the email is registered (anti-enu
 
 ### UI Contracts
 
-#### Screen: Tela de cadastro
+#### Screen: Registration screen
 
 **Route:** `/signup`
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-333 (node `Doz7n3FsRhfvelYrPhTZAG:140:333`)
-**Purpose:** "Cadastro de usuário com e-mail e senha".
+**Purpose:** "User registration with email and password".
 
 **Auth requirement:** Anonymous _(no §Authorization Matrix emitted — pre-session public auth screen; the upstream `/auth/register` carries no security requirement in the contract source)_
 
 **Rendering strategy:** RSC page shell composing a `"use client"` form child (react-hook-form + Zod resolver), submitting through the BFF Route Handler _(source: phase-02-auth-frontend/TD-05 — Mutation Submission Pathway: Route Handler POST + client fetch; form pattern per phase-02-auth-frontend/TD-04)_
 
 **Reused DS components:**
-- `components/auth/signup-form.tsx (new)` — Form como unidade (TD-04/TD-05); submit dispara mutation de signup
+- `components/auth/signup-form.tsx (new)` — Form as a unit (TD-04/TD-05); submit triggers the signup mutation
 - `components/ui/card.tsx` — Container auth card
-- `components/auth/back-link.tsx (new)` — Navegação client-side (Next.js `<Link>`)
-- `components/auth/brand-logo.tsx` — Inclui `components/icons/streamtube-icon.tsx`
+- `components/auth/back-link.tsx (new)` — Client-side navigation (Next.js `<Link>`)
+- `components/auth/brand-logo.tsx` — Includes `components/icons/streamtube-icon.tsx`
 - `components/ui/label.tsx` — form field labels
-- `components/ui/input.tsx` — Controlado via react-hook-form (TD-04)
-- `components/auth/password-visibility-toggle.tsx (new)` — Toggle de `type` password/text client-side
-- `components/auth/password-strength-meter.tsx (new)` — Opera apenas sobre input client-side
-- `components/auth/terms-checkbox.tsx (new)` — Estado checkbox local; validado por Zod (TD-04)
-- `components/ui/checkbox.tsx (new)` — Primitive DS ainda não autorada
-- `components/auth/auth-footer.tsx` — Inclui link "Sign in" → /login (nav client-side)
+- `components/ui/input.tsx` — Controlled via react-hook-form (TD-04)
+- `components/auth/password-visibility-toggle.tsx (new)` — Toggle of `type` password/text, client-side
+- `components/auth/password-strength-meter.tsx (new)` — Operates only on the client-side input
+- `components/auth/terms-checkbox.tsx (new)` — Local checkbox state; validated by Zod (TD-04)
+- `components/ui/checkbox.tsx (new)` — DS primitive not yet authored
+- `components/auth/auth-footer.tsx` — Includes "Sign in" link → /login (client-side nav)
 
 **Server-connected components:**
-- `SignupForm` — verbs: Cadastrar novo usuário com e-mail e senha | endpoint: `POST /api/auth/signup` (§API Contracts → BFF tier — see for `forwards-to` + request/response/projection) | reuse: `components/auth/signup-form.tsx (new)`
-- `SubmitButton` — verbs: Cadastrar novo usuário com e-mail e senha | endpoint: `POST /api/auth/signup` (§API Contracts → BFF tier) | reuse: `components/ui/button.tsx`
+- `SignupForm` — verbs: Register a new user with email and password | endpoint: `POST /api/auth/signup` (§API Contracts → BFF tier — see for `forwards-to` + request/response/projection) | reuse: `components/auth/signup-form.tsx (new)`
+- `SubmitButton` — verbs: Register a new user with email and password | endpoint: `POST /api/auth/signup` (§API Contracts → BFF tier) | reuse: `components/ui/button.tsx`
 
 **Behaviors:**
 
 *Rendered states:*
-- Loading: submit pendente — `SubmitButton` desabilitado / spinner enquanto a mutation está em voo.
-- Empty: não aplicável (form sempre renderizado).
-- Success: 201 — conta criada; backend dispara e-mail de confirmação (a conta permanece não confirmada até o link ser seguido). Não há sessão nesta etapa.
-- Error: 409 e-mail já registrado / 400 validação — exibidos inline + alerta de form-level (ver mapping abaixo).
+- Loading: submit pending — `SubmitButton` disabled / spinner while the mutation is in flight.
+- Empty: not applicable (form always rendered).
+- Success: 201 — account created; the backend sends a confirmation email (the account remains unconfirmed until the link is followed). There is no session at this stage.
+- Error: 409 email already registered / 400 validation — shown inline + a form-level alert (see mapping below).
 
 *Interactions:*
-- `<PasswordVisibilityToggle>` click → alterna `type` password/text dos campos Password e Confirm Password (client-side).
-- `<PasswordStrengthMeter>` ← reflete o input de senha ao vivo (client-side).
-- `<TermsCheckboxRow>` toggle → estado local; bloqueia submit até marcado (validado por Zod, TD-04).
-- back-arrow + link "Sign in" do `AuthFooter` → navegação client-side (Next.js `<Link>`).
+- `<PasswordVisibilityToggle>` click → toggles the `type` password/text of the Password and Confirm Password fields (client-side).
+- `<PasswordStrengthMeter>` ← reflects the password input live (client-side).
+- `<TermsCheckboxRow>` toggle → local state; blocks submit until checked (validated by Zod, TD-04).
+- back-arrow + the "Sign in" link in `AuthFooter` → client-side navigation (Next.js `<Link>`).
 
 **Error Catalog → UX mapping:**
 
 | errorCode (upstream `ApiErrorEnvelope`) | UX treatment |
 |-----------------------------------------|--------------|
-| 409 (Email already registered) | Hint inline no campo de e-mail com CTA "fazer login"; _TBD — design gap, sem variant de erro no Figma_ |
-| 400 (Validation failed) | `FormMessage` inline abaixo do campo ofensor; _TBD — design gap_ |
+| 409 (Email already registered) | Inline hint on the email field with a "Sign in" CTA; _TBD — design gap, no error variant in Figma_ |
+| 400 (Validation failed) | Inline `FormMessage` below the offending field; _TBD — design gap_ |
 
-_Nenhum §Error Catalog emitido (slice sem TD Backend/Cross-layer); o envelope upstream `{ statusCode, error, message, code }` é a fonte (derived: project contract source)._
+_No §Error Catalog emitted (slice has no Backend/Cross-layer TD); the upstream `{ statusCode, error, message, code }` envelope is the source (derived: project contract source)._
 
-**Client-side validation mirror:** _Sem regras de validação field-level na contract source (`RegisterDto` com `properties: {}` não expandido em `openapi.json`); o schema Zod client-side é autorado no implement per phase-02-auth-frontend/TD-04, espelhando o upstream quando a spec expandir._
+**Client-side validation mirror:** _No field-level validation rules in the contract source (`RegisterDto` with `properties: {}` not expanded in `openapi.json`); the client-side Zod schema is authored at implement time per phase-02-auth-frontend/TD-04, mirroring the upstream once the spec expands._
 
 **Accessibility notes:**
-- Follow DS defaults (nenhuma observação de a11y específica no inventory).
+- Follow DS defaults (no a11y-specific note in the inventory).
 
-_Open questions (passivas — já registradas no inventory `## Open questions`, ingeridas como OQ por plan-validate): links "Terms of Service"/"Privacy Policy" apontam para `/terms`/`/privacy` fora do escopo da Fase 02; nenhuma surface de erro/loading presente no Figma (design gap — inferir padrão shadcn `FormMessage` + `Alert` no implement)._
+_Open questions (passive — already recorded in the inventory `## Open questions`, ingested as OQ by plan-validate): the "Terms of Service"/"Privacy Policy" links point to `/terms`/`/privacy`, outside Phase 02's scope; no error/loading surface present in Figma (design gap — infer the shadcn `FormMessage` + `Alert` pattern at implement time)._
 
 ---
 
-#### Screen: Tela de login
+#### Screen: Login screen
 
 **Route:** `/login`
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=138-179 (node `Doz7n3FsRhfvelYrPhTZAG:138:179`)
-**Purpose:** "Login e controle de sessão do usuário".
+**Purpose:** "Login and user session control".
 
 **Auth requirement:** Anonymous _(no §Authorization Matrix emitted — pre-session public auth screen; the upstream `/auth/login` carries no security requirement in the contract source)_
 
-**Rendering strategy:** RSC page shell composing a `"use client"` form child (react-hook-form + Zod resolver), submitting through the BFF Route Handler _(source: phase-02-auth-frontend/TD-05; form pattern per phase-02-auth-frontend/TD-04)_. Em sucesso, o cookie `iron-session` é selado pelo BFF e a sessão propaga para Client Components via RSC + Context Provider _(per phase-02-auth-frontend/TD-06)_.
+**Rendering strategy:** RSC page shell composing a `"use client"` form child (react-hook-form + Zod resolver), submitting through the BFF Route Handler _(source: phase-02-auth-frontend/TD-05; form pattern per phase-02-auth-frontend/TD-04)_. On success, the `iron-session` cookie is sealed by the BFF and the session propagates to Client Components via RSC + Context Provider _(per phase-02-auth-frontend/TD-06)_.
 
 **Reused DS components:**
 - `components/auth/login-form.tsx (new)` — react-hook-form + Zod (TD-04); submit → `/api/auth/login` (TD-05)
-- `components/ui/card.tsx` — see screen: Tela de cadastro
-- `components/auth/brand-logo.tsx` — composta de StreamtubeIcon + wordmark
-- `components/icons/streamtube-icon.tsx` — Sub-componente do BrandLogo (reusar o componente DS, não o asset remoto)
+- `components/ui/card.tsx` — see screen: Registration screen
+- `components/auth/brand-logo.tsx` — composed of StreamtubeIcon + wordmark
+- `components/icons/streamtube-icon.tsx` — Sub-component of BrandLogo (reuse the DS component, not the remote asset)
 - `components/ui/label.tsx` — form field labels
-- `components/ui/input.tsx` — Controlado via react-hook-form (TD-04)
-- `components/ui/button.tsx` — SubmitButton "Sign in"; trigger do submit (TD-05)
-- `components/auth/auth-footer.tsx` — link interno "Sign up" → /signup (nav client-side)
+- `components/ui/input.tsx` — Controlled via react-hook-form (TD-04)
+- `components/ui/button.tsx` — SubmitButton "Sign in"; submit trigger (TD-05)
+- `components/auth/auth-footer.tsx` — internal "Sign up" link → /signup (client-side nav)
 
 **Server-connected components:**
-- `LoginForm` — verbs: Autenticar usuário com e-mail e senha e iniciar sessão | endpoint: `POST /api/auth/login` (§API Contracts → BFF tier — see for `forwards-to` + Set-Cookie projection) | reuse: `components/auth/login-form.tsx (new)`
-- `SubmitButton` — verbs: Autenticar usuário com e-mail e senha e iniciar sessão | endpoint: `POST /api/auth/login` (§API Contracts → BFF tier) | reuse: `components/ui/button.tsx`
+- `LoginForm` — verbs: Authenticate user with email and password and start a session | endpoint: `POST /api/auth/login` (§API Contracts → BFF tier — see for `forwards-to` + Set-Cookie projection) | reuse: `components/auth/login-form.tsx (new)`
+- `SubmitButton` — verbs: Authenticate user with email and password and start a session | endpoint: `POST /api/auth/login` (§API Contracts → BFF tier) | reuse: `components/ui/button.tsx`
 
 **Behaviors:**
 
 *Rendered states:*
-- Loading: submit pendente — `SubmitButton` desabilitado / spinner.
-- Empty: não aplicável.
-- Success: 200 — cookie `iron-session` setado pelo BFF (tokens nunca chegam ao browser, per TD-02); redireciona para a área autenticada.
-- Error: 401 credenciais inválidas / 403 e-mail não confirmado / 400 validação (ver mapping abaixo).
+- Loading: submit pending — `SubmitButton` disabled / spinner.
+- Empty: not applicable.
+- Success: 200 — `iron-session` cookie set by the BFF (tokens never reach the browser, per TD-02); redirects to the authenticated area.
+- Error: 401 invalid credentials / 403 email not confirmed / 400 validation (see mapping below).
 
 *Interactions:*
-- Link "Forgot password?" → navegação client-side para `/forgot-password` (Next.js `<Link>`).
-- Link "Sign up" do `AuthFooter` → navegação client-side para `/signup`.
+- Link "Forgot password?" → client-side navigation to `/forgot-password` (Next.js `<Link>`).
+- "Sign up" link in `AuthFooter` → client-side navigation to `/signup`.
 
 **Error Catalog → UX mapping:**
 
 | errorCode (upstream `ApiErrorEnvelope`) | UX treatment |
 |-----------------------------------------|--------------|
-| 401 (Invalid email or password) | `Alert` form-level "credenciais inválidas"; _TBD — design gap, sem variant de erro no Figma_ |
-| 403 (Email not confirmed) | `Alert` form-level com CTA de reenvio de confirmação; _TBD — design gap_ |
-| 400 (Validation failed) | `FormMessage` inline abaixo do campo ofensor; _TBD — design gap_ |
+| 401 (Invalid email or password) | Form-level `Alert` "invalid credentials"; _TBD — design gap, no error variant in Figma_ |
+| 403 (Email not confirmed) | Form-level `Alert` with a resend-confirmation CTA; _TBD — design gap_ |
+| 400 (Validation failed) | Inline `FormMessage` below the offending field; _TBD — design gap_ |
 
-_Nenhum §Error Catalog emitido; envelope upstream `{ statusCode, error, message, code }` é a fonte (derived: project contract source)._
+_No §Error Catalog emitted; the upstream `{ statusCode, error, message, code }` envelope is the source (derived: project contract source)._
 
-**Client-side validation mirror:** _Sem regras field-level na contract source (`LoginDto` com `properties: {}` não expandido); schema Zod client-side autorado no implement per phase-02-auth-frontend/TD-04._
+**Client-side validation mirror:** _No field-level rules in the contract source (`LoginDto` with `properties: {}` not expanded); client-side Zod schema authored at implement time per phase-02-auth-frontend/TD-04._
 
 **Accessibility notes:**
-- Follow DS defaults (nenhuma observação de a11y específica no inventory).
+- Follow DS defaults (no a11y-specific note in the inventory).
 
-_Open questions (passivas — já no inventory `## Open questions`): Input password sem visibility-toggle no Figma (possível design gap); nenhuma surface de erro/feedback presente no Figma node (design gap — runtime states inferidos no implement); StreamtubeIcon renderizado como `<img>` remoto no Figma, mas reusar o componente DS `components/icons/streamtube-icon.tsx`._
+_Open questions (passive — already in the inventory `## Open questions`): the password input has no visibility toggle in Figma (possible design gap); no error/feedback surface present in the Figma node (design gap — runtime states inferred at implement time); StreamtubeIcon is rendered as a remote `<img>` in Figma, but reuse the DS component `components/icons/streamtube-icon.tsx`._
 
 ---
 
-#### Screen: Tela de solicitação de recuperação de senha
+#### Screen: Password recovery request screen
 
 **Route:** `/forgot-password`
 **Figma:** https://www.figma.com/design/Doz7n3FsRhfvelYrPhTZAG/?node-id=140-289 (node `Doz7n3FsRhfvelYrPhTZAG:140:289`)
-**Purpose:** "Recuperação de senha: solicitação via e-mail → link com token → redefinição" — esta tela cobre a etapa de solicitação (envio do link por e-mail).
+**Purpose:** "Password recovery: request via email → link with token → reset" — this screen covers the request step (sending the link by email).
 
 **Auth requirement:** Anonymous _(no §Authorization Matrix emitted — pre-session public auth screen; the upstream `/auth/forgot-password` carries no security requirement in the contract source)_
 
-**Rendering strategy:** RSC page shell composing a `"use client"` form child (react-hook-form + Zod resolver), submitting through the BFF Route Handler _(source: phase-02-auth-frontend/TD-05; form pattern per phase-02-auth-frontend/TD-04)_. Estado de sucesso renderizado inline no mesmo `Card` em 204 _(per phase-02-auth-frontend/TD-07 — RSC owns token, Client owns input; aqui o sucesso é exibido na mesma tela sem rota dedicada)_.
+**Rendering strategy:** RSC page shell composing a `"use client"` form child (react-hook-form + Zod resolver), submitting through the BFF Route Handler _(source: phase-02-auth-frontend/TD-05; form pattern per phase-02-auth-frontend/TD-04)_. Success state rendered inline in the same `Card` on 204 _(per phase-02-auth-frontend/TD-07 — RSC owns token, Client owns input; here success is shown on the same screen with no dedicated route)_.
 
 **Reused DS components:**
 - `components/auth/forgot-password-form.tsx (new)` — Email field group + Button; submit → `POST /api/auth/forgot-password` (TD-05)
-- `components/ui/card.tsx` — see screen: Tela de cadastro
-- `components/ui/icon-button.tsx (new)` — `arrow_back`; nav client-side de volta para `/login` (DS primitive ainda não autorada)
-- `components/auth/brand-logo.tsx` — see screen: Tela de cadastro
+- `components/ui/card.tsx` — see screen: Registration screen
+- `components/ui/icon-button.tsx (new)` — `arrow_back`; client-side nav back to `/login` (DS primitive not yet authored)
+- `components/auth/brand-logo.tsx` — see screen: Registration screen
 - `components/ui/label.tsx` — form field label
-- `components/ui/input.tsx` — Controlado via react-hook-form (TD-04)
+- `components/ui/input.tsx` — Controlled via react-hook-form (TD-04)
 - `components/ui/button.tsx` — SubmitButton "Send reset link" (TD-05)
-- `components/auth/auth-footer.tsx` — texto exibido no Figma é "Sign up" (provável inconsistência — esperado "Sign in")
+- `components/auth/auth-footer.tsx` — the text shown in Figma is "Sign up" (likely inconsistency — "Sign in" expected)
 
 **Server-connected components:**
-- `ForgotPasswordForm` — verbs: Solicitar envio de e-mail com link de redefinição de senha | endpoint: `POST /api/auth/forgot-password` (§API Contracts → BFF tier — see for `forwards-to` + anti-enumeration note) | reuse: `components/auth/forgot-password-form.tsx (new)`
-- `SubmitButton` — verbs: Solicitar envio de e-mail com link de redefinição de senha | endpoint: `POST /api/auth/forgot-password` (§API Contracts → BFF tier) | reuse: `components/ui/button.tsx`
+- `ForgotPasswordForm` — verbs: Request sending of an email with a password reset link | endpoint: `POST /api/auth/forgot-password` (§API Contracts → BFF tier — see for `forwards-to` + anti-enumeration note) | reuse: `components/auth/forgot-password-form.tsx (new)`
+- `SubmitButton` — verbs: Request sending of an email with a password reset link | endpoint: `POST /api/auth/forgot-password` (§API Contracts → BFF tier) | reuse: `components/ui/button.tsx`
 
 **Behaviors:**
 
 *Rendered states:*
-- Loading: submit pendente — `SubmitButton` desabilitado / spinner.
-- Empty: não aplicável.
-- Success: 204 — caixa de confirmação inline dentro do mesmo `Card` (resposta idêntica esteja o e-mail registrado ou não — anti-enumeration upstream).
-- Error: 400 validação (ver mapping abaixo).
+- Loading: submit pending — `SubmitButton` disabled / spinner.
+- Empty: not applicable.
+- Success: 204 — an inline confirmation box within the same `Card` (identical response whether or not the email is registered — upstream anti-enumeration).
+- Error: 400 validation (see mapping below).
 
 *Interactions:*
-- `<IconButton>` (`arrow_back`) → navegação client-side de volta para `/login`.
-- submit bem-sucedido → estado de sucesso inline substitui o form no mesmo `Card`.
+- `<IconButton>` (`arrow_back`) → client-side navigation back to `/login`.
+- successful submit → the inline success state replaces the form in the same `Card`.
 
 **Error Catalog → UX mapping:**
 
 | errorCode (upstream `ApiErrorEnvelope`) | UX treatment |
 |-----------------------------------------|--------------|
-| 400 (Validation failed) | `FormMessage` inline abaixo do campo de e-mail; _TBD — design gap_ |
+| 400 (Validation failed) | Inline `FormMessage` below the email field; _TBD — design gap_ |
 
-_Nenhum §Error Catalog emitido; envelope upstream `{ statusCode, error, message, code }` é a fonte (derived: project contract source)._
+_No §Error Catalog emitted; the upstream `{ statusCode, error, message, code }` envelope is the source (derived: project contract source)._
 
-**Client-side validation mirror:** _Sem regras field-level na contract source (`ForgotPasswordDto` com `properties: {}` não expandido); schema Zod client-side autorado no implement per phase-02-auth-frontend/TD-04._
+**Client-side validation mirror:** _No field-level rules in the contract source (`ForgotPasswordDto` with `properties: {}` not expanded); client-side Zod schema authored at implement time per phase-02-auth-frontend/TD-04._
 
 **Accessibility notes:**
-- Follow DS defaults (nenhuma observação de a11y específica no inventory).
+- Follow DS defaults (no a11y-specific note in the inventory).
 
-_Open questions (passivas — já no inventory `## Open questions`): `AuthFooter` exibe "Sign up" onde a UX usual seria "Sign in" (inconsistência de design — confirmar com designer); estado de sucesso inline não extraído como variant separada no Figma (design gap — inferir no implement); a tela "set new password" (destino do link) não existe no Figma — capability coberta apenas parcialmente, a etapa de redefinição está em `## Non-UI / Deferred Capabilities` (deferred para uma fase posterior)._
+_Open questions (passive — already in the inventory `## Open questions`): `AuthFooter` shows "Sign up" where the usual UX would be "Sign in" (design inconsistency — confirm with designer); the inline success state was not extracted as a separate variant in Figma (design gap — infer at implement time); the "set new password" screen (the link's destination) does not exist in Figma — the capability is only partially covered; the reset step is listed in `## Non-UI / Deferred Capabilities` (deferred to a later phase)._
 
 ### UI ↔ API Traceability Matrix
 
 | Verb | Component | Screen | Endpoint (from API Contracts) | TD ref |
 |------|-----------|--------|-------------------------------|--------|
-| Cadastrar novo usuário com e-mail e senha | SignupForm + SubmitButton | /signup | POST /api/auth/signup → forwards-to POST /auth/register | phase-02-auth-frontend/TD-05 |
-| Autenticar usuário com e-mail e senha e iniciar sessão | LoginForm + SubmitButton | /login | POST /api/auth/login → forwards-to POST /auth/login | phase-02-auth-frontend/TD-05 |
-| Solicitar envio de e-mail com link de redefinição de senha | ForgotPasswordForm + SubmitButton | /forgot-password | POST /api/auth/forgot-password → forwards-to POST /auth/forgot-password | phase-02-auth-frontend/TD-05 |
+| Register a new user with email and password | SignupForm + SubmitButton | /signup | POST /api/auth/signup → forwards-to POST /auth/register | phase-02-auth-frontend/TD-05 |
+| Authenticate user with email and password and start a session | LoginForm + SubmitButton | /login | POST /api/auth/login → forwards-to POST /auth/login | phase-02-auth-frontend/TD-05 |
+| Request sending of an email with a password reset link | ForgotPasswordForm + SubmitButton | /forgot-password | POST /api/auth/forgot-password → forwards-to POST /auth/forgot-password | phase-02-auth-frontend/TD-05 |
 
-_Capabilities marcadas em `## Non-UI / Deferred Capabilities` (Confirmação de conta, Logout, set-new-password destination, umbrella "Telas …") são excluídas desta matriz._
+_Capabilities marked in `## Non-UI / Deferred Capabilities` (Account confirmation, Logout, set-new-password destination, umbrella "Screens …") are excluded from this matrix._
 
 ---
 
@@ -934,17 +934,17 @@ SI-02.8 — depends on SI-02.1 + SI-02.3 (BFF forgot-password route)
 Screen: /signup
 SI-02.10.0 — depends on SI-02.0.1, SI-02.0.4, SI-02.0.5, SI-02.0.6 (drift audit)
 └── SI-02.10a — depends on SI-02.10.0 + SI-02.0.1, SI-02.0.4, SI-02.0.5, SI-02.0.6 (visual shell)
-    └── SI-02.10b — depends on SI-02.10a + SI-02.5 + SI-02.1 (lógica & wiring)
+    └── SI-02.10b — depends on SI-02.10a + SI-02.5 + SI-02.1 (logic & wiring)
 
 Screen: /login
 SI-02.11.0 — depends on SI-02.0.4 (drift audit)
 └── SI-02.11a — depends on SI-02.11.0 + SI-02.0.4 (visual shell)
-    └── SI-02.11b — depends on SI-02.11a + SI-02.6 + SI-02.9 + SI-02.1 (lógica & wiring)
+    └── SI-02.11b — depends on SI-02.11a + SI-02.6 + SI-02.9 + SI-02.1 (logic & wiring)
 
 Screen: /forgot-password
 SI-02.12.0 — depends on SI-02.0.3, SI-02.0.4 (drift audit)
 └── SI-02.12a — depends on SI-02.12.0 + SI-02.0.3, SI-02.0.4 (visual shell)
-    └── SI-02.12b — depends on SI-02.12a + SI-02.8 + SI-02.1 (lógica & wiring)
+    └── SI-02.12b — depends on SI-02.12a + SI-02.8 + SI-02.1 (logic & wiring)
 ```
 
 ---
@@ -957,36 +957,36 @@ SI-02.12.0 — depends on SI-02.0.3, SI-02.0.4 (drift audit)
 - [ ] SI-02.0.4 — Custom-business simple group: back-link + forgot-password-form + login-form + password-strength-meter + signup-form
 - [ ] SI-02.0.5 — Custom-business complex: password-visibility-toggle
 - [ ] SI-02.0.6 — Custom-business complex: terms-checkbox
-- [ ] SI-02.1 — Auth contract aliases em `lib/api/contracts.ts`
-- [ ] SI-02.2 — Módulo de sessão iron-session (`lib/auth/session.ts`)
-- [ ] SI-02.3 — Handlers MSW de auth (`mocks/handlers/auth.ts`)
-- [ ] SI-02.4 — Helper de refresh de token single-flight (`lib/auth/refresh.ts`)
+- [ ] SI-02.1 — Auth contract aliases in `lib/api/contracts.ts`
+- [ ] SI-02.2 — iron-session session module (`lib/auth/session.ts`)
+- [ ] SI-02.3 — Auth MSW handlers (`mocks/handlers/auth.ts`)
+- [ ] SI-02.4 — Single-flight token refresh helper (`lib/auth/refresh.ts`)
 - [ ] SI-02.5 — BFF Route Handler: POST /api/auth/signup
 - [ ] SI-02.6 — BFF Route Handler: POST /api/auth/login
 - [ ] SI-02.7 — BFF Route Handler: POST /api/auth/logout
 - [ ] SI-02.8 — BFF Route Handler: POST /api/auth/forgot-password
-- [ ] SI-02.9 — Propagação de sessão para Client Components (RSC + Context Provider)
-- [ ] SI-02.10.0 — Drift audit: Tela de cadastro
-- [ ] SI-02.10a — Tela de cadastro (visual shell)
-- [ ] SI-02.10b — Tela de cadastro (lógica & wiring)
-- [ ] SI-02.11.0 — Drift audit: Tela de login
-- [ ] SI-02.11a — Tela de login (visual shell)
-- [ ] SI-02.11b — Tela de login (lógica & wiring)
-- [ ] SI-02.12.0 — Drift audit: Tela de solicitação de recuperação de senha
-- [ ] SI-02.12a — Tela de solicitação de recuperação de senha (visual shell)
-- [ ] SI-02.12b — Tela de solicitação de recuperação de senha (lógica & wiring)
+- [ ] SI-02.9 — Session propagation to Client Components (RSC + Context Provider)
+- [ ] SI-02.10.0 — Drift audit: Registration screen
+- [ ] SI-02.10a — Registration screen (visual shell)
+- [ ] SI-02.10b — Registration screen (logic & wiring)
+- [ ] SI-02.11.0 — Drift audit: Login screen
+- [ ] SI-02.11a — Login screen (visual shell)
+- [ ] SI-02.11b — Login screen (logic & wiring)
+- [ ] SI-02.12.0 — Drift audit: Password recovery request screen
+- [ ] SI-02.12a — Password recovery request screen (visual shell)
+- [ ] SI-02.12b — Password recovery request screen (logic & wiring)
 
 **Per-screen deliverables:**
 
-- [ ] Screen Tela de cadastro (`/signup`) is routable
-- [ ] Screen Tela de cadastro (`/signup`) renders loading, success, and error states
-- [ ] Screen Tela de cadastro (`/signup`) passes component tests (per testing-guide-next-frontend layers)
-- [ ] Screen Tela de login (`/login`) is routable
-- [ ] Screen Tela de login (`/login`) renders loading, success, and error states
-- [ ] Screen Tela de login (`/login`) passes component tests (per testing-guide-next-frontend layers)
-- [ ] Screen Tela de solicitação de recuperação de senha (`/forgot-password`) is routable
-- [ ] Screen Tela de solicitação de recuperação de senha (`/forgot-password`) renders submit, inline success, and error states
-- [ ] Screen Tela de solicitação de recuperação de senha (`/forgot-password`) passes component tests (per testing-guide-next-frontend layers)
+- [ ] Screen Registration screen (`/signup`) is routable
+- [ ] Screen Registration screen (`/signup`) renders loading, success, and error states
+- [ ] Screen Registration screen (`/signup`) passes component tests (per testing-guide-next-frontend layers)
+- [ ] Screen Login screen (`/login`) is routable
+- [ ] Screen Login screen (`/login`) renders loading, success, and error states
+- [ ] Screen Login screen (`/login`) passes component tests (per testing-guide-next-frontend layers)
+- [ ] Screen Password recovery request screen (`/forgot-password`) is routable
+- [ ] Screen Password recovery request screen (`/forgot-password`) renders submit, inline success, and error states
+- [ ] Screen Password recovery request screen (`/forgot-password`) passes component tests (per testing-guide-next-frontend layers)
 
 **Full test suites:**
 

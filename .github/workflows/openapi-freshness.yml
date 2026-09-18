@@ -1,0 +1,41 @@
+name: OpenAPI Freshness
+
+# Guards the generated-artifact chain next-frontend/CLAUDE.md documents:
+# nestjs-project/openapi.json --(scripts/sync-openapi.sh, TD-02)--> next-frontend/openapi.json
+#   --(npm run openapi:types, TD-03)--> next-frontend/lib/api/types.gen.ts
+# Fails the PR if either committed copy is stale relative to the backend's
+# current spec, per docs/decisions/technical-decisions-next-frontend-openapi-typing.md
+# (TD-03, Option C).
+on:
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  openapi-freshness:
+    name: openapi.json + types.gen.ts are in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+          cache-dependency-path: next-frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: next-frontend
+        run: npm ci
+
+      - run: bash scripts/sync-openapi.sh
+
+      - name: Regenerate types from the synced spec
+        working-directory: next-frontend
+        run: npm run openapi:types
+
+      - name: Fail if committed artifacts are stale
+        run: |
+          if ! git diff --exit-code -- next-frontend/openapi.json next-frontend/lib/api/types.gen.ts; then
+            echo "::error::next-frontend/openapi.json or lib/api/types.gen.ts is stale. Run 'bash scripts/sync-openapi.sh' then 'npm run openapi:types' inside next-frontend/, and commit both files."
+            exit 1
+          fi

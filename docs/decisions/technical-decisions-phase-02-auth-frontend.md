@@ -28,7 +28,7 @@ _Subprojects in scope:_
 
 **Scope:** Frontend
 
-**Capability:** Transversal — covers: "Cadastro de usuário com e-mail e senha", "Login e controle de sessão do usuário", "Logout", "Telas de cadastro, login, confirmação de conta e recuperação de senha"
+**Capability:** Transversal — covers: "User registration with email and password", "Login and user session control", "Logout", "Registration, login, account confirmation, and password recovery screens"
 
 **Context:** Phase 02's FE has to take the NestJS backend's JWT-based auth and turn it into a working Next.js session. The first decision is structural: do we adopt a third-party auth framework that wraps the whole flow, or do we build the BFF↔Nest auth bridge ourselves on top of the strict-BFF architecture already chosen? This single decision constrains every TD that follows: TDs 02–06 are downstream consequences of A vs. B.
 
@@ -67,7 +67,7 @@ The login Route Handler returns the tokens to the browser as a JSON body. A Clie
 
 **Scope:** Frontend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** Given TD-01 Option A (custom BFF cookie-based session), the next decision is the cookie's shape. The BFF receives two tokens from Nest on `/auth/login` and `/auth/refresh`: an access JWT (~15min) and a refresh token (`phase-02-auth/TD-09` chose JWT for the refresh too). It must persist them so subsequent BFF requests can attach `Authorization: Bearer <accessToken>` to upstream calls and call `/auth/refresh` when the access expires.
 
@@ -109,7 +109,7 @@ The cookie carries only a random session ID; the actual tokens live in a server-
 
 **Scope:** Frontend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** Backend access tokens expire in ~15min (`phase-02-auth/TD-03`). The FE must replace expired access tokens using the refresh token without forcing the user to log in again. The choice is _where_ refresh is detected and orchestrated. Three placements are realistic: the BFF transparently refreshes on upstream 401, the client retries explicitly via `/api/auth/refresh`, or a background timer near expiry pre-empts the 401.
 
@@ -150,7 +150,7 @@ A Client Component at the layout level sets a `setTimeout` for `accessExpiresAt 
 
 **Scope:** Frontend
 
-**Capability:** Telas de cadastro, login, confirmação de conta e recuperação de senha
+**Capability:** Registration, login, account confirmation, and password recovery screens
 
 **Context:** Phase 02 introduces the first user-input forms in the project: signup, login, forgot-password, reset-password (password + confirmation). All four have similar shapes (1-2 fields, async submit, error mapping from the backend's `{ error, message }` envelope). The choice of form-handling library shapes ergonomics for these four screens AND every form in Phases 03–07 (video upload metadata, comment composer, channel edit, search bar, filter chips). It also interacts with TD-05 (mutation pathway): some libraries are progressive-enhancement-first (tied to Server Actions), others are JS-first (tied to client `fetch`).
 
@@ -190,7 +190,7 @@ No library. Each form is a `<form action={signupAction}>` with `useActionState` 
 
 **Scope:** Frontend
 
-**Capability:** Transversal — covers: "Cadastro de usuário com e-mail e senha", "Login e controle de sessão do usuário", "Logout", "Recuperação de senha: solicitação via e-mail → link com token → redefinição"
+**Capability:** Transversal — covers: "User registration with email and password", "Login and user session control", "Logout", "Password recovery: request via email → link with token → reset"
 
 **Context:** Phase 02 is the first phase with user-initiated _writes_ (signup, login, logout, request-reset, reset-password, resend-confirmation). Every write call eventually reaches NestJS, but the FE has two viable paths to get there:
 
@@ -234,7 +234,7 @@ Each mutation picks the more idiomatic pathway. Form submits use Server Actions;
 
 **Scope:** Frontend
 
-**Capability:** Login e controle de sessão do usuário
+**Capability:** Login and user session control
 
 **Context:** Once the user is logged in (cookie set per TD-02), Client Components need to know "who am I, am I logged in?" — to render an avatar instead of a "Login" button, to show the current channel name, to disable form fields while a login mutation is in flight, etc. Phase 02 itself introduces minimal authenticated UI (just the post-login redirect target — possibly a stub home), but the propagation pattern set here is reused across every phase that has authenticated affordances.
 
@@ -275,7 +275,7 @@ Each Client Component that needs the session calls `useSession()`, which `fetch`
 
 **Scope:** Frontend
 
-**Capability:** Transversal — covers: "Confirmação de conta via e-mail com link de ativação", "Recuperação de senha: solicitação via e-mail → link com token → redefinição"
+**Capability:** Transversal — covers: "Account confirmation via email with an activation link", "Password recovery: request via email → link with token → reset"
 
 **Context:** Two backend flows send an email containing a URL with a one-time opaque token (`phase-02-auth/TD-04`):
 

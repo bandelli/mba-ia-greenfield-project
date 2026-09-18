@@ -12,20 +12,20 @@ sources_mtime:
 
 ## Objective
 
-Implementar documentação OpenAPI no projeto NestJS — tooling, estratégia do artefato e política de exposição em produção.
+Implement OpenAPI documentation in the NestJS project — tooling, artifact strategy, and production exposure policy.
 
 ---
 
 ## Step Implementations
 
-### SI-1 — Instalar `@nestjs/swagger` + configurar CLI plugin
+### SI-1 — Install `@nestjs/swagger` + configure CLI plugin
 
-**Description:** Trazer o tooling oficial decidido em `openapi-docs-nestjs/TD-01` (`@nestjs/swagger` + CLI plugin com `classValidatorShim`) para o `nestjs-project/` — a fundação que SI-2/SI-3/SI-4 consomem.
+**Description:** Bring the official tooling decided in `openapi-docs-nestjs/TD-01` (`@nestjs/swagger` + CLI plugin with `classValidatorShim`) into `nestjs-project/` — the foundation SI-2/SI-3/SI-4 consume.
 
 **Technical actions:**
 
-1. Instalar `@nestjs/swagger@^11.0.0` em `nestjs-project/package.json` (compatível com `@nestjs/core ^11.0.1` instalado — per `openapi-docs-nestjs/TD-01`).
-2. Adicionar bloco `compilerOptions.plugins` em `nestjs-project/nest-cli.json` com `name: "@nestjs/swagger"` e `options: { classValidatorShim: true, introspectComments: true, dtoFileNameSuffix: [".dto.ts", ".entity.ts"] }` (per `openapi-docs-nestjs/TD-01` Recommendation — preserva stack `class-validator` já fixado em `phase-02-auth/TD-06`).
+1. Install `@nestjs/swagger@^11.0.0` in `nestjs-project/package.json` (compatible with the installed `@nestjs/core ^11.0.1` — per `openapi-docs-nestjs/TD-01`).
+2. Add a `compilerOptions.plugins` block to `nestjs-project/nest-cli.json` with `name: "@nestjs/swagger"` and `options: { classValidatorShim: true, introspectComments: true, dtoFileNameSuffix: [".dto.ts", ".entity.ts"] }` (per `openapi-docs-nestjs/TD-01` Recommendation — preserves the `class-validator` stack already fixed in `phase-02-auth/TD-06`).
 
 **Tests:** _(empty — Infra)_
 
@@ -33,120 +33,120 @@ Implementar documentação OpenAPI no projeto NestJS — tooling, estratégia do
 
 **Acceptance criteria:**
 
-- `npx tsc --noEmit` no `nestjs-project/` retorna código `0` após a instalação (lib instala sem regressão de tipos).
-- `npm run build` emite `metadata.ts` ao lado de `dist/` (sinal de que o CLI plugin executou contra os DTOs existentes).
-- `node -e "require('@nestjs/swagger')"` carrega sem erro dentro do container `nestjs-api`.
+- `npx tsc --noEmit` in `nestjs-project/` returns exit code `0` after installation (the library installs without a type regression).
+- `npm run build` emits `metadata.ts` alongside `dist/` (a sign that the CLI plugin ran against the existing DTOs).
+- `node -e "require('@nestjs/swagger')"` loads without error inside the `nestjs-api` container.
 
 ---
 
-### SI-2 — Configuração `swagger.config.ts` + flag `SWAGGER_ENABLED`
+### SI-2 — `swagger.config.ts` configuration + `SWAGGER_ENABLED` flag
 
-**Description:** Materializar a política de exposição decidida em `openapi-docs-nestjs/TD-03` como um config namespace dedicado, alinhado ao padrão `registerAs(...)` herdado de phase 02 (`Inherited Conventions`). SI-3 lê este config para gatilhar o mount.
+**Description:** Materialize the exposure policy decided in `openapi-docs-nestjs/TD-03` as a dedicated config namespace, aligned with the `registerAs(...)` pattern inherited from phase 02 (`Inherited Conventions`). SI-3 reads this config to trigger the mount.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/config/swagger.config.ts` exportando `registerAs('swagger', () => ({ enabled: process.env.SWAGGER_ENABLED === 'true' }))` — segue o padrão `Inherited Conventions` (config-per-domain em `src/config/`).
-2. Adicionar entrada `SWAGGER_ENABLED: Joi.string().valid('true','false').default('false')` ao schema em `nestjs-project/src/config/env.validation.ts` — Joi rejeita valores fora do par `true|false`, default fechado por segurança (alinha com `openapi-docs-nestjs/TD-03` postura defensiva).
-3. Registrar `swaggerConfig` em `load: [...]` do `ConfigModule.forRoot(...)` em `nestjs-project/src/app.module.ts` (junto aos outros configs do projeto).
+1. Create `nestjs-project/src/config/swagger.config.ts` exporting `registerAs('swagger', () => ({ enabled: process.env.SWAGGER_ENABLED === 'true' }))` — follows the `Inherited Conventions` pattern (config-per-domain in `src/config/`).
+2. Add the entry `SWAGGER_ENABLED: Joi.string().valid('true','false').default('false')` to the schema in `nestjs-project/src/config/env.validation.ts` — Joi rejects values outside the `true|false` pair, closed default for safety (aligns with `openapi-docs-nestjs/TD-03`'s defensive posture).
+3. Register `swaggerConfig` in `load: [...]` of `ConfigModule.forRoot(...)` in `nestjs-project/src/app.module.ts` (alongside the project's other configs).
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `swagger.config.ts` | Unit: real lib (`@nestjs/config`) com test config — verifica que `enabled` é `true` quando `SWAGGER_ENABLED='true'` e `false` em qualquer outro valor (per Testing Requirements → "Service with configured lib") | `src/config/swagger.config.spec.ts` |
-| `env.validation.ts` | Integration: Joi schema com `SWAGGER_ENABLED` inválido falha boot; com `'true'`/`'false'` passa (per Testing Requirements → "Module with configured imports") | `src/config/env.validation.integration-spec.ts` |
+| `swagger.config.ts` | Unit: real lib (`@nestjs/config`) with test config — verifies `enabled` is `true` when `SWAGGER_ENABLED='true'` and `false` for any other value (per Testing Requirements → "Service with configured lib") | `src/config/swagger.config.spec.ts` |
+| `env.validation.ts` | Integration: Joi schema with an invalid `SWAGGER_ENABLED` fails boot; with `'true'`/`'false'` it passes (per Testing Requirements → "Module with configured imports") | `src/config/env.validation.integration-spec.ts` |
 
-**Dependencies:** SI-1 _(a lib precisa estar instalada para `app.module.ts` compilar com o config registrado)_
+**Dependencies:** SI-1 _(the lib must be installed for `app.module.ts` to compile with the registered config)_
 
 **Acceptance criteria:**
 
-- Carregar `swaggerConfig` via `@Inject(swaggerConfig.KEY)` retorna `{ enabled: true }` quando `SWAGGER_ENABLED=true` está no ambiente.
-- Boot da aplicação com `SWAGGER_ENABLED=invalid` falha imediatamente com erro de validação Joi referindo a chave `SWAGGER_ENABLED`.
-- Boot da aplicação sem `SWAGGER_ENABLED` no env funciona — Joi aplica o default `'false'`, sem erro.
+- Loading `swaggerConfig` via `@Inject(swaggerConfig.KEY)` returns `{ enabled: true }` when `SWAGGER_ENABLED=true` is in the environment.
+- Booting the application with `SWAGGER_ENABLED=invalid` fails immediately with a Joi validation error referring to the `SWAGGER_ENABLED` key.
+- Booting the application without `SWAGGER_ENABLED` in the env works — Joi applies the `'false'` default, with no error.
 
 ---
 
-### SI-3 — Montar Swagger UI runtime condicional em `main.ts`
+### SI-3 — Mount the Swagger UI conditionally at runtime in `main.ts`
 
-**Description:** Implementar a parte runtime de `openapi-docs-nestjs/TD-02` (Option C) gated pela flag definida em SI-2 — `DocumentBuilder` + `SwaggerModule.setup('api/docs', ...)` mounted apenas quando `swagger.enabled === true`, conforme `openapi-docs-nestjs/TD-03`. Os três endpoints `### API Contracts` (`/api/docs`, `/api/docs-json`, `/api/docs-yaml`) passam a existir.
+**Description:** Implement the runtime part of `openapi-docs-nestjs/TD-02` (Option C) gated by the flag defined in SI-2 — `DocumentBuilder` + `SwaggerModule.setup('api/docs', ...)` mounted only when `swagger.enabled === true`, per `openapi-docs-nestjs/TD-03`. The three `### API Contracts` endpoints (`/api/docs`, `/api/docs-json`, `/api/docs-yaml`) now exist.
 
 **Technical actions:**
 
-1. Em `nestjs-project/src/main.ts`, após `NestFactory.create(AppModule)` e antes de `app.listen(...)`, ler `app.get(swaggerConfig.KEY).enabled` e, quando `true`, instanciar `DocumentBuilder().setTitle('StreamTube API').setDescription('API REST do StreamTube').setVersion('1.0').addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token').build()` (per `openapi-docs-nestjs/TD-02` + library-refs § 1).
-2. Carregar `await SwaggerModule.loadPluginMetadata((await import('./metadata')).default)` antes de `createDocument` — sem isso, o output do CLI plugin (SI-1) não é injetado no documento (per library-refs § 3).
-3. Chamar `SwaggerModule.setup('api/docs', app, document, { customSiteTitle: 'StreamTube API Docs', swaggerOptions: { persistAuthorization: true } })` dentro do branch `if (enabled)` — `## Technical Specifications → ### API Contracts → Conditional-mount contract` define a semântica esperada.
+1. In `nestjs-project/src/main.ts`, after `NestFactory.create(AppModule)` and before `app.listen(...)`, read `app.get(swaggerConfig.KEY).enabled` and, when `true`, instantiate `DocumentBuilder().setTitle('StreamTube API').setDescription('StreamTube REST API').setVersion('1.0').addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token').build()` (per `openapi-docs-nestjs/TD-02` + library-refs § 1).
+2. Load `await SwaggerModule.loadPluginMetadata((await import('./metadata')).default)` before `createDocument` — without this, the CLI plugin's (SI-1) output is not injected into the document (per library-refs § 3).
+3. Call `SwaggerModule.setup('api/docs', app, document, { customSiteTitle: 'StreamTube API Docs', swaggerOptions: { persistAuthorization: true } })` inside the `if (enabled)` branch — `## Technical Specifications → ### API Contracts → Conditional-mount contract` defines the expected semantics.
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `main.ts` (Swagger mount) | E2E (Supertest) — boot da app com `SWAGGER_ENABLED=true` → `GET /api/docs` responde `200`/HTML; `GET /api/docs-json` responde `200`/JSON com `info.title === 'StreamTube API'`; `GET /api/docs-yaml` responde `200`/YAML | `test/swagger.e2e-spec.ts` |
-| `main.ts` (gating) | E2E (Supertest) — boot da app sem `SWAGGER_ENABLED` (ou com `'false'`) → as três rotas retornam `404` | (mesmo arquivo, segundo `describe`) |
+| `main.ts` (Swagger mount) | E2E (Supertest) — booting the app with `SWAGGER_ENABLED=true` → `GET /api/docs` responds `200`/HTML; `GET /api/docs-json` responds `200`/JSON with `info.title === 'StreamTube API'`; `GET /api/docs-yaml` responds `200`/YAML | `test/swagger.e2e-spec.ts` |
+| `main.ts` (gating) | E2E (Supertest) — booting the app without `SWAGGER_ENABLED` (or with `'false'`) → all three routes return `404` | (same file, second `describe`) |
 
-**Dependencies:** SI-1, SI-2 _(SI-1 garante a lib + metadata.ts; SI-2 garante o `swagger.enabled` injetável)_
+**Dependencies:** SI-1, SI-2 _(SI-1 guarantees the lib + metadata.ts; SI-2 guarantees the injectable `swagger.enabled`)_
 
 **Acceptance criteria:**
 
-- Com `SWAGGER_ENABLED=true`, `GET /api/docs` retorna `200` com `Content-Type: text/html` e o corpo contém o título `StreamTube API Docs`.
-- Com `SWAGGER_ENABLED=true`, `GET /api/docs-json` retorna `200` com `application/json` e o corpo é um documento OpenAPI 3.x cujo `info.title === 'StreamTube API'` e `components.securitySchemes['access-token']` declara `type: 'http', scheme: 'bearer', bearerFormat: 'JWT'`.
-- Com `SWAGGER_ENABLED=true`, `GET /api/docs-yaml` retorna `200` com `application/yaml`.
-- Com `SWAGGER_ENABLED` ausente ou `'false'`, qualquer uma das três rotas retorna `404` (sem vazamento de cabeçalhos Swagger).
+- With `SWAGGER_ENABLED=true`, `GET /api/docs` returns `200` with `Content-Type: text/html` and the body contains the title `StreamTube API Docs`.
+- With `SWAGGER_ENABLED=true`, `GET /api/docs-json` returns `200` with `application/json` and the body is an OpenAPI 3.x document whose `info.title === 'StreamTube API'` and `components.securitySchemes['access-token']` declares `type: 'http', scheme: 'bearer', bearerFormat: 'JWT'`.
+- With `SWAGGER_ENABLED=true`, `GET /api/docs-yaml` returns `200` with `application/yaml`.
+- With `SWAGGER_ENABLED` absent or `'false'`, any of the three routes returns `404` (no leaking of Swagger headers).
 
 ---
 
-### SI-4 — Script `openapi:export` + artefato `openapi.json`
+### SI-4 — `openapi:export` script + `openapi.json` artifact
 
-**Description:** Implementar a parte estática de `openapi-docs-nestjs/TD-02` (Option C) — `nestjs-project/src/openapi-export.ts` instancia o `AppModule`, serializa o documento via `JSON.stringify(document, null, 2)` em `nestjs-project/openapi.json`, e encerra sem `app.listen`. Habilita codegen offline para o frontend futuro (cross-layer contact point declarado em TD-02).
+**Description:** Implement the static part of `openapi-docs-nestjs/TD-02` (Option C) — `nestjs-project/src/openapi-export.ts` instantiates `AppModule`, serializes the document via `JSON.stringify(document, null, 2)` to `nestjs-project/openapi.json`, and exits without `app.listen`. Enables offline codegen for the future frontend (cross-layer contact point declared in TD-02).
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/openapi-export.ts` com `bootstrap` que chama `NestFactory.create(AppModule, { logger: false })`, monta `DocumentBuilder` idêntico ao de SI-3 (mesmo `setTitle/setVersion/addBearerAuth`), chama `SwaggerModule.createDocument(app, document)`, grava `writeFileSync('openapi.json', JSON.stringify(document, null, 2))` e termina com `await app.close()` (per library-refs § 6).
-2. Adicionar `"openapi:export": "ts-node -r tsconfig-paths/register src/openapi-export.ts"` em `nestjs-project/package.json` → `scripts` (per library-refs § 6).
-3. Versionar `nestjs-project/openapi.json` inicial gerado pela primeira execução do script, para que o diff de PR exponha mudanças de contrato (per `openapi-docs-nestjs/TD-02` Recommendation — "fundação correta para futura integração FE").
+1. Create `nestjs-project/src/openapi-export.ts` with a `bootstrap` that calls `NestFactory.create(AppModule, { logger: false })`, builds a `DocumentBuilder` identical to SI-3's (same `setTitle/setVersion/addBearerAuth`), calls `SwaggerModule.createDocument(app, document)`, writes with `writeFileSync('openapi.json', JSON.stringify(document, null, 2))`, and finishes with `await app.close()` (per library-refs § 6).
+2. Add `"openapi:export": "ts-node -r tsconfig-paths/register src/openapi-export.ts"` to `nestjs-project/package.json` → `scripts` (per library-refs § 6).
+3. Version the initial `nestjs-project/openapi.json` generated by the script's first run, so PR diffs expose contract changes (per `openapi-docs-nestjs/TD-02` Recommendation — "correct foundation for future FE integration").
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `openapi-export.ts` | Integration: invoca a função `exportSpec` programaticamente (sem subprocess), grava em path temporário, lê o arquivo e afirma sobre `info.title === 'StreamTube API'`, `info.version === '1.0'` e `components.securitySchemes['access-token']` presente | `src/openapi-export.integration-spec.ts` |
+| `openapi-export.ts` | Integration: invokes the `exportSpec` function programmatically (no subprocess), writes to a temp path, reads the file, and asserts on `info.title === 'StreamTube API'`, `info.version === '1.0'`, and `components.securitySchemes['access-token']` present | `src/openapi-export.integration-spec.ts` |
 
-**Dependencies:** SI-1 _(precisa de `@nestjs/swagger` + metadata.ts emitida pelo CLI plugin; o script reusa o `AppModule` carregado, independente do estado de `SWAGGER_ENABLED`)_
+**Dependencies:** SI-1 _(needs `@nestjs/swagger` + the metadata.ts emitted by the CLI plugin; the script reuses the loaded `AppModule`, independent of `SWAGGER_ENABLED`'s state)_
 
 **Acceptance criteria:**
 
-- `docker compose exec nestjs-api npm run openapi:export` termina com exit code `0` e produz `nestjs-project/openapi.json`.
-- `nestjs-project/openapi.json` é um documento OpenAPI 3.x válido com `info.title === 'StreamTube API'` e `info.version === '1.0'`.
-- O documento exportado contém `components.securitySchemes['access-token']` com `type: 'http'`, `scheme: 'bearer'`, `bearerFormat: 'JWT'` — espelhando o runtime de SI-3.
-- O documento exportado contém schemas inferidos dos DTOs existentes (e.g., DTOs de phase-02-auth) via CLI plugin — verifica que `components.schemas` é não-vazio.
+- `docker compose exec nestjs-api npm run openapi:export` finishes with exit code `0` and produces `nestjs-project/openapi.json`.
+- `nestjs-project/openapi.json` is a valid OpenAPI 3.x document with `info.title === 'StreamTube API'` and `info.version === '1.0'`.
+- The exported document contains `components.securitySchemes['access-token']` with `type: 'http'`, `scheme: 'bearer'`, `bearerFormat: 'JWT'` — mirroring SI-3's runtime.
+- The exported document contains schemas inferred from the existing DTOs (e.g., phase-02-auth DTOs) via the CLI plugin — verifies `components.schemas` is non-empty.
 
 ---
 
-### SI-5 — Enriquecer spec OpenAPI com decoradores explícitos nos controllers/DTOs existentes
+### SI-5 — Enrich the OpenAPI spec with explicit decorators on existing controllers/DTOs
 
-**Description:** Materializar a Revision de 2026-05-12 em `openapi-docs-nestjs/TD-01` — a inferência via CLI plugin (`classValidatorShim: true`) cobre apenas schemas de DTOs a partir de `class-validator`, mas operações, respostas tipadas por status code, contratos de erro e exemplos exigem decoradores explícitos. Esta SI percorre os controllers já implementados em `nestjs-project/src/auth/` e `nestjs-project/src/users/` (entregues em phase-02-auth) anotando cada endpoint com `@ApiOperation` (summary + description), `@ApiBody` quando o body é tipado, `@ApiParam`/`@ApiQuery` para parâmetros, e `@ApiResponse` cobrindo o status code de sucesso + os erros relevantes alinhados ao envelope de phase-02-auth/TD-07 (`{ statusCode, error, message, code }`). Declara um modelo de erro compartilhado via `@ApiExtraModels(ApiErrorEnvelope)` registrado uma vez no `DocumentBuilder` (ou via `@ApiExtraModels` na raiz dos controllers afetados) e referenciado em `@ApiResponse({ schema: { $ref: getSchemaPath(ApiErrorEnvelope) } })`.
+**Description:** Materialize the 2026-05-12 Revision in `openapi-docs-nestjs/TD-01` — inference via the CLI plugin (`classValidatorShim: true`) covers only DTO schemas derived from `class-validator`, but operations, status-code-typed responses, error contracts, and examples require explicit decorators. This SI walks the controllers already implemented in `nestjs-project/src/auth/` and `nestjs-project/src/users/` (delivered in phase-02-auth) annotating each endpoint with `@ApiOperation` (summary + description), `@ApiBody` when the body is typed, `@ApiParam`/`@ApiQuery` for parameters, and `@ApiResponse` covering the success status code + the relevant errors aligned with phase-02-auth/TD-07's envelope (`{ statusCode, error, message, code }`). It declares a shared error model via `@ApiExtraModels(ApiErrorEnvelope)` registered once in `DocumentBuilder` (or via `@ApiExtraModels` at the root of the affected controllers) and referenced in `@ApiResponse({ schema: { $ref: getSchemaPath(ApiErrorEnvelope) } })`.
 
 **Technical actions:**
 
-1. Criar `nestjs-project/src/common/openapi/api-error-envelope.dto.ts` exportando uma classe `ApiErrorEnvelope` cujos campos (`statusCode: number`, `error: string`, `message: string | string[]`, `code?: string`) são decorados com `@ApiProperty` — espelha o envelope decidido em `phase-02-auth/TD-07` (consultar `## Inherited Decisions Detail → phase-02-auth/TD-07` no context). Esta classe é o schema reusável referenciado por todos os `@ApiResponse` de erro.
-2. Registrar `ApiErrorEnvelope` em `nestjs-project/src/swagger/swagger-document.ts` (helper `buildSwaggerConfig`) via `SwaggerModule.createDocument(app, config, { extraModels: [ApiErrorEnvelope] })` — garante o schema aparece em `components.schemas` mesmo se nenhum controller individual o registrar com `@ApiExtraModels`.
-3. Anotar `nestjs-project/src/auth/*.controller.ts` (signup/login/refresh/forgot-password/reset-password/confirm-email) e `nestjs-project/src/users/*.controller.ts` com `@ApiTags('auth' | 'users')` no controller-level + por endpoint: `@ApiOperation({ summary, description })`, `@ApiBody({ type: <DtoExistente> })` (CLI plugin já infere, mas tornar explícito quando há `examples`), `@ApiParam`/`@ApiQuery` quando aplicável, e múltiplos `@ApiResponse` cobrindo: (a) success status (200/201/204) com `type: <ResponseDto>` ou `description`; (b) os erros documentados que cada endpoint emite (400 validação, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 429 throttler) usando `{ status, description, schema: { $ref: getSchemaPath(ApiErrorEnvelope) } }`.
-4. Para endpoints protegidos por `JwtAuthGuard`, adicionar `@ApiBearerAuth('access-token')` (nome do security scheme já registrado em `DocumentBuilder` de SI-3). Endpoints públicos não recebem o decorator.
-5. Re-executar `npm run openapi:export` e revisar o diff de `nestjs-project/openapi.json` antes de versionar — confirmar que cada path tem `summary`, `responses` por status code, e referências a `#/components/schemas/ApiErrorEnvelope` nos error responses.
+1. Create `nestjs-project/src/common/openapi/api-error-envelope.dto.ts` exporting a class `ApiErrorEnvelope` whose fields (`statusCode: number`, `error: string`, `message: string | string[]`, `code?: string`) are decorated with `@ApiProperty` — mirrors the envelope decided in `phase-02-auth/TD-07` (see `## Inherited Decisions Detail → phase-02-auth/TD-07` in the context). This class is the reusable schema referenced by every error `@ApiResponse`.
+2. Register `ApiErrorEnvelope` in `nestjs-project/src/swagger/swagger-document.ts` (the `buildSwaggerConfig` helper) via `SwaggerModule.createDocument(app, config, { extraModels: [ApiErrorEnvelope] })` — guarantees the schema appears in `components.schemas` even if no individual controller registers it with `@ApiExtraModels`.
+3. Annotate `nestjs-project/src/auth/*.controller.ts` (signup/login/refresh/forgot-password/reset-password/confirm-email) and `nestjs-project/src/users/*.controller.ts` with `@ApiTags('auth' | 'users')` at the controller level + per endpoint: `@ApiOperation({ summary, description })`, `@ApiBody({ type: <ExistingDto> })` (the CLI plugin already infers it, but make it explicit when `examples` are present), `@ApiParam`/`@ApiQuery` where applicable, and multiple `@ApiResponse` entries covering: (a) the success status (200/201/204) with `type: <ResponseDto>` or `description`; (b) the documented errors each endpoint emits (400 validation, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 429 throttler) using `{ status, description, schema: { $ref: getSchemaPath(ApiErrorEnvelope) } }`.
+4. For endpoints protected by `JwtAuthGuard`, add `@ApiBearerAuth('access-token')` (the security scheme name already registered in SI-3's `DocumentBuilder`). Public endpoints do not receive the decorator.
+5. Re-run `npm run openapi:export` and review the `nestjs-project/openapi.json` diff before versioning — confirm each path has a `summary`, `responses` per status code, and references to `#/components/schemas/ApiErrorEnvelope` in the error responses.
 
 **Tests:**
 
 | Artifact | Layer | Test file |
 |----------|-------|-----------|
-| `ApiErrorEnvelope` | Integration: extende a integration test de `openapi-export.ts` (SI-4) afirmando: (a) `components.schemas.ApiErrorEnvelope` existe e tem as propriedades esperadas; (b) ao menos um path tem `responses['401'].content['application/json'].schema.$ref === '#/components/schemas/ApiErrorEnvelope'`; (c) endpoints de auth/users protegidos têm `security: [{ 'access-token': [] }]`; (d) endpoints documentados têm `summary` não-vazio | `src/openapi-export.integration-spec.ts` (extensão) |
+| `ApiErrorEnvelope` | Integration: extends the `openapi-export.ts` integration test (SI-4) asserting: (a) `components.schemas.ApiErrorEnvelope` exists and has the expected properties; (b) at least one path has `responses['401'].content['application/json'].schema.$ref === '#/components/schemas/ApiErrorEnvelope'`; (c) protected auth/users endpoints have `security: [{ 'access-token': [] }]`; (d) documented endpoints have a non-empty `summary` | `src/openapi-export.integration-spec.ts` (extension) |
 
-**Dependencies:** SI-1, SI-2, SI-3, SI-4 _(precisa do tooling, config, runtime UI e script de export já no lugar; só anota código existente e estende uma integration test já criada)._
+**Dependencies:** SI-1, SI-2, SI-3, SI-4 _(needs the tooling, config, runtime UI, and export script already in place; only annotates existing code and extends an already-created integration test.)_
 
 **Acceptance criteria:**
 
-- `nestjs-project/src/common/openapi/api-error-envelope.dto.ts` existe e exporta `ApiErrorEnvelope` com 4 `@ApiProperty` (statusCode, error, message, code).
-- `npm run openapi:export` regera `nestjs-project/openapi.json` e o diff mostra: (a) novo schema `ApiErrorEnvelope` em `components.schemas`; (b) cada endpoint em `/auth/*` e `/users/*` ganhou `summary`, ≥1 `responses` documentando o caso de sucesso e ≥1 erro; (c) endpoints protegidos têm `security: [{ "access-token": [] }]`.
-- `docker compose exec nestjs-api npm run test -- openapi-export.integration-spec` passa com as novas asserções.
-- `npx tsc --noEmit` exits 0 e `npm run lint` exits 0 após as anotações.
+- `nestjs-project/src/common/openapi/api-error-envelope.dto.ts` exists and exports `ApiErrorEnvelope` with 4 `@ApiProperty` fields (statusCode, error, message, code).
+- `npm run openapi:export` regenerates `nestjs-project/openapi.json` and the diff shows: (a) a new `ApiErrorEnvelope` schema in `components.schemas`; (b) each endpoint under `/auth/*` and `/users/*` gained a `summary`, ≥1 `responses` documenting the success case and ≥1 error; (c) protected endpoints have `security: [{ "access-token": [] }]`.
+- `docker compose exec nestjs-api npm run test -- openapi-export.integration-spec` passes with the new assertions.
+- `npx tsc --noEmit` exits 0 and `npm run lint` exits 0 after the annotations.
 
 ---
 
@@ -202,21 +202,21 @@ The three endpoints share a single mount switch: the `if (process.env.SWAGGER_EN
 
 ```
 SI-1 (root — install lib + CLI plugin)
-├── SI-2 — depends on SI-1 (config namespace precisa da lib instalada para compilar `app.module.ts`)
-│   └── SI-3 — depends on SI-1 + SI-2 (runtime mount precisa de @nestjs/swagger + flag injetável)
-├── SI-4 — depends on SI-1 (export script reusa CLI plugin metadata; flag SWAGGER_ENABLED não se aplica)
-└── SI-5 — depends on SI-1, SI-2, SI-3, SI-4 (enriquece spec via decoradores; reusa runtime + export já no lugar; estende integration test de SI-4)
+├── SI-2 — depends on SI-1 (the config namespace needs the lib installed for `app.module.ts` to compile)
+│   └── SI-3 — depends on SI-1 + SI-2 (runtime mount needs @nestjs/swagger + the injectable flag)
+├── SI-4 — depends on SI-1 (export script reuses CLI plugin metadata; the SWAGGER_ENABLED flag does not apply)
+└── SI-5 — depends on SI-1, SI-2, SI-3, SI-4 (enriches the spec via decorators; reuses the runtime + export already in place; extends SI-4's integration test)
 ```
 
 ---
 
 ## Deliverables
 
-- [ ] SI-1 — Instalar `@nestjs/swagger` + configurar CLI plugin
-- [ ] SI-2 — Configuração `swagger.config.ts` + flag `SWAGGER_ENABLED`
-- [ ] SI-3 — Montar Swagger UI runtime condicional em `main.ts`
-- [ ] SI-4 — Script `openapi:export` + artefato `openapi.json`
-- [ ] SI-5 — Enriquecer spec OpenAPI com decoradores explícitos nos controllers/DTOs existentes
+- [ ] SI-1 — Install `@nestjs/swagger` + configure CLI plugin
+- [ ] SI-2 — `swagger.config.ts` configuration + `SWAGGER_ENABLED` flag
+- [ ] SI-3 — Mount the Swagger UI conditionally at runtime in `main.ts`
+- [ ] SI-4 — `openapi:export` script + `openapi.json` artifact
+- [ ] SI-5 — Enrich the OpenAPI spec with explicit decorators on existing controllers/DTOs
 
 **Full test suites:**
 
@@ -224,4 +224,4 @@ SI-1 (root — install lib + CLI plugin)
 - [ ] Backend E2E tests pass (`docker compose exec nestjs-api npm run test:e2e`)
 - [ ] Type-check passes (`docker compose exec nestjs-api npx tsc --noEmit`)
 - [ ] Lint passes (`docker compose exec nestjs-api npm run lint`)
-- [ ] Build succeeds and emits `metadata.ts` ao lado de `dist/` (`docker compose exec nestjs-api npm run build`)
+- [ ] Build succeeds and emits `metadata.ts` alongside `dist/` (`docker compose exec nestjs-api npm run build`)

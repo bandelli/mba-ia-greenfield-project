@@ -1,27 +1,33 @@
 import { DataSource, Repository } from 'typeorm';
-import { RefreshToken } from '../auth/entities/refresh-token.entity';
-import { VerificationToken } from '../auth/entities/verification-token.entity';
 import {
   cleanAllTables,
   createTestDataSource,
+  ALL_APP_ENTITIES,
 } from '../test/create-test-data-source';
 import { User } from '../users/entities/user.entity';
+import {
+  Video,
+  VideoCategory,
+  VideoStatus,
+  VideoVisibility,
+} from '../videos/entities/video.entity';
 import { ChannelsService } from './channels.service';
 import { Channel } from './entities/channel.entity';
-
-const ALL_ENTITIES = [User, Channel, RefreshToken, VerificationToken];
+import { Subscription } from './entities/subscription.entity';
 
 describe('ChannelsService (integration)', () => {
   let dataSource: DataSource;
   let channelsService: ChannelsService;
   let userRepository: Repository<User>;
   let channelRepository: Repository<Channel>;
+  let videoRepository: Repository<Video>;
 
   beforeAll(async () => {
-    dataSource = createTestDataSource(ALL_ENTITIES);
+    dataSource = createTestDataSource(ALL_APP_ENTITIES);
     await dataSource.initialize();
     userRepository = dataSource.getRepository(User);
     channelRepository = dataSource.getRepository(Channel);
+    videoRepository = dataSource.getRepository(Video);
     channelsService = new ChannelsService(dataSource);
   });
 
@@ -87,6 +93,222 @@ describe('ChannelsService (integration)', () => {
 
       const channels = await channelRepository.find();
       expect(channels).toHaveLength(2);
+    });
+  });
+
+  describe('findByUserId', () => {
+    it('returns the channel owned by the given user', async () => {
+      const user = await createUser();
+      await channelsService.createChannel(user.id, 'findme@example.com');
+
+      const channel = await channelsService.findByUserId(user.id);
+
+      expect(channel.user_id).toBe(user.id);
+      expect(channel.nickname).toBe('findme');
+    });
+
+    it('rejects when the user has no channel', async () => {
+      await expect(
+        channelsService.findByUserId('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toThrow();
+    });
+  });
+
+  async function createChannelWithVideos(
+    email: string,
+  ): Promise<{ user: User; channel: Channel }> {
+    const user = await createUser();
+    const channel = await channelsService.createChannel(user.id, email);
+    return { user, channel };
+  }
+
+  async function createVideo(
+    channel: Channel,
+    overrides: Partial<Video> = {},
+  ): Promise<Video> {
+    return videoRepository.save(
+      videoRepository.create({
+        user_id: channel.user_id,
+        channel_id: channel.id,
+        storage_key: `videos/${channel.id}-${Math.random()}.mp4`,
+        ...overrides,
+      }),
+    );
+  }
+
+  describe('findVideosForOwner', () => {
+    it('returns every status and visibility for the own channel, paginated', async () => {
+      const { user, channel } =
+        await createChannelWithVideos('owner1@example.com');
+      await createVideo(channel, { status: VideoStatus.DRAFT });
+      await createVideo(channel, {
+        status: VideoStatus.READY,
+        visibility: VideoVisibility.UNLISTED,
+      });
+      await createVideo(channel, {
+        status: VideoStatus.READY,
+        visibility: VideoVisibility.PUBLIC,
+        published_at: new Date(),
+      });
+
+      const result = await channelsService.findVideosForOwner(user.id, {});
+
+      expect(result.total).toBe(3);
+      expect(result.items).toHaveLength(3);
+      expect(result.items.every((item) => item.views === 0)).toBe(true);
+    });
+
+    it('reads likes and comments from the denormalized counters instead of hardcoding 0', async () => {
+      const { user, channel } = await createChannelWithVideos(
+        'owner-counters@example.com',
+      );
+      await createVideo(channel, {
+        likes_count: 4,
+        dislikes_count: 1,
+        comments_count: 2,
+      });
+
+      const result = await channelsService.findVideosForOwner(user.id, {});
+
+      expect(result.items[0].likes).toBe(4);
+      expect(result.items[0].comments).toBe(2);
+    });
+
+    it('filters by visibility', async () => {
+      const { user, channel } =
+        await createChannelWithVideos('owner2@example.com');
+      await createVideo(channel, { visibility: VideoVisibility.UNLISTED });
+      await createVideo(channel, { visibility: VideoVisibility.PUBLIC });
+
+      const result = await channelsService.findVideosForOwner(user.id, {
+        visibility: VideoVisibility.PUBLIC,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].visibility).toBe(VideoVisibility.PUBLIC);
+    });
+
+    it('filters by title substring search', async () => {
+      const { user, channel } =
+        await createChannelWithVideos('owner3@example.com');
+      await createVideo(channel, { title: 'How to bake bread' });
+      await createVideo(channel, { title: 'Guitar lessons' });
+
+      const result = await channelsService.findVideosForOwner(user.id, {
+        search: 'bread',
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].title).toBe('How to bake bread');
+    });
+
+    it('paginates results', async () => {
+      const { user, channel } =
+        await createChannelWithVideos('owner4@example.com');
+      for (let i = 0; i < 3; i++) {
+        await createVideo(channel);
+      }
+
+      const result = await channelsService.findVideosForOwner(user.id, {
+        page: 2,
+        limit: 2,
+      });
+
+      expect(result.total).toBe(3);
+      expect(result.items).toHaveLength(1);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(2);
+    });
+  });
+
+  describe('findPublicChannelInfo', () => {
+    it('includes subscribersCount, defaulting to 0', async () => {
+      const { channel } = await createChannelWithVideos(
+        'public-info@example.com',
+      );
+
+      const result = await channelsService.findPublicChannelInfo(
+        channel.nickname,
+      );
+
+      expect(result.subscribersCount).toBe(0);
+      expect(result.nickname).toBe(channel.nickname);
+    });
+
+    it('defaults isSubscribed to false for an anonymous caller', async () => {
+      const { channel } = await createChannelWithVideos(
+        'public-info-anon@example.com',
+      );
+
+      const result = await channelsService.findPublicChannelInfo(
+        channel.nickname,
+      );
+
+      expect(result.isSubscribed).toBe(false);
+    });
+
+    it('reflects a real subscription for the authenticated caller', async () => {
+      const { channel } = await createChannelWithVideos(
+        'public-info-sub@example.com',
+      );
+      const subscriber = await createUser();
+      await dataSource.getRepository(Subscription).save(
+        dataSource.getRepository(Subscription).create({
+          subscriber_user_id: subscriber.id,
+          channel_id: channel.id,
+        }),
+      );
+
+      const result = await channelsService.findPublicChannelInfo(
+        channel.nickname,
+        subscriber.id,
+      );
+
+      expect(result.isSubscribed).toBe(true);
+    });
+
+    it('throws ChannelNotFoundException for an unknown nickname', async () => {
+      await expect(
+        channelsService.findPublicChannelInfo('no-such-channel'),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('findPublicVideos', () => {
+    it('excludes draft, unlisted, and unpublished videos', async () => {
+      const { channel } = await createChannelWithVideos('public1@example.com');
+      await createVideo(channel, { status: VideoStatus.DRAFT });
+      await createVideo(channel, {
+        status: VideoStatus.READY,
+        visibility: VideoVisibility.UNLISTED,
+        published_at: new Date(),
+      });
+      await createVideo(channel, {
+        status: VideoStatus.READY,
+        visibility: VideoVisibility.PUBLIC,
+        published_at: null,
+      });
+      const published = await createVideo(channel, {
+        status: VideoStatus.READY,
+        visibility: VideoVisibility.PUBLIC,
+        published_at: new Date(),
+        category: VideoCategory.MUSIC,
+      });
+
+      const result = await channelsService.findPublicVideos(
+        channel.nickname,
+        {},
+      );
+
+      expect(result.total).toBe(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(published.id);
+    });
+
+    it('throws ChannelNotFoundException for an unknown nickname', async () => {
+      await expect(
+        channelsService.findPublicVideos('no-such-channel', {}),
+      ).rejects.toThrow();
     });
   });
 });

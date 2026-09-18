@@ -32,4 +32,19 @@ export default tseslint.config(
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
+  {
+    // Test files routinely touch values whose real type is `any` by design
+    // of the tools involved — supertest's `res.body`, mocked pg driver
+    // errors, jest.spyOn() targets — not by sloppy typing. Enforcing
+    // no-unsafe-*/unbound-method here produces noise without catching real
+    // bugs; production code (outside this glob) keeps full strictness.
+    files: ['**/*.spec.ts', '**/*.integration-spec.ts', '**/*.e2e-spec.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
 );

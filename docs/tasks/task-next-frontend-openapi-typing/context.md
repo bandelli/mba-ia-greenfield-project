@@ -176,7 +176,7 @@ _Source files:_
 
 | Capability | Status | Origin phase | Rationale |
 |-----------|--------|--------------|-----------|
-| Telas de cadastro, login, confirmação de conta e recuperação de senha | deferred | phase-02-auth | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
+| Registration, login, account confirmation, and password recovery screens | deferred | phase-02-auth | `next-frontend/` is not initialized in this phase; UI surfaces start in a later phase. |
 
 ## UI Inventory
 
